@@ -1,0 +1,27 @@
+@media print {
+  @page {
+    margin: 0;
+    size: 80mm auto;
+  }
+  
+  body * {
+    visibility: hidden;
+  }
+  
+  .receipt-container,
+  .receipt-container * {
+    visibility: visible;
+  }
+  
+  .receipt-container {
+    margin: 0 auto;
+    padding: 1rem;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  
+  .no-print {
+    display: none;
+  }
+}
