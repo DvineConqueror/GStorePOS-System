@@ -1,5 +1,5 @@
 
-import { ProductCatalog } from '@/components/pos/ProductCatalog';
+import { CashierProductCatalog } from '@/components/pos/CashierProductCatalog';
 import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
@@ -7,11 +7,12 @@ import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
+import { PosProvider } from '@/context/PosContext';
 import { Button } from '@/components/ui/button';
 import { Image } from 'lucide-react';
 
-export default function PosPage() {
-  const { profile, signOut } = useAuth();
+function PosPageContent() {
+  const { user, signOut } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-pos-primary/30 to-pos-background">
@@ -26,7 +27,7 @@ export default function PosPage() {
           <div className="flex items-center space-x-3 sm:space-x-6">
             <div className="flex items-center space-x-2 text-gray-700">
               <span className="text-xs sm:text-sm">Cashier:</span>
-              <span className="text-sm sm:text-base font-medium">{profile?.full_name}</span>
+              <span className="text-sm sm:text-base font-medium">{user?.firstName} {user?.lastName}</span>
             </div>
             <Button 
               variant="outline" 
@@ -60,7 +61,7 @@ export default function PosPage() {
           
           <TabsContent value="pos" className="flex-grow flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-6">
             <div className="flex-1 md:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 p-2 sm:p-4 min-h-0">
-              <ProductCatalog />
+              <CashierProductCatalog />
             </div>
             <div className="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 p-2 sm:p-4">
               <Cart />
@@ -88,5 +89,13 @@ export default function PosPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function PosPage() {
+  return (
+    <PosProvider>
+      <PosPageContent />
+    </PosProvider>
   );
 }

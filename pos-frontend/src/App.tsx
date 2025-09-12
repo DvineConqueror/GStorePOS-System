@@ -11,6 +11,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminRoute from '@/components/auth/AdminRoute';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
+import PosPage from './pages/PosPage';
 
 const App = () => {
   const queryClient = new QueryClient();
@@ -30,7 +31,12 @@ const App = () => {
                     <Index />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin" element={
+                <Route path="/pos" element={
+                  <ProtectedRoute>
+                    <PosPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/dashboard" element={
                   <AdminRoute>
                     <AdminPage />
                   </AdminRoute>

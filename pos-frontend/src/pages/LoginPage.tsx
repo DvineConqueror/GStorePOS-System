@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, Users, UserCheck } from 'lucide-react';
 import Cookies from 'js-cookie';
 
 export default function LoginPage() {
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [icon, setIcon] = useState(<EyeOff />);
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSetup, setIsSetup] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
@@ -57,8 +58,14 @@ export default function LoginPage() {
       if (data.success) {
         // Store the token in cookies
         Cookies.set('auth_token', data.data.token, { expires: 7 });
-        // Use window.location.href to avoid React re-renders
-        window.location.href = '/';
+        
+        // Role-based redirect
+        const userRole = data.data.user.role;
+        if (userRole === 'admin') {
+          window.location.href = '/dashboard';
+        } else {
+          window.location.href = '/pos';
+        }
         return { success: true };
       }
       
@@ -83,25 +90,41 @@ export default function LoginPage() {
           lastName
         });
         if (result.success) {
-          navigate('/');
+          navigate('/dashboard');
         }
       } else if (isSignUp) {
-        const result = await signUpCashier({
-          username,
-          email,
-          password,
-          firstName,
-          lastName
-        });
-        if (result.success) {
-          // Cashier accounts require admin approval, so don't auto-login
-          // Reset form and switch back to login mode
-          setIsSignUp(false);
-          setEmail('');
-          setPassword('');
-          setUsername('');
-          setFirstName('');
-          setLastName('');
+        if (isAdminMode) {
+          // Admin signup - only allow if no admin exists
+          const result = await signUp({
+            username,
+            email,
+            password,
+            role: 'admin',
+            firstName,
+            lastName
+          });
+          if (result.success) {
+            navigate('/dashboard');
+          }
+        } else {
+          // Cashier signup
+          const result = await signUpCashier({
+            username,
+            email,
+            password,
+            firstName,
+            lastName
+          });
+          if (result.success) {
+            // Cashier accounts require admin approval, so don't auto-login
+            // Reset form and switch back to login mode
+            setIsSignUp(false);
+            setEmail('');
+            setPassword('');
+            setUsername('');
+            setFirstName('');
+            setLastName('');
+          }
         }
       } else {
         const result = await handleLogin(email, password);
@@ -124,56 +147,66 @@ export default function LoginPage() {
     }
   };
 
-  const handleAdminLogin = async () => {
-    try {
-      // Navigate to admin page after successful login
-      const result = await handleLogin(email, password);
-      if (result.success) {
-        // Check if user is admin before redirecting
-        const token = Cookies.get('auth_token');
-        if (token) {
-          // Decode token to check role (simple approach)
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            if (payload.role === 'admin') {
-              window.location.href = '/admin';
-            } else {
-              toast({
-                title: "Access Denied",
-                description: "Admin privileges required",
-                variant: "destructive",
-              });
-            }
-          } catch (e) {
-            window.location.href = '/';
-          }
-        }
-      } else {
-        // Show error toast for failed admin login
-        toast({
-          title: "Admin Login Failed",
-          description: result.message || 'Invalid credentials or insufficient permissions',
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Admin authentication error:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+  const toggleRoleMode = () => {
+    // Add smooth transition effect
+    const container = document.querySelector('.login-container');
+    if (container) {
+      container.classList.add('transitioning');
     }
+    
+    // Delay the state change for smooth animation
+    setTimeout(() => {
+      setIsAdminMode(!isAdminMode);
+      // Reset form when switching modes
+      setEmail('');
+      setPassword('');
+      setUsername('');
+      setFirstName('');
+      setLastName('');
+      setIsSignUp(false);
+      setIsSetup(false);
+      
+      // Remove transition class after animation
+      setTimeout(() => {
+        if (container) {
+          container.classList.remove('transitioning');
+        }
+      }, 300);
+    }, 150);
   };
 
+  // Dynamic color schemes based on role
+  const cashierColors = {
+    primary: 'from-blue-500/20 to-blue-100',
+    cardBg: 'bg-white',
+    primaryButton: 'bg-blue-600 hover:bg-blue-700',
+    primaryText: 'text-blue-600',
+    primaryBorder: 'border-blue-200 focus:border-blue-500 focus:ring-blue-500/20',
+    primaryHover: 'hover:bg-blue-600/10',
+    logoBg: 'bg-blue-500/10',
+    logoIcon: 'bg-blue-500/20'
+  };
+
+  const adminColors = {
+    primary: 'from-slate-800/20 to-slate-900/10',
+    cardBg: 'bg-slate-50',
+    primaryButton: 'bg-slate-800 hover:bg-slate-900',
+    primaryText: 'text-slate-800',
+    primaryBorder: 'border-slate-300 focus:border-slate-600 focus:ring-slate-600/20',
+    primaryHover: 'hover:bg-slate-800/10',
+    logoBg: 'bg-slate-800/10',
+    logoIcon: 'bg-slate-800/20'
+  };
+
+  const colors = isAdminMode ? adminColors : cashierColors;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pos-primary/20 to-pos-background">
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br ${colors.primary} transition-all duration-700`}>
       <div className="container mx-auto flex items-center justify-center px-4">
-        <div className="grid md:grid-cols-2 gap-8 w-full max-w-[1000px] bg-white rounded-2xl shadow-2xl p-8">
-          {/* Left side - Image/Logo Section */}
-          <div className="hidden md:flex flex-col items-center justify-center p-8 bg-pos-primary/10 rounded-xl">
-            <div className="w-48 h-48 mb-8 bg-pos-primary/20 rounded-full flex items-center justify-center">
-              {/* Placeholder for logo */}
+        <div className={`login-container grid md:grid-cols-2 gap-8 w-full max-w-[1000px] ${colors.cardBg} rounded-2xl shadow-2xl p-8 transition-all duration-700 ease-in-out`}>
+          {/* Logo/Info Section - Position changes based on role */}
+          <div className={`hidden md:flex flex-col items-center justify-center p-8 ${colors.logoBg} rounded-xl transition-all duration-500 ${isAdminMode ? 'order-2' : 'order-1'}`}>
+            <div className={`w-48 h-48 mb-8 ${colors.logoIcon} rounded-full flex items-center justify-center transition-all duration-500`}>
               <img
                 src="/images/BlesseStoreIcon.png"
                 alt="Store Logo"
@@ -181,24 +214,51 @@ export default function LoginPage() {
               />
             </div>
             <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-pos-primary">Welcome to Grocery POS</h2>
-              <p className="text-gray-600">Manage your store with ease and efficiency</p>
+              <h2 className={`text-2xl font-bold ${colors.primaryText} transition-colors duration-500`}>
+                {isAdminMode ? 'Admin Dashboard' : 'Cashier POS'}
+              </h2>
+              <p className="text-gray-600">
+                {isAdminMode 
+                  ? 'Manage your store operations and analytics' 
+                  : 'Process sales and manage transactions'}
+              </p>
             </div>
           </div>
 
-          {/* Right side - Login Form */}
-          <div className="flex flex-col justify-center">
+          {/* Form Section - Position changes based on role */}
+          <div className={`flex flex-col justify-center transition-all duration-500 ${isAdminMode ? 'order-1' : 'order-2'}`}>
             <Card className="border-0 shadow-none">
               <CardHeader className="space-y-2">
-                <CardTitle className="text-3xl font-bold text-pos-primary">
-                  {isSetup ? 'Initial Setup' : isSignUp ? 'Create Account' : 'Welcome Back'}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className={`text-3xl font-bold ${colors.primaryText} transition-colors duration-500`}>
+                    {isSetup ? 'Initial Setup' : isSignUp ? 'Create Account' : 'Welcome Back'}
+                  </CardTitle>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleRoleMode}
+                    className={`${colors.primaryHover} ${colors.primaryBorder} transition-all duration-300`}
+                  >
+                    {isAdminMode ? (
+                      <>
+                        <Users className="mr-2 h-4 w-4" />
+                        Cashier Mode
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        Admin Mode
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <CardDescription className="text-base">
                   {isSetup 
                     ? 'Create the initial admin account to get started' 
                     : isSignUp 
-                    ? 'Create a new account to get started' 
-                    : 'Sign in to continue to your dashboard'}
+                    ? `Create a new ${isAdminMode ? 'admin' : 'cashier'} account` 
+                    : `Sign in to continue to your ${isAdminMode ? 'admin dashboard' : 'POS system'}`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -213,7 +273,7 @@ export default function LoginPage() {
                           id="username"
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
-                          className="h-11 px-4 border-gray-200 focus:border-pos-primary focus:ring-pos-primary/20"
+                          className={`h-11 px-4 ${colors.primaryBorder} transition-all duration-300`}
                           placeholder="johndoe"
                           required
                         />
@@ -227,7 +287,7 @@ export default function LoginPage() {
                             id="firstName"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
-                            className="h-11 px-4 border-gray-200 focus:border-pos-primary focus:ring-pos-primary/20"
+                            className={`h-11 px-4 ${colors.primaryBorder} transition-all duration-300`}
                             placeholder="John"
                             required
                           />
@@ -240,7 +300,7 @@ export default function LoginPage() {
                             id="lastName"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
-                            className="h-11 px-4 border-gray-200 focus:border-pos-primary focus:ring-pos-primary/20"
+                            className={`h-11 px-4 ${colors.primaryBorder} transition-all duration-300`}
                             placeholder="Doe"
                             required
                           />
@@ -257,7 +317,7 @@ export default function LoginPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-11 px-4 border-gray-200 focus:border-pos-primary focus:ring-pos-primary/20"
+                      className={`h-11 px-4 ${colors.primaryBorder} transition-all duration-300`}
                       placeholder="you@example.com"
                       required
                     />
@@ -272,13 +332,13 @@ export default function LoginPage() {
                         type={type}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="h-11 px-4 pr-10 border-gray-200 focus:border-pos-primary focus:ring-pos-primary/20"
+                        className={`h-11 px-4 pr-10 ${colors.primaryBorder} transition-all duration-300`}
                         placeholder="••••••••"
                         required
                       />
                       <button 
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pos-primary transition-colors duration-300"
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:${colors.primaryText} transition-colors duration-300`}
                         onClick={togglePasswordVisibility}
                       >
                         {icon}
@@ -289,28 +349,16 @@ export default function LoginPage() {
                     <Button 
                       type="submit" 
                       disabled={isLoading}
-                      className="w-full h-11 bg-pos-primary hover:bg-pos-primary/90 duration-500 text-white font-medium"
+                      className={`w-full h-11 ${colors.primaryButton} duration-500 text-white font-medium transition-all`}
                     >
-                      {isLoading ? 'Loading...' : (isSetup ? 'Setup Admin Account' : isSignUp ? 'Create Account' : 'Sign In')}
+                      {isLoading ? 'Loading...' : (isSetup ? 'Setup Admin Account' : isSignUp ? `Create ${isAdminMode ? 'Admin' : 'Cashier'} Account` : 'Sign In')}
                     </Button>
                     
                     {!isSignUp && !isSetup && (
                       <Button 
                         type="button" 
                         variant="outline"
-                        className="w-full h-11 border-pos-primary text-pos-primary hover:bg-pos-primary/10 duration-500 font-medium"
-                        onClick={handleAdminLogin}
-                      >
-                        <ShieldCheck className="mr-2 h-4 w-4" />
-                        Sign In as Admin
-                      </Button>
-                    )}
-                    
-                    {!isSignUp && !isSetup && (
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        className="w-full h-11 border-green-600 text-green-600 hover:bg-green-600/10 duration-500 font-medium"
+                        className={`w-full h-11 border-green-600 text-green-600 hover:bg-green-600/10 duration-500 font-medium`}
                         onClick={() => setIsSetup(true)}
                       >
                         <ShieldCheck className="mr-2 h-4 w-4" />
@@ -323,12 +371,12 @@ export default function LoginPage() {
                     <Button
                       type="button"
                       variant="link"
-                      className="w-full text-pos-primary hover:text-pos-primary/80 duration-500"
+                      className={`w-full ${colors.primaryText} hover:${colors.primaryText}/80 duration-500 transition-colors`}
                       onClick={() => setIsSignUp(!isSignUp)}
                     >
                       {isSignUp 
                         ? 'Already have an account? Sign in' 
-                        : "Don't have an account? Sign up"}
+                        : `Don't have an account? Sign up as ${isAdminMode ? 'Admin' : 'Cashier'}`}
                     </Button>
                   )}
                   

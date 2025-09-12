@@ -164,6 +164,18 @@ router.post('/register', authenticate, async (req, res): Promise<void> => {
 
     const { username, email, password, role, firstName, lastName } = req.body;
 
+    // Check if trying to create admin and admin already exists
+    if (role === 'admin') {
+      const existingAdmin = await User.findOne({ role: 'admin' });
+      if (existingAdmin) {
+        res.status(400).json({
+          success: false,
+          message: 'Admin account already exists. Only one admin account is allowed.',
+        } as ApiResponse);
+        return;
+      }
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({
       $or: [{ email }, { username }]

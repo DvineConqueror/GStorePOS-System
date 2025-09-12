@@ -201,8 +201,18 @@ router.post('/', authenticate, requireCashier, async (req, res): Promise<void> =
       await product.save();
     }
 
+    // Generate transaction number
+    const count = await Transaction.countDocuments();
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const sequence = String(count + 1).padStart(6, '0');
+    const transactionNumber = `TXN${year}${month}${day}${sequence}`;
+
     // Create transaction
     const transaction = new Transaction({
+      transactionNumber,
       items: processedItems,
       subtotal,
       tax,

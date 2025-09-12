@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom animations for login page transitions */
+@layer utilities {
+  .login-container.transitioning {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  
+  .login-container {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
