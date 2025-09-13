@@ -38,31 +38,45 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration
-const allowedOrigins = [
-  'http://localhost:5173', // Vite default port
-  'http://localhost:8080', // Alternative port
-  'http://localhost:3000', // React default port
-  process.env.FRONTEND_URL
-].filter(Boolean); // Remove undefined values
-
+// CORS configuration - More permissive for development
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+  origin: function (origin, callback) {
+    console.log('CORS request from origin:', origin);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
     
-    if (allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      console.log('Allowing request with no origin');
       return callback(null, true);
     }
     
     // In development, allow any localhost port
     if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
+      console.log('Allowing localhost origin in development:', origin);
       return callback(null, true);
     }
     
+    // Allow specific origins
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:8080', 
+      'http://localhost:3000',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    console.log('Allowed origins:', allowedOrigins);
+    
+    if (allowedOrigins.includes(origin)) {
+      console.log('Origin allowed:', origin);
+      return callback(null, true);
+    }
+    
+    console.log('Origin not allowed:', origin);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
 // Body parsing middleware

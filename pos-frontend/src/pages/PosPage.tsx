@@ -4,6 +4,7 @@ import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
+import { PersonalCashierAnalytics } from '@/components/pos/PersonalCashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
@@ -70,15 +71,30 @@ function PosPageContent() {
           </TabsContent>
           
           <TabsContent value="analytics" className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            <div className="col-span-1 md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
-              <AnalyticsCharts />
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
-              <CashierAnalytics />
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
-              <TransactionHistory />
-            </div>
+            {user?.role === 'admin' ? (
+              <>
+                {/* Admin sees all analytics */}
+                <div className="col-span-1 md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
+                  <AnalyticsCharts />
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
+                  <CashierAnalytics />
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
+                  <TransactionHistory />
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Cashiers see only their personal analytics */}
+                <div className="col-span-1 md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
+                  <PersonalCashierAnalytics />
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
+                  <TransactionHistory />
+                </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </main>

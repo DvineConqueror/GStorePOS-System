@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [type, setType] = useState('password');
   const [icon, setIcon] = useState(<EyeOff />);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [isSetup, setIsSetup] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -56,17 +55,28 @@ export default function LoginPage() {
       const data = await response.json();
       
       if (data.success) {
-        // Store the token in cookies
-        Cookies.set('auth_token', data.data.token, { expires: 7 });
-        
-        // Role-based redirect
         const userRole = data.data.user.role;
-        if (userRole === 'admin') {
-          window.location.href = '/dashboard';
-        } else {
+        
+        // Enforce role-based access
+        if (!isAdminMode && userRole === 'cashier') {
+          // Cashiers can only login in cashier mode
+          Cookies.set('auth_token', data.data.token, { expires: 7 });
           window.location.href = '/pos';
+          return { success: true };
+        } else if (isAdminMode && userRole === 'admin') {
+          // Admins can only login in admin mode -> dashboard
+          Cookies.set('auth_token', data.data.token, { expires: 7 });
+          window.location.href = '/dashboard';
+          return { success: true };
+        } else {
+          // Invalid role/mode combination
+          return { 
+            success: false, 
+            message: userRole === 'admin' 
+              ? 'Admin access required. Please use Admin Mode to login.' 
+              : 'Cashier access required. Please use Cashier Mode to login.' 
+          };
         }
-        return { success: true };
       }
       
       return { success: false, message: data.message || 'Login failed' };
@@ -81,25 +91,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (isSetup) {
-        const result = await setup({
-          username,
-          email,
-          password,
-          firstName,
-          lastName
-        });
-        if (result.success) {
-          navigate('/dashboard');
-        }
-      } else if (isSignUp) {
+      if (isSignUp) {
         if (isAdminMode) {
-          // Admin signup - only allow if no admin exists
-          const result = await signUp({
+          // Admin signup - use setup endpoint for initial admin creation
+          const result = await setup({
             username,
             email,
             password,
-            role: 'admin',
             firstName,
             lastName
           });
@@ -164,7 +162,6 @@ export default function LoginPage() {
       setFirstName('');
       setLastName('');
       setIsSignUp(false);
-      setIsSetup(false);
       
       // Remove transition class after animation
       setTimeout(() => {
@@ -231,7 +228,7 @@ export default function LoginPage() {
               <CardHeader className="space-y-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className={`text-3xl font-bold ${colors.primaryText} transition-colors duration-500`}>
-                    {isSetup ? 'Initial Setup' : isSignUp ? 'Create Account' : 'Welcome Back'}
+                    {isSignUp ? 'Create Account' : 'Welcome Back'}
                   </CardTitle>
                   <Button
                     type="button"
@@ -254,16 +251,14 @@ export default function LoginPage() {
                   </Button>
                 </div>
                 <CardDescription className="text-base">
-                  {isSetup 
-                    ? 'Create the initial admin account to get started' 
-                    : isSignUp 
+                  {isSignUp 
                     ? `Create a new ${isAdminMode ? 'admin' : 'cashier'} account` 
                     : `Sign in to continue to your ${isAdminMode ? 'admin dashboard' : 'POS system'}`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {(isSignUp || isSetup) && (
+                  {isSignUp && (
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="username" className="text-sm font-medium">
@@ -351,23 +346,12 @@ export default function LoginPage() {
                       disabled={isLoading}
                       className={`w-full h-11 ${colors.primaryButton} duration-500 text-white font-medium transition-all`}
                     >
-                      {isLoading ? 'Loading...' : (isSetup ? 'Setup Admin Account' : isSignUp ? `Create ${isAdminMode ? 'Admin' : 'Cashier'} Account` : 'Sign In')}
+                      {isLoading ? 'Loading...' : (isSignUp ? `Create ${isAdminMode ? 'Admin' : 'Cashier'} Account` : 'Sign In')}
                     </Button>
                     
-                    {!isSignUp && !isSetup && (
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        className={`w-full h-11 border-green-600 text-green-600 hover:bg-green-600/10 duration-500 font-medium`}
-                        onClick={() => setIsSetup(true)}
-                      >
-                        <ShieldCheck className="mr-2 h-4 w-4" />
-                        Initial Setup
-                      </Button>
-                    )}
                   </div>
                   
-                  {!isSetup && (
+                  {!isAdminMode && (
                     <Button
                       type="button"
                       variant="link"
@@ -376,18 +360,7 @@ export default function LoginPage() {
                     >
                       {isSignUp 
                         ? 'Already have an account? Sign in' 
-                        : `Don't have an account? Sign up as ${isAdminMode ? 'Admin' : 'Cashier'}`}
-                    </Button>
-                  )}
-                  
-                  {isSetup && (
-                    <Button
-                      type="button"
-                      variant="link"
-                      className="w-full text-gray-500 hover:text-gray-700 duration-500"
-                      onClick={() => setIsSetup(false)}
-                    >
-                      Back to Login
+                        : "Don't have an account? Sign up as Cashier"}
                     </Button>
                   )}
                 </form>

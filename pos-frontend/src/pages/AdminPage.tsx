@@ -15,8 +15,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
+import { CashierProductCatalog } from '@/components/pos/CashierProductCatalog';
+import { Cart } from '@/components/pos/Cart';
+import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { PosProvider } from '@/context/PosContext';
-import { ArrowLeft, UserCheck, UserX, Shield, Users, Search, Filter, Plus, Edit, Trash2, Package, BarChart3, History, LogOut, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, UserCheck, UserX, Shield, Users, Search, Filter, Plus, Edit, Trash2, Package, BarChart3, History, LogOut, Eye, EyeOff, AlertTriangle, ShoppingCart } from 'lucide-react';
 
 interface UserProfile {
   _id: string;
@@ -370,7 +373,7 @@ const AdminPageContent = () => {
 
         {/* Tabs for different admin sections */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               User Management
@@ -378,6 +381,10 @@ const AdminPageContent = () => {
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Product Management
+            </TabsTrigger>
+            <TabsTrigger value="pos" className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              POS System
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -759,35 +766,48 @@ const AdminPageContent = () => {
             </Card>
           </TabsContent>
 
+          {/* POS System Tab */}
+          <TabsContent value="pos" className="space-y-6">
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-6">
+              <div className="flex-1 md:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 p-4 min-h-0">
+                <CashierProductCatalog />
+              </div>
+              <div className="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <Cart />
+              </div>
+              <CheckoutDialog />
+            </div>
+          </TabsContent>
+
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="col-span-1 md:col-span-2">
-                <Card>
+                <Card className="bg-slate-800 border-slate-700">
                   <CardHeader>
-                    <CardTitle>Sales Analytics</CardTitle>
+                    <CardTitle className="text-white">Sales Analytics</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="bg-slate-800">
                     <AnalyticsCharts />
                   </CardContent>
                 </Card>
               </div>
               <div className="col-span-1">
-                <Card>
+                <Card className="bg-slate-800 border-slate-700">
                   <CardHeader>
-                    <CardTitle>Cashier Performance</CardTitle>
+                    <CardTitle className="text-white">Cashier Performance</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="bg-slate-800">
                     <CashierAnalytics />
                   </CardContent>
                 </Card>
               </div>
               <div className="col-span-1">
-                <Card>
+                <Card className="bg-slate-800 border-slate-700">
                   <CardHeader>
-                    <CardTitle>Transaction History</CardTitle>
+                    <CardTitle className="text-white">Transaction History</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="bg-slate-800">
                     <TransactionHistory />
                   </CardContent>
                 </Card>

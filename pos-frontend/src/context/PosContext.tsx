@@ -233,6 +233,9 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
         
         dispatch({ type: 'COMPLETE_TRANSACTION', payload: completedTransaction });
         
+        // Refetch products to update stock levels
+        await fetchProducts();
+        
         toast({
           title: "Success",
           description: "Transaction completed successfully",

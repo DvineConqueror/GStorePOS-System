@@ -196,7 +196,7 @@ router.post('/', authenticate, requireCashier, async (req, res): Promise<void> =
 
       subtotal += itemTotal - itemDiscount;
 
-      // Update product stock
+      // Update product stock immediately
       product.stock -= item.quantity;
       await product.save();
     }
