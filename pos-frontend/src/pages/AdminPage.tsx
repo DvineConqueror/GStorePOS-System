@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
+import { PosProvider } from '@/context/PosContext';
 import { ArrowLeft, UserCheck, UserX, Shield, Users, Search, Filter, Plus, Edit, Trash2, Package, BarChart3, History, LogOut, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 interface UserProfile {
@@ -49,7 +50,7 @@ interface Product {
   updatedAt: string;
 }
 
-const AdminPage = () => {
+const AdminPageContent = () => {
   const { user, signOut } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -93,12 +94,6 @@ const AdminPage = () => {
     }
   }, [searchTerm, roleFilter, statusFilter]);
 
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchProducts();
-    }
-  }, [productSearchTerm, productCategoryFilter, productStatusFilter]);
-
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -141,34 +136,26 @@ const AdminPage = () => {
 
   const fetchProducts = async () => {
     try {
-      const params: any = {};
-      
-      if (productSearchTerm) params.search = productSearchTerm;
-      if (productCategoryFilter !== 'all') params.category = productCategoryFilter;
-      if (productStatusFilter !== 'all') {
-        if (productStatusFilter === 'in-stock') params.inStock = true;
-        if (productStatusFilter === 'out-of-stock') params.inStock = false;
-        if (productStatusFilter === 'active') params.isActive = true;
-        if (productStatusFilter === 'inactive') params.isActive = false;
-      }
-      
-      console.log('Fetching products with params:', params);
-      const response = await productsAPI.getProducts(params);
-      console.log('Products response:', response);
+      console.log('Fetching products...');
+      // Fetch ALL products (both active and inactive) for admin dashboard
+      const response = await productsAPI.getProducts({});
+      console.log('Full API response:', response);
       
       if (response.success) {
         setProducts(response.data);
-        console.log('Products set:', response.data);
+        console.log('Products loaded:', response.data.length, 'products');
+        console.log('Products data:', response.data);
       } else {
+        console.error('API returned success: false', response);
         throw new Error(response.message || 'Failed to fetch products');
       }
     } catch (error: any) {
+      console.error('Error fetching products:', error);
       toast({
         title: "Error",
         description: "Failed to fetch products",
         variant: "destructive"
       });
-      console.error('Error fetching products:', error);
     }
   };
 
@@ -318,18 +305,22 @@ const AdminPage = () => {
     
     let matchesStatus = true;
     if (productStatusFilter === 'in-stock') matchesStatus = product.stock > 0;
-    if (productStatusFilter === 'out-of-stock') matchesStatus = product.stock === 0;
-    if (productStatusFilter === 'active') matchesStatus = product.isActive;
-    if (productStatusFilter === 'inactive') matchesStatus = !product.isActive;
+    else if (productStatusFilter === 'out-of-stock') matchesStatus = product.stock === 0;
+    else if (productStatusFilter === 'active') matchesStatus = product.isActive;
+    else if (productStatusFilter === 'inactive') matchesStatus = !product.isActive;
+    // If productStatusFilter is 'all', matchesStatus remains true
     
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  console.log('Products state:', products);
-  console.log('Filtered products:', filteredProducts);
-  console.log('Product search term:', productSearchTerm);
-  console.log('Product category filter:', productCategoryFilter);
-  console.log('Product status filter:', productStatusFilter);
+  // Debug logging (only when there are products)
+  if (products.length > 0) {
+    console.log('Product filtering debug:');
+    console.log('- Total products:', products.length);
+    console.log('- Filtered products:', filteredProducts.length);
+    console.log('- Product status filter:', productStatusFilter);
+  }
+
 
   if (!user || user.role !== 'admin') {
     return (
@@ -397,23 +388,23 @@ const AdminPage = () => {
           {/* User Management Tab */}
           <TabsContent value="users" className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total Cashiers</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{userStats.totalUsers}</div>
+                  <div className="text-2xl font-bold">{userStats.cashierUsers || 0}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                  <CardTitle className="text-sm font-medium">Active Cashiers</CardTitle>
                   <UserCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{userStats.activeUsers}</div>
+                  <div className="text-2xl font-bold">{userStats.cashierUsers || 0}</div>
                 </CardContent>
               </Card>
               <Card>
@@ -422,16 +413,7 @@ const AdminPage = () => {
                   <Shield className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{userStats.adminUsers}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Cashiers</CardTitle>
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{userStats.cashierUsers}</div>
+                  <div className="text-2xl font-bold">{userStats.adminUsers || 0}</div>
                 </CardContent>
               </Card>
             </div>
@@ -815,6 +797,14 @@ const AdminPage = () => {
         </Tabs>
       </div>
     </div>
+  );
+};
+
+const AdminPage = () => {
+  return (
+    <PosProvider>
+      <AdminPageContent />
+    </PosProvider>
   );
 };
 

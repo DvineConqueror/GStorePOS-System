@@ -66,6 +66,50 @@ router.get('/', authenticate, requireAdmin, async (req, res): Promise<void> => {
   }
 });
 
+// @desc    Get user statistics
+// @route   GET /api/v1/users/stats
+// @access  Private (Admin only)
+router.get('/stats', authenticate, requireAdmin, async (req, res): Promise<void> => {
+  try {
+    console.log('Getting user stats...');
+    console.log('User from req:', req.user);
+    
+    const totalUsers = await User.countDocuments();
+    console.log('Total users:', totalUsers);
+    
+    const activeUsers = await User.countDocuments({ isActive: true });
+    console.log('Active users:', activeUsers);
+    
+    const adminUsers = await User.countDocuments({ role: 'admin', isActive: true });
+    console.log('Admin users:', adminUsers);
+    
+    const cashierUsers = await User.countDocuments({ role: 'cashier', isActive: true });
+    console.log('Cashier users:', cashierUsers);
+
+    const stats = {
+      totalUsers,
+      activeUsers,
+      inactiveUsers: totalUsers - activeUsers,
+      adminUsers,
+      cashierUsers,
+    };
+    
+    console.log('Stats to return:', stats);
+
+    res.json({
+      success: true,
+      message: 'User statistics retrieved successfully.',
+      data: stats,
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while retrieving user statistics.',
+    } as ApiResponse);
+  }
+});
+
 // @desc    Get single user by ID
 // @route   GET /api/v1/users/:id
 // @access  Private (Admin only)
@@ -274,36 +318,6 @@ router.post('/:id/reset-password', authenticate, requireAdmin, async (req, res):
     res.status(500).json({
       success: false,
       message: 'Server error while resetting password.',
-    } as ApiResponse);
-  }
-});
-
-// @desc    Get user statistics
-// @route   GET /api/v1/users/stats
-// @access  Private (Admin only)
-router.get('/stats', authenticate, requireAdmin, async (req, res): Promise<void> => {
-  try {
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ isActive: true });
-    const adminUsers = await User.countDocuments({ role: 'admin', isActive: true });
-    const cashierUsers = await User.countDocuments({ role: 'cashier', isActive: true });
-
-    res.json({
-      success: true,
-      message: 'User statistics retrieved successfully.',
-      data: {
-        totalUsers,
-        activeUsers,
-        inactiveUsers: totalUsers - activeUsers,
-        adminUsers,
-        cashierUsers,
-      },
-    } as ApiResponse);
-  } catch (error) {
-    console.error('Get user stats error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while retrieving user statistics.',
     } as ApiResponse);
   }
 });

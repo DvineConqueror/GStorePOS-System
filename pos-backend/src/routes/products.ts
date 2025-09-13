@@ -18,15 +18,18 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
       minPrice,
       maxPrice,
       inStock,
-      isActive = true,
+      isActive,
       search,
       sort = 'name',
       order = 'asc'
     } = req.query;
 
-    const filters: ProductFilters = {
-      isActive: isActive === 'true',
-    };
+    const filters: ProductFilters = {};
+    
+    // Only filter by isActive if explicitly provided
+    if (isActive !== undefined) {
+      filters.isActive = isActive === 'true';
+    }
 
     if (category) filters.category = category as string;
     if (brand) filters.brand = brand as string;
@@ -41,7 +44,12 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
 
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-    let query: any = { isActive: filters.isActive };
+    let query: any = {};
+    
+    // Only add isActive filter if explicitly provided
+    if (filters.isActive !== undefined) {
+      query.isActive = filters.isActive;
+    }
 
     // Apply filters
     if (filters.category) {
