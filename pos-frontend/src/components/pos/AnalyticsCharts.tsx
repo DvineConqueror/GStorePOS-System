@@ -20,7 +20,7 @@ import {
 import { SalesByCategory, SalesByDate } from '@/types';
 import { formatCurrency } from '@/utils/format';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#64748b', '#475569', '#334155', '#1e293b', '#0f172a', '#7c3aed', '#a855f7'];
 
 export function AnalyticsCharts() {
   const { state } = usePos();
@@ -119,15 +119,15 @@ export function AnalyticsCharts() {
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <CardTitle className="text-xl sm:text-2xl font-bold text-blue-800">Sales Analytics</CardTitle>
-            <CardDescription className="text-sm text-blue-600">Overview of your store's performance</CardDescription>
+            <CardTitle className="text-xl sm:text-2xl font-bold text-white">Sales Analytics</CardTitle>
+            <CardDescription className="text-sm text-slate-400">Overview of your store's performance</CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setTimeFrame('today')}
-              className={`text-xs sm:text-sm border-blue-200 ${timeFrame === 'today' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 hover:bg-blue-50'}`}
+              className={`text-xs sm:text-sm border-slate-600 ${timeFrame === 'today' ? 'bg-slate-600 text-white border-slate-600' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border-slate-600'}`}
             >
               Today
             </Button>
@@ -135,7 +135,7 @@ export function AnalyticsCharts() {
               variant="outline"
               size="sm"
               onClick={() => setTimeFrame('week')}
-              className={`text-xs sm:text-sm border-blue-200 ${timeFrame === 'week' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 hover:bg-blue-50'}`}
+              className={`text-xs sm:text-sm border-slate-600 ${timeFrame === 'week' ? 'bg-slate-600 text-white border-slate-600' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border-slate-600'}`}
             >
               Week
             </Button>
@@ -143,7 +143,7 @@ export function AnalyticsCharts() {
               variant="outline"
               size="sm"
               onClick={() => setTimeFrame('month')}
-              className={`text-xs sm:text-sm border-blue-200 ${timeFrame === 'month' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 hover:bg-blue-50'}`}
+              className={`text-xs sm:text-sm border-slate-600 ${timeFrame === 'month' ? 'bg-slate-600 text-white border-slate-600' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border-slate-600'}`}
             >
               Month
             </Button>
@@ -152,31 +152,31 @@ export function AnalyticsCharts() {
       </CardHeader>
       <CardContent className="p-2 sm:p-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-          <Card className="bg-white border border-blue-200 p-3 sm:p-4 shadow-sm">
-            <div className="text-xs sm:text-sm text-blue-600">Total Sales</div>
-            <div className="text-lg sm:text-2xl font-bold text-blue-800">{formatCurrency(calculateTotalSales())}</div>
+          <Card className="bg-slate-800 border border-slate-700 p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-slate-400">Total Sales</div>
+            <div className="text-lg sm:text-2xl font-bold text-white">{formatCurrency(calculateTotalSales())}</div>
           </Card>
-          <Card className="bg-white border border-blue-200 p-3 sm:p-4 shadow-sm">
-            <div className="text-xs sm:text-sm text-blue-600">Total Transactions</div>
-            <div className="text-lg sm:text-2xl font-bold text-blue-800">{calculateTotalTransactions()}</div>
+          <Card className="bg-slate-800 border border-slate-700 p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-slate-400">Total Transactions</div>
+            <div className="text-lg sm:text-2xl font-bold text-white">{calculateTotalTransactions()}</div>
           </Card>
-          <Card className="bg-white border border-blue-200 p-3 sm:p-4 shadow-sm">
-            <div className="text-xs sm:text-sm text-blue-600">Average Transaction</div>
-            <div className="text-lg sm:text-2xl font-bold text-blue-800">{formatCurrency(calculateAverageTransactionValue())}</div>
+          <Card className="bg-slate-800 border border-slate-700 p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-slate-400">Average Transaction</div>
+            <div className="text-lg sm:text-2xl font-bold text-white">{formatCurrency(calculateAverageTransactionValue())}</div>
           </Card>
         </div>
 
         <Tabs defaultValue="category" className="w-full">
-          <TabsList className="mb-4 bg-white p-1 rounded-lg border border-blue-200 w-full sm:w-auto">
+          <TabsList className="mb-4 bg-slate-800 p-1 rounded-lg border border-slate-700 w-full sm:w-auto">
             <TabsTrigger 
               value="category"
-              className="text-xs sm:text-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-blue-600"
+              className="text-xs sm:text-sm data-[state=active]:bg-slate-600 data-[state=active]:text-white text-slate-300"
             >
               Sales by Category
             </TabsTrigger>
             <TabsTrigger 
               value="timeline"
-              className="text-xs sm:text-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-blue-600"
+              className="text-xs sm:text-sm data-[state=active]:bg-slate-600 data-[state=active]:text-white text-slate-300"
             >
               Sales Timeline
             </TabsTrigger>
@@ -200,7 +200,15 @@ export function AnalyticsCharts() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(value as number)}
+                    contentStyle={{
+                      backgroundColor: '#1e293b',
+                      border: '1px solid #64748b',
+                      borderRadius: '8px',
+                      color: '#e2e8f0'
+                    }}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -211,11 +219,27 @@ export function AnalyticsCharts() {
             <div className="h-[250px] sm:h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={calculateSalesByDate()}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
-                  <XAxis dataKey="date" />
-                  <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                  <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                  <Bar dataKey="amount" fill="#0088FE" radius={[4, 4, 0, 0]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fill: '#e2e8f0' }}
+                    axisLine={{ stroke: '#64748b' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#e2e8f0' }}
+                    axisLine={{ stroke: '#64748b' }}
+                    tickFormatter={(value) => formatCurrency(value)} 
+                  />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(value as number)}
+                    contentStyle={{
+                      backgroundColor: '#1e293b',
+                      border: '1px solid #64748b',
+                      borderRadius: '8px',
+                      color: '#e2e8f0'
+                    }}
+                  />
+                  <Bar dataKey="amount" fill="#64748b" radius={[4, 4, 0, 0]}>
                     {calculateSalesByDate().map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
