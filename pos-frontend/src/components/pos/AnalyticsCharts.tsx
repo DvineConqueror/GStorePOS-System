@@ -115,19 +115,19 @@ export function AnalyticsCharts() {
   const salesByDate = calculateSalesByDate();
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm">
-      <CardHeader>
+    <Card className="bg-transparent border-0 shadow-none">
+      <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <CardTitle className="text-xl sm:text-2xl font-bold text-pos-primary">Sales Analytics</CardTitle>
-            <CardDescription className="text-sm text-gray-600">Overview of your store's performance</CardDescription>
+            <CardTitle className="text-xl sm:text-2xl font-bold text-blue-800">Sales Analytics</CardTitle>
+            <CardDescription className="text-sm text-blue-600">Overview of your store's performance</CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setTimeFrame('today')}
-              className={`text-xs sm:text-sm ${timeFrame === 'today' ? 'bg-pos-primary text-white' : 'bg-pos-primary/5'}`}
+              className={`text-xs sm:text-sm border-blue-200 ${timeFrame === 'today' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 hover:bg-blue-50'}`}
             >
               Today
             </Button>
@@ -135,7 +135,7 @@ export function AnalyticsCharts() {
               variant="outline"
               size="sm"
               onClick={() => setTimeFrame('week')}
-              className={`text-xs sm:text-sm ${timeFrame === 'week' ? 'bg-pos-primary text-white' : 'bg-pos-primary/5'}`}
+              className={`text-xs sm:text-sm border-blue-200 ${timeFrame === 'week' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 hover:bg-blue-50'}`}
             >
               Week
             </Button>
@@ -143,7 +143,7 @@ export function AnalyticsCharts() {
               variant="outline"
               size="sm"
               onClick={() => setTimeFrame('month')}
-              className={`text-xs sm:text-sm ${timeFrame === 'month' ? 'bg-pos-primary text-white' : 'bg-pos-primary/5'}`}
+              className={`text-xs sm:text-sm border-blue-200 ${timeFrame === 'month' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 hover:bg-blue-50'}`}
             >
               Month
             </Button>
@@ -152,31 +152,31 @@ export function AnalyticsCharts() {
       </CardHeader>
       <CardContent className="p-2 sm:p-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-          <Card className="bg-pos-primary/5 border-none p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-600">Total Sales</div>
-            <div className="text-lg sm:text-2xl font-bold text-pos-primary">{formatCurrency(calculateTotalSales())}</div>
+          <Card className="bg-white border border-blue-200 p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-blue-600">Total Sales</div>
+            <div className="text-lg sm:text-2xl font-bold text-blue-800">{formatCurrency(calculateTotalSales())}</div>
           </Card>
-          <Card className="bg-pos-primary/5 border-none p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-600">Total Transactions</div>
-            <div className="text-lg sm:text-2xl font-bold text-pos-primary">{calculateTotalTransactions()}</div>
+          <Card className="bg-white border border-blue-200 p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-blue-600">Total Transactions</div>
+            <div className="text-lg sm:text-2xl font-bold text-blue-800">{calculateTotalTransactions()}</div>
           </Card>
-          <Card className="bg-pos-primary/5 border-none p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-600">Average Transaction</div>
-            <div className="text-lg sm:text-2xl font-bold text-pos-primary">{formatCurrency(calculateAverageTransactionValue())}</div>
+          <Card className="bg-white border border-blue-200 p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-blue-600">Average Transaction</div>
+            <div className="text-lg sm:text-2xl font-bold text-blue-800">{formatCurrency(calculateAverageTransactionValue())}</div>
           </Card>
         </div>
 
         <Tabs defaultValue="category" className="w-full">
-          <TabsList className="mb-4 bg-white/50 backdrop-blur-sm p-1 rounded-lg border border-gray-100 w-full sm:w-auto">
+          <TabsList className="mb-4 bg-white p-1 rounded-lg border border-blue-200 w-full sm:w-auto">
             <TabsTrigger 
               value="category"
-              className="text-xs sm:text-sm data-[state=active]:bg-pos-primary data-[state=active]:text-white"
+              className="text-xs sm:text-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-blue-600"
             >
               Sales by Category
             </TabsTrigger>
             <TabsTrigger 
               value="timeline"
-              className="text-xs sm:text-sm data-[state=active]:bg-pos-primary data-[state=active]:text-white"
+              className="text-xs sm:text-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-blue-600"
             >
               Sales Timeline
             </TabsTrigger>

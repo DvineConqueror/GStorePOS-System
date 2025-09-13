@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { transactionsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
 import { TrendingUp, ShoppingCart, DollarSign, Calendar } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface PersonalStats {
   totalSales: number;
@@ -125,9 +126,9 @@ export function PersonalCashierAnalytics() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+    <Card className="bg-transparent border-0 shadow-none">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-blue-800">
           <TrendingUp className="h-5 w-5 text-blue-600" />
           My Performance
         </CardTitle>
@@ -135,7 +136,7 @@ export function PersonalCashierAnalytics() {
       <CardContent className="space-y-6">
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-800">Total Sales</span>
@@ -143,59 +144,82 @@ export function PersonalCashierAnalytics() {
             <div className="text-2xl font-bold text-blue-900">{formatCurrency(stats.totalSales)}</div>
           </div>
           
-          <div className="bg-green-50 p-4 rounded-lg">
+          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <ShoppingCart className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Total Transactions</span>
+              <ShoppingCart className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">Total Transactions</span>
             </div>
-            <div className="text-2xl font-bold text-green-900">{stats.totalTransactions}</div>
+            <div className="text-2xl font-bold text-blue-900">{stats.totalTransactions}</div>
           </div>
           
-          <div className="bg-purple-50 p-4 rounded-lg">
+          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium text-purple-800">Today's Sales</span>
+              <Calendar className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">Today's Sales</span>
             </div>
-            <div className="text-2xl font-bold text-purple-900">{formatCurrency(stats.todaySales)}</div>
+            <div className="text-2xl font-bold text-blue-900">{formatCurrency(stats.todaySales)}</div>
           </div>
           
-          <div className="bg-orange-50 p-4 rounded-lg">
+          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-orange-600" />
-              <span className="text-sm font-medium text-orange-800">Avg Transaction</span>
+              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">Avg Transaction</span>
             </div>
-            <div className="text-2xl font-bold text-orange-900">{formatCurrency(stats.averageTransaction)}</div>
+            <div className="text-2xl font-bold text-blue-900">{formatCurrency(stats.averageTransaction)}</div>
           </div>
         </div>
         
         {/* Daily Sales Chart */}
         <div>
-          <h3 className="text-lg font-semibold mb-4">Last 7 Days Performance</h3>
-          <div className="space-y-3">
-            {dailySales.map((day, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="font-medium">{day.date}</span>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-blue-600">{formatCurrency(day.sales)}</div>
-                  <div className="text-sm text-gray-500">{day.transactions} transactions</div>
-                </div>
-              </div>
-            ))}
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-800">Last 7 Days Performance</h3>
+          <div className="h-48 sm:h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dailySales} margin={{ top: 20, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 10, fill: '#1e40af' }}
+                  axisLine={{ stroke: '#3b82f6' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 10, fill: '#1e40af' }}
+                  axisLine={{ stroke: '#3b82f6' }}
+                  tickFormatter={(value) => `$${value}`}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #3b82f6',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    fontSize: '12px'
+                  }}
+                  formatter={(value: number, name: string) => [
+                    name === 'sales' ? formatCurrency(value) : value,
+                    name === 'sales' ? 'Sales' : 'Transactions'
+                  ]}
+                  labelStyle={{ color: '#1e40af', fontWeight: 'bold' }}
+                />
+                <Bar 
+                  dataKey="sales" 
+                  fill="#3b82f6" 
+                  radius={[4, 4, 0, 0]}
+                  name="sales"
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
         
         {/* Additional Stats */}
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-blue-200">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-800">{stats.totalItems}</div>
-            <div className="text-sm text-gray-600">Items Sold</div>
+            <div className="text-2xl font-bold text-blue-800">{stats.totalItems}</div>
+            <div className="text-sm text-blue-600">Items Sold</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-800">{stats.todayTransactions}</div>
-            <div className="text-sm text-gray-600">Today's Transactions</div>
+            <div className="text-2xl font-bold text-blue-800">{stats.todayTransactions}</div>
+            <div className="text-sm text-blue-600">Today's Transactions</div>
           </div>
         </div>
       </CardContent>

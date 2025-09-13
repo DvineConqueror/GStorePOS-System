@@ -15,11 +15,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
+import { AdminAdvancedAnalytics } from '@/components/pos/AdminAdvancedAnalytics';
 import { CashierProductCatalog } from '@/components/pos/CashierProductCatalog';
 import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { PosProvider } from '@/context/PosContext';
-import { ArrowLeft, UserCheck, UserX, Shield, Users, Search, Filter, Plus, Edit, Trash2, Package, BarChart3, History, LogOut, Eye, EyeOff, AlertTriangle, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, UserCheck, UserX, Shield, Users, Search, Filter, Plus, Edit, Trash2, Package, BarChart3, History, LogOut, Eye, EyeOff, AlertTriangle, ShoppingCart, Zap } from 'lucide-react';
 
 interface UserProfile {
   _id: string;
@@ -365,30 +366,45 @@ const AdminPageContent = () => {
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="text-gray-600 mt-2">Manage users, products, and system settings</p>
           </div>
-          <Button onClick={handleLogout} variant="outline">
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 text-gray-700">
+              <Shield className="h-4 w-4" />
+              <span className="text-sm font-medium">Admin: {user?.firstName} {user?.lastName}</span>
+            </div>
+            <Button onClick={handleLogout} variant="outline">
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Tabs for different admin sections */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              User Management
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+            <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">User Management</span>
+              <span className="sm:hidden">Users</span>
             </TabsTrigger>
-            <TabsTrigger value="products" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Product Management
+            <TabsTrigger value="products" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Package className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Product Management</span>
+              <span className="sm:hidden">Products</span>
             </TabsTrigger>
-            <TabsTrigger value="pos" className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              POS System
+            <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">POS System</span>
+              <span className="sm:hidden">POS</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
+            <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Advanced</span>
+              <span className="sm:hidden">Advanced</span>
             </TabsTrigger>
           </TabsList>
 
@@ -781,8 +797,8 @@ const AdminPageContent = () => {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="col-span-1 md:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="col-span-1 lg:col-span-2">
                 <Card className="bg-slate-800 border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-white">Sales Analytics</CardTitle>
@@ -813,6 +829,21 @@ const AdminPageContent = () => {
                 </Card>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Advanced Analytics Tab */}
+          <TabsContent value="advanced" className="space-y-6">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Advanced Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="bg-slate-800">
+                <AdminAdvancedAnalytics />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

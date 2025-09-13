@@ -17,21 +17,21 @@ export function TransactionHistory() {
   const { transactions } = state;
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2 sm:pb-3">
-        <CardTitle className="text-lg sm:text-xl">Recent Transactions</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">Transaction history and details</CardDescription>
+    <Card className="h-full bg-transparent border-0 shadow-none">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg sm:text-xl text-blue-800">Recent Transactions</CardTitle>
+        <CardDescription className="text-xs sm:text-sm text-blue-600">Transaction history and details</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="border rounded-md overflow-x-auto">
+        <div className="border border-blue-200 rounded-md overflow-x-auto bg-white">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs sm:text-sm">Cashier</TableHead>
-                <TableHead className="text-xs sm:text-sm">Date</TableHead>
-                <TableHead className="text-xs sm:text-sm">Items</TableHead>
-                <TableHead className="text-xs sm:text-sm text-right">Amount</TableHead>
-                <TableHead className="text-xs sm:text-sm text-right">Status</TableHead>
+              <TableRow className="bg-blue-50">
+                <TableHead className="text-xs sm:text-sm text-blue-800">Cashier</TableHead>
+                <TableHead className="text-xs sm:text-sm text-blue-800">Date</TableHead>
+                <TableHead className="text-xs sm:text-sm text-blue-800">Items</TableHead>
+                <TableHead className="text-xs sm:text-sm text-right text-blue-800">Amount</TableHead>
+                <TableHead className="text-xs sm:text-sm text-right text-blue-800">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -41,18 +41,21 @@ export function TransactionHistory() {
                 const formattedTime = date.toLocaleTimeString();
                 
                 return (
-                  <TableRow key={transaction._id}>
-                    <TableCell className="font-medium">
+                  <TableRow key={transaction._id} className="hover:bg-blue-50/50">
+                    <TableCell className="font-medium text-blue-800">
                       {transaction.cashierName}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-blue-700">
                       <div>{formattedDate}</div>
-                      <div className="text-xs text-muted-foreground">{formattedTime}</div>
+                      <div className="text-xs text-blue-500">{formattedTime}</div>
                     </TableCell>
-                    <TableCell>{transaction.items.length} items</TableCell>
-                    <TableCell className="text-right text-pos-primary">{formatCurrency(transaction.total)}</TableCell>
+                    <TableCell className="text-blue-700">{transaction.items.length} items</TableCell>
+                    <TableCell className="text-right text-blue-600 font-semibold">{formatCurrency(transaction.total)}</TableCell>
                     <TableCell className="text-right">
-                      <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'}>
+                      <Badge 
+                        variant={transaction.status === 'completed' ? 'default' : 'destructive'}
+                        className={transaction.status === 'completed' ? 'bg-blue-100 text-blue-800 border-blue-200' : ''}
+                      >
                         {transaction.status}
                       </Badge>
                     </TableCell>
@@ -61,7 +64,7 @@ export function TransactionHistory() {
               })}
               {transactions.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-6 text-blue-500">
                     No transactions yet
                   </TableCell>
                 </TableRow>

@@ -6,104 +6,118 @@ import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { PersonalCashierAnalytics } from '@/components/pos/PersonalCashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
+import { AdvancedAnalytics } from '@/components/pos/AdvancedAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { PosProvider } from '@/context/PosContext';
 import { Button } from '@/components/ui/button';
-import { Image } from 'lucide-react';
+import { LogOut, ShoppingCart, BarChart3, History, User, Zap } from 'lucide-react';
 
 function PosPageContent() {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-pos-primary/30 to-pos-background">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100 shadow-sm">
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center p-4 space-y-3 sm:space-y-0">
-          <div className="flex items-center space-x-4 sm:space-x-6">
-            <div className="bg-pos-primary/30 p-2 rounded-full">
-              <img src="/images/BlesseStoreIcon.png" className="w-8 h-8 sm:w-12 sm:h-12 rounded-full" alt="Store Logo" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-pos-primary">Grocery POS</h1>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Cashier Dashboard</h1>
+            <p className="text-gray-600 mt-2">Process sales and manage transactions</p>
           </div>
-          <div className="flex items-center space-x-3 sm:space-x-6">
+          <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-gray-700">
-              <span className="text-xs sm:text-sm">Cashier:</span>
-              <span className="text-sm sm:text-base font-medium">{user?.firstName} {user?.lastName}</span>
+              <User className="h-4 w-4" />
+              <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={signOut}
-              className="text-sm border-pos-primary/20 text-pos-primary hover:bg-pos-primary/5"
-            >
-              Sign Out
+            <Button onClick={signOut} variant="outline">
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
             </Button>
           </div>
         </div>
-      </header>
-      
-      <main className="flex-grow container mx-auto p-2 sm:p-3">
-        <Tabs defaultValue="pos" className="flex flex-col">
-          <div className="flex justify-center">
-            <TabsList className="mb-1 bg-white/50 backdrop-blur-sm p-1 sm:p-2 rounded-lg border border-gray-100 w-full sm:w-auto">
-              <TabsTrigger 
-                value="pos" 
-                className="text-sm sm:text-base data-[state=active]:bg-pos-primary data-[state=active]:text-white"
-              >
-                Point of Sale
-              </TabsTrigger>
-              <TabsTrigger 
-                value="analytics"
-                className="text-sm sm:text-base data-[state=active]:bg-pos-primary data-[state=active]:text-white"
-              >
-                Analytics
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          
-          <TabsContent value="pos" className="flex-grow flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-6">
-            <div className="flex-1 md:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 p-2 sm:p-4 min-h-0">
-              <CashierProductCatalog />
+
+        {/* Tabs for different sections */}
+        <Tabs defaultValue="pos" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Point of Sale</span>
+              <span className="sm:hidden">POS</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Advanced</span>
+              <span className="sm:hidden">Advanced</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* POS System Tab */}
+          <TabsContent value="pos" className="space-y-6">
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-6">
+              <div className="flex-1 md:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 p-4 min-h-0">
+                <CashierProductCatalog />
+              </div>
+              <div className="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <Cart />
+              </div>
+              <CheckoutDialog />
             </div>
-            <div className="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 p-2 sm:p-4">
-              <Cart />
-            </div>
-            <CheckoutDialog />
           </TabsContent>
-          
-          <TabsContent value="analytics" className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {user?.role === 'admin' ? (
-              <>
-                {/* Admin sees all analytics */}
-                <div className="col-span-1 md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
-                  <AnalyticsCharts />
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
-                  <CashierAnalytics />
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
-                  <TransactionHistory />
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Cashiers see only their personal analytics */}
-                <div className="col-span-1 md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
-                  <PersonalCashierAnalytics />
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
-                  <TransactionHistory />
-                </div>
-              </>
-            )}
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {user?.role === 'admin' ? (
+                <>
+                  {/* Admin sees all analytics with blue theme */}
+                  <div className="col-span-1 lg:col-span-2">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
+                      <AnalyticsCharts />
+                    </div>
+                  </div>
+                  <div className="col-span-1">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
+                      <CashierAnalytics />
+                    </div>
+                  </div>
+                  <div className="col-span-1">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
+                      <TransactionHistory />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Cashiers see only their personal analytics with blue theme */}
+                  <div className="col-span-1 lg:col-span-2">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
+                      <PersonalCashierAnalytics />
+                    </div>
+                  </div>
+                  <div className="col-span-1">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
+                      <TransactionHistory />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Advanced Analytics Tab */}
+          <TabsContent value="advanced" className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
+              <AdvancedAnalytics />
+            </div>
           </TabsContent>
         </Tabs>
-      </main>
-      
-      <footer className="bg-white/80 backdrop-blur-sm border-t border-gray-100 p-2 sm:p-4 text-center">
-        <div className="container mx-auto text-xs sm:text-sm text-gray-600">
-          Grocery POS System &copy; {new Date().getFullYear()}
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
