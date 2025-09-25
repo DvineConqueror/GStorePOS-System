@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import { AuthProvider } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminRoute from '@/components/auth/AdminRoute';
+import SuperadminRoute from '@/components/auth/SuperadminRoute';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import PosPage from './pages/PosPage';
@@ -18,6 +19,13 @@ import { AdminLayout } from '@/layouts/AdminLayout';
 import { CashierLayout } from '@/layouts/CashierLayout';
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
 import { CashierDashboard } from '@/pages/cashier/CashierDashboard';
+import SuperadminLayout from '@/layouts/SuperadminLayout';
+import SuperadminDashboard from '@/pages/superadmin/SuperadminDashboard';
+import UserApproval from '@/components/superadmin/UserApproval';
+import ManagerCreationForm from '@/components/superadmin/ManagerCreationForm';
+import AllUsers from '@/components/superadmin/AllUsers';
+import SystemSettings from '@/components/superadmin/SystemSettings';
+import ApprovalStatusNotification from '@/components/notifications/ApprovalStatusNotification';
 
 const App = () => {
   const queryClient = new QueryClient();
@@ -30,6 +38,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <ApprovalStatusNotification />
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
@@ -65,6 +74,19 @@ const App = () => {
                   <Route path="analytics" element={<PosPage />} />
                   <Route path="history" element={<PosPage />} />
                   <Route path="profile" element={<PosPage />} />
+                </Route>
+                
+                {/* Superadmin Routes (Hidden - accessible via direct URL) */}
+                <Route path="/superadmin" element={
+                  <SuperadminRoute>
+                    <SuperadminLayout />
+                  </SuperadminRoute>
+                }>
+                  <Route index element={<SuperadminDashboard />} />
+                  <Route path="users" element={<AllUsers />} />
+                  <Route path="approvals" element={<UserApproval />} />
+                  <Route path="create-manager" element={<ManagerCreationForm />} />
+                  <Route path="settings" element={<SystemSettings />} />
                 </Route>
                 
                 {/* Legacy Routes (for backward compatibility) */}

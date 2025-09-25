@@ -53,7 +53,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </CardTitle>
           <CardDescription className={`${isSignUp ? 'text-xs' : 'text-sm'} text-center`}>
             {isSignUp 
-            ? `Create a new ${isAdminMode ? 'manager' : 'cashier'} account` 
+            ? `Create a new cashier account` 
             : `Sign in to continue to your ${isAdminMode ? 'manager dashboard' : 'POS system'}`}
           </CardDescription>
         </CardHeader>
@@ -198,7 +198,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 disabled={isLoading}
                 className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-sm ${colors.primaryButton} duration-500 text-white font-medium transition-all`}
               >
-                {isLoading ? 'Loading...' : (isSignUp ? `Create ${isAdminMode ? 'Manager' : 'Cashier'} Account` : 'Sign In')}
+                {isLoading ? 'Loading...' : (isSignUp ? 'Create Cashier Account' : 'Sign In')}
               </Button>
             </div>
             

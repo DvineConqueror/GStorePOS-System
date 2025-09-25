@@ -15,8 +15,8 @@ const bcrypt = require('bcryptjs');
 const readline = require('readline');
 require('dotenv').config();
 
-// Import the User model
-const User = require('../src/models/User');
+// Import the User model from compiled JavaScript
+const User = require('../dist/models/User');
 
 // Create readline interface for user input
 const rl = readline.createInterface({

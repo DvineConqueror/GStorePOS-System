@@ -8,9 +8,14 @@ import {
   DollarSign, 
   TrendingUp,
   Shield,
-  ShoppingCart
+  ShoppingCart,
+  UserPlus,
+  UserCheck,
+  Clock
 } from 'lucide-react';
 import { usersAPI, analyticsAPI } from '@/lib/api';
+import { useApproval } from '@/hooks/useApproval';
+import { useAuth } from '@/context/AuthContext';
 
 interface UserStats {
   totalUsers: number;
@@ -29,6 +34,9 @@ interface SalesStats {
 }
 
 export function AdminDashboard() {
+  const { user } = useAuth();
+  const { stats: approvalStats } = useApproval({ userRole: user?.role as 'superadmin' | 'manager' });
+  
   const [userStats, setUserStats] = useState<UserStats>({
     totalUsers: 0,
     activeUsers: 0,
@@ -146,20 +154,94 @@ export function AdminDashboard() {
         </Card>
       </div>
 
+      {/* Pending Approvals Alert */}
+      {approvalStats.totalPending > 0 && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Clock className="h-5 w-5 text-yellow-600" />
+                <div>
+                  <h3 className="font-semibold text-yellow-800">Pending Cashier Approvals</h3>
+                  <p className="text-sm text-yellow-700">
+                    {approvalStats.totalPending} cashier account(s) waiting for your approval
+                  </p>
+                </div>
+              </div>
+              <Button 
+                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                onClick={() => window.location.href = '/admin/approvals'}
+              >
+                <UserCheck className="h-4 w-4 mr-2" />
+                Review Approvals
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Users className="mr-2 h-5 w-5" />
-              Cashier Management
+              <UserPlus className="mr-2 h-5 w-5" />
+              Create Cashier
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 mb-4">
-              Manage cashier accounts, permissions, and status
+              Create new cashier accounts with automatic approval
             </p>
-            <Button className="w-full">Manage Cashiers</Button>
+            <Button 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              onClick={() => window.location.href = '/admin/cashiers/create'}
+            >
+              Create Cashier
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <UserCheck className="mr-2 h-5 w-5" />
+              Pending Approvals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-4">
+              Review and approve new cashier registrations
+            </p>
+            <Button 
+              className="w-full bg-yellow-600 hover:bg-yellow-700"
+              onClick={() => window.location.href = '/admin/approvals'}
+            >
+              <Badge variant="destructive" className="mr-2 bg-yellow-600">
+                {approvalStats.totalPending}
+              </Badge>
+              Review Approvals
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="mr-2 h-5 w-5" />
+              Manage Cashiers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-4">
+              Manage existing cashier accounts and permissions
+            </p>
+            <Button 
+              className="w-full"
+              onClick={() => window.location.href = '/admin/cashiers'}
+            >
+              Manage Cashiers
+            </Button>
           </CardContent>
         </Card>
 
@@ -174,10 +256,18 @@ export function AdminDashboard() {
             <p className="text-sm text-gray-600 mb-4">
               Add, edit, and manage your product inventory
             </p>
-            <Button className="w-full">Manage Products</Button>
+            <Button 
+              className="w-full"
+              onClick={() => window.location.href = '/admin/products'}
+            >
+              Manage Products
+            </Button>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Additional Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -189,7 +279,32 @@ export function AdminDashboard() {
             <p className="text-sm text-gray-600 mb-4">
               Access the point of sale system for transactions
             </p>
-            <Button className="w-full">Open POS</Button>
+            <Button 
+              className="w-full"
+              onClick={() => window.location.href = '/admin/pos'}
+            >
+              Open POS
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="mr-2 h-5 w-5" />
+              Analytics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-4">
+              View detailed analytics and reports
+            </p>
+            <Button 
+              className="w-full"
+              onClick={() => window.location.href = '/admin/analytics'}
+            >
+              View Analytics
+            </Button>
           </CardContent>
         </Card>
       </div>

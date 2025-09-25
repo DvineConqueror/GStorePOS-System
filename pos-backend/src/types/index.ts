@@ -6,10 +6,14 @@ export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
-  role: 'admin' | 'cashier';
+  role: 'superadmin' | 'manager' | 'cashier';
   firstName: string;
   lastName: string;
   isActive: boolean;
+  isApproved: boolean;
+  approvedBy?: string;
+  approvedAt?: Date;
+  createdBy?: string;
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;

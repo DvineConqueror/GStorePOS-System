@@ -10,7 +10,8 @@
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "create-superadmin": "node scripts/create-superadmin.js"
   },
   "keywords": ["pos", "grocery", "mern", "typescript"],
   "author": "Collective 3",

@@ -247,11 +247,11 @@ router.post('/', authenticate, requireCashier, async (req, res): Promise<void> =
 // @access  Private (Admin only)
 router.post('/:id/refund', authenticate, async (req, res): Promise<void> => {
   try {
-    // Only admin can process refunds
-    if (req.user?.role !== 'admin') {
+    // Only manager or superadmin can process refunds
+    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
       res.status(403).json({
         success: false,
-        message: 'Access denied. Admin role required for refunds.',
+        message: 'Access denied. Manager or Superadmin role required for refunds.',
       } as ApiResponse);
       return;
     }
@@ -310,11 +310,11 @@ router.post('/:id/refund', authenticate, async (req, res): Promise<void> => {
 // @access  Private (Admin only)
 router.post('/:id/void', authenticate, async (req, res): Promise<void> => {
   try {
-    // Only admin can void transactions
-    if (req.user?.role !== 'admin') {
+    // Only manager or superadmin can void transactions
+    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
       res.status(403).json({
         success: false,
-        message: 'Access denied. Admin role required to void transactions.',
+        message: 'Access denied. Manager or Superadmin role required to void transactions.',
       } as ApiResponse);
       return;
     }
@@ -370,13 +370,13 @@ router.post('/:id/void', authenticate, async (req, res): Promise<void> => {
 
 // @desc    Get daily sales summary
 // @route   GET /api/v1/transactions/sales/daily
-// @access  Private (Admin only)
+// @access  Private (Manager/Superadmin only)
 router.get('/sales/daily', authenticate, async (req, res): Promise<void> => {
   try {
-    if (req.user?.role !== 'admin') {
+    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
       res.status(403).json({
         success: false,
-        message: 'Access denied. Admin role required.',
+        message: 'Access denied. Manager or Superadmin role required.',
       } as ApiResponse);
       return;
     }
@@ -406,13 +406,13 @@ router.get('/sales/daily', authenticate, async (req, res): Promise<void> => {
 
 // @desc    Get sales by cashier
 // @route   GET /api/v1/transactions/sales/by-cashier
-// @access  Private (Admin only)
+// @access  Private (Manager/Superadmin only)
 router.get('/sales/by-cashier', authenticate, async (req, res): Promise<void> => {
   try {
-    if (req.user?.role !== 'admin') {
+    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
       res.status(403).json({
         success: false,
-        message: 'Access denied. Admin role required.',
+        message: 'Access denied. Manager or Superadmin role required.',
       } as ApiResponse);
       return;
     }
@@ -439,13 +439,13 @@ router.get('/sales/by-cashier', authenticate, async (req, res): Promise<void> =>
 
 // @desc    Get top products
 // @route   GET /api/v1/transactions/sales/top-products
-// @access  Private (Admin only)
+// @access  Private (Manager/Superadmin only)
 router.get('/sales/top-products', authenticate, async (req, res): Promise<void> => {
   try {
-    if (req.user?.role !== 'admin') {
+    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
       res.status(403).json({
         success: false,
-        message: 'Access denied. Admin role required.',
+        message: 'Access denied. Manager or Superadmin role required.',
       } as ApiResponse);
       return;
     }

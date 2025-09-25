@@ -347,4 +347,63 @@ export const analyticsAPI = {
   },
 };
 
+// Superadmin API
+export const superadminAPI = {
+  getSystemStats: async () => {
+    const response = await api.get('/superadmin/stats');
+    return response.data;
+  },
+
+  getAllUsers: async (params?: {
+    page?: number;
+    limit?: number;
+    role?: string;
+    isActive?: boolean;
+    isApproved?: boolean;
+    search?: string;
+    sort?: string;
+    order?: 'asc' | 'desc';
+  }) => {
+    const response = await api.get('/superadmin/users', { params });
+    return response.data;
+  },
+
+  getPendingApprovals: async (params?: {
+    page?: number;
+    limit?: number;
+    role?: string;
+  }) => {
+    const response = await api.get('/superadmin/approvals', { params });
+    return response.data;
+  },
+
+  approveUser: async (userId: string, approved: boolean, reason?: string) => {
+    const response = await api.post(`/superadmin/approve/${userId}`, {
+      approved,
+      reason,
+    });
+    return response.data;
+  },
+
+  bulkApproveUsers: async (userIds: string[], approved: boolean, reason?: string) => {
+    const response = await api.post('/superadmin/bulk-approve', {
+      userIds,
+      approved,
+      reason,
+    });
+    return response.data;
+  },
+
+  createManager: async (managerData: {
+    username: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }) => {
+    const response = await api.post('/superadmin/create-manager', managerData);
+    return response.data;
+  },
+};
+
 export default api;

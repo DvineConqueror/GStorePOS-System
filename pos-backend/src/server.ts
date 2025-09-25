@@ -13,6 +13,7 @@ import productRoutes from './routes/products';
 import transactionRoutes from './routes/transactions';
 import userRoutes from './routes/users';
 import analyticsRoutes from './routes/analytics';
+import superadminRoutes from './routes/superadmin';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -106,6 +107,7 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/superadmin', superadminRoutes);
 
 // Error handling middleware
 app.use(notFound);

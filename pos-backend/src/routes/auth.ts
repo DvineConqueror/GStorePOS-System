@@ -33,15 +33,19 @@ router.post('/setup', async (req, res): Promise<void> => {
       return;
     }
 
-    // Create initial admin user
+    // Create initial manager user
     const user = new User({
       username,
       email,
       password,
-      role: 'admin',
+      role: 'manager',
       firstName,
       lastName,
       isActive: true,
+      isApproved: true, // Initial manager is auto-approved
+      approvedBy: undefined, // System-created
+      approvedAt: new Date(),
+      createdBy: undefined, // System-created
     });
 
     await user.save();
@@ -119,7 +123,8 @@ router.post('/register-cashier', async (req, res): Promise<void> => {
       role: 'cashier',
       firstName,
       lastName,
-      isActive: false, // Requires admin approval
+      isActive: true, // Active but not approved
+      isApproved: false, // Requires manager/superadmin approval
     });
 
     await user.save();
@@ -153,24 +158,24 @@ router.post('/register-cashier', async (req, res): Promise<void> => {
 // @access  Private (Admin)
 router.post('/register', authenticate, async (req, res): Promise<void> => {
   try {
-    // Check if user is admin
-    if (req.user?.role !== 'admin') {
+    // Check if user is manager or superadmin
+    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
       res.status(403).json({
         success: false,
-        message: 'Access denied. Admin role required.',
+        message: 'Access denied. Manager or Superadmin role required.',
       } as ApiResponse);
       return;
     }
 
     const { username, email, password, role, firstName, lastName } = req.body;
 
-    // Check if trying to create admin and admin already exists
-    if (role === 'admin') {
-      const existingAdmin = await User.findOne({ role: 'admin' });
-      if (existingAdmin) {
+    // Check if trying to create superadmin and superadmin already exists
+    if (role === 'superadmin') {
+      const existingSuperadmin = await User.findOne({ role: 'superadmin' });
+      if (existingSuperadmin) {
         res.status(400).json({
           success: false,
-          message: 'Admin account already exists. Only one admin account is allowed.',
+          message: 'Superadmin account already exists. Only one superadmin account is allowed.',
         } as ApiResponse);
         return;
       }
@@ -189,14 +194,24 @@ router.post('/register', authenticate, async (req, res): Promise<void> => {
       return;
     }
 
-    // Create new user
+    // Create new user with approval logic
+    const userRole = role || 'cashier';
+    const isAutoApproved = (req.user?.role === 'superadmin' && userRole === 'manager') || 
+                          (req.user?.role === 'manager' && userRole === 'cashier') ||
+                          (req.user?.role === 'superadmin' && userRole === 'cashier');
+
     const user = new User({
       username,
       email,
       password,
-      role: role || 'cashier',
+      role: userRole,
       firstName,
       lastName,
+      isActive: true,
+      isApproved: isAutoApproved,
+      approvedBy: isAutoApproved ? req.user?._id : undefined,
+      approvedAt: isAutoApproved ? new Date() : undefined,
+      createdBy: req.user?._id,
     });
 
     await user.save();
@@ -306,6 +321,7 @@ router.post('/login', async (req, res): Promise<void> => {
           firstName: user.firstName,
           lastName: user.lastName,
           isActive: user.isActive,
+          isApproved: user.isApproved,
           lastLogin: user.lastLogin,
         },
         token,
@@ -347,6 +363,7 @@ router.get('/me', authenticate, async (req, res): Promise<void> => {
           firstName: user.firstName,
           lastName: user.lastName,
           isActive: user.isActive,
+          isApproved: user.isApproved,
           lastLogin: user.lastLogin,
           createdAt: user.createdAt,
         },

@@ -27,7 +27,7 @@ const AdminPageContent = () => {
   const adminStats = useAdminStats();
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role === 'manager' || user?.role === 'superadmin') {
       userManagement.fetchUsers();
       userManagement.fetchUserStats();
       productManagement.fetchProducts();
@@ -35,13 +35,13 @@ const AdminPageContent = () => {
   }, [user]);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role === 'manager' || user?.role === 'superadmin') {
       userManagement.fetchUsers();
     }
   }, [userManagement.searchTerm, userManagement.statusFilter]);
 
 
-  if (!user || user.role !== 'admin') {
+  if (!user || (user.role !== 'manager' && user.role !== 'superadmin')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">

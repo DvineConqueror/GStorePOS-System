@@ -8,10 +8,14 @@ interface User {
   id: string;
   username: string;
   email: string;
-  role: 'admin' | 'cashier';
+  role: 'superadmin' | 'manager' | 'cashier';
   firstName: string;
   lastName: string;
   isActive: boolean;
+  isApproved: boolean;
+  approvedBy?: string;
+  approvedAt?: string;
+  createdBy?: string;
   lastLogin?: string;
   createdAt: string;
 }

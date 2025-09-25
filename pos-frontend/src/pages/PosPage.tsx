@@ -73,7 +73,7 @@ function PosPageContent() {
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              {user?.role === 'admin' ? (
+              {user?.role === 'manager' || user?.role === 'superadmin' ? (
                 <>
                   {/* Admin sees all analytics with blue theme */}
                   <div className="col-span-1 lg:col-span-2">

@@ -27,7 +27,7 @@ const userSchema = new Schema<IUser>({
   },
   role: {
     type: String,
-    enum: ['admin', 'cashier'],
+    enum: ['superadmin', 'manager', 'cashier'],
     default: 'cashier',
     required: true,
   },
@@ -47,6 +47,24 @@ const userSchema = new Schema<IUser>({
     type: Boolean,
     default: true,
   },
+  isApproved: {
+    type: Boolean,
+    default: false,
+  },
+  approvedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+  },
+  approvedAt: {
+    type: Date,
+    required: false,
+  },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+  },
   lastLogin: {
     type: Date,
   },
@@ -63,6 +81,9 @@ const userSchema = new Schema<IUser>({
 // Index for better query performance
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
+userSchema.index({ isApproved: 1 });
+userSchema.index({ createdBy: 1 });
+userSchema.index({ approvedBy: 1 });
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {
@@ -91,15 +112,25 @@ userSchema.methods.comparePassword = async function(candidatePassword: string): 
 // Static method to find user by email or username
 userSchema.statics.findByCredentials = async function(emailOrUsername: string, password: string) {
   const user = await this.findOne({
-    $or: [
-      { email: emailOrUsername },
-      { username: emailOrUsername }
-    ],
-    isActive: true
+    $and: [
+      {
+        $or: [
+          { email: emailOrUsername },
+          { username: emailOrUsername }
+        ]
+      },
+      { isActive: true },
+      {
+        $or: [
+          { isApproved: true },
+          { isApproved: { $exists: false } } // Allow users without isApproved field (legacy users)
+        ]
+      }
+    ]
   }).select('+password');
 
   if (!user) {
-    throw new Error('Invalid credentials');
+    throw new Error('Invalid credentials or account not approved');
   }
 
   const isMatch = await user.comparePassword(password);

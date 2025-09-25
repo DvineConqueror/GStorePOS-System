@@ -1,8 +1,45 @@
-# Admin Account Creation Script
+# Account Creation Scripts
 
-This directory contains scripts for managing admin accounts in the Grocery POS System.
+This directory contains scripts for managing user accounts in the Grocery POS System.
 
-## Creating Admin Accounts
+## Creating Superadmin Accounts
+
+### Using the Script
+
+To create a new superadmin account, run the following command from the `pos-backend` directory:
+
+```bash
+npm run create-superadmin
+```
+
+Or directly with Node.js:
+
+```bash
+node scripts/create-superadmin.js
+```
+
+### What the Superadmin Script Does
+
+1. **Connects to MongoDB** - Uses the connection string from your `.env` file
+2. **Checks for Existing Superadmin** - Prevents multiple superadmin accounts
+3. **Prompts for Superadmin Details**:
+   - Username (must be unique)
+   - Email (must be unique)
+   - First Name
+   - Last Name
+   - Password (minimum 6 characters)
+4. **Validates Input** - Checks for duplicate usernames/emails
+5. **Creates Superadmin Account** - Auto-approved with full system access
+6. **Confirms Success** - Shows account details and access instructions
+
+### Superadmin Access
+
+- **Hidden URL**: `http://localhost:8080/superadmin`
+- **Full System Access**: Can create managers and approve all users
+- **No UI Navigation**: Accessible only via direct URL
+- **System-Level Authority**: Highest role in the hierarchy
+
+## Creating Admin/Manager Accounts
 
 ### Using the Script
 

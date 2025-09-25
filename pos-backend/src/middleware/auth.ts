@@ -43,6 +43,15 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
+    // Check if user is approved (handle legacy users without isApproved field)
+    if (user.isApproved === false) {
+      res.status(401).json({
+        success: false,
+        message: 'Account is not approved. Please wait for approval.',
+      });
+      return;
+    }
+
     req.user = user;
     next();
   } catch (error) {
@@ -91,5 +100,6 @@ export const authorize = (...roles: string[]) => {
   };
 };
 
-export const requireAdmin = authorize('admin');
-export const requireCashier = authorize('cashier', 'admin');
+export const requireManager = authorize('manager', 'superadmin');
+export const requireAdmin = authorize('manager', 'superadmin'); // Keep for backward compatibility
+export const requireCashier = authorize('cashier', 'manager', 'superadmin');
