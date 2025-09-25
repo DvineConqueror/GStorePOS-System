@@ -1,0 +1,221 @@
+import { Request, Response } from 'express';
+import { UserService } from '../services/UserService';
+import { ApiResponse } from '../types';
+
+export class UserController {
+  /**
+   * Get all users
+   */
+  static async getUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        role,
+        isActive,
+        search,
+        sort = 'createdAt',
+        order = 'desc'
+      } = req.query;
+
+      const result = await UserService.getUsers({
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        role: role as string,
+        isActive: isActive ? isActive === 'true' : undefined,
+        search: search as string,
+        sort: sort as string,
+        order: order as 'asc' | 'desc'
+      });
+
+      res.json({
+        success: true,
+        message: 'Users retrieved successfully.',
+        data: result.users,
+        pagination: result.pagination,
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Get users error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while retrieving users.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Get user statistics
+   */
+  static async getUserStats(req: Request, res: Response): Promise<void> {
+    try {
+      const stats = await UserService.getUserStats();
+
+      res.json({
+        success: true,
+        message: 'User statistics retrieved successfully.',
+        data: stats,
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Get user stats error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while retrieving user statistics.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Get single user by ID
+   */
+  static async getUserById(req: Request, res: Response): Promise<void> {
+    try {
+      const user = await UserService.getUserById(req.params.id);
+
+      res.json({
+        success: true,
+        message: 'User retrieved successfully.',
+        data: user,
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Get user error:', error);
+      if (error instanceof Error && error.message === 'User not found') {
+        res.status(404).json({
+          success: false,
+          message: 'User not found.',
+        } as ApiResponse);
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Server error while retrieving user.',
+        } as ApiResponse);
+      }
+    }
+  }
+
+  /**
+   * Update user
+   */
+  static async updateUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { username, email, role, firstName, lastName, isActive } = req.body;
+      const userId = req.params.id;
+
+      const user = await UserService.updateUser(userId, {
+        username,
+        email,
+        role,
+        firstName,
+        lastName,
+        isActive
+      });
+
+      res.json({
+        success: true,
+        message: 'User updated successfully.',
+        data: user,
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Update user error:', error);
+      if (error instanceof Error) {
+        if (error.message === 'User not found') {
+          res.status(404).json({
+            success: false,
+            message: 'User not found.',
+          } as ApiResponse);
+        } else if (error.message.includes('already taken')) {
+          res.status(400).json({
+            success: false,
+            message: error.message,
+          } as ApiResponse);
+        } else {
+          res.status(500).json({
+            success: false,
+            message: 'Server error while updating user.',
+          } as ApiResponse);
+        }
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Server error while updating user.',
+        } as ApiResponse);
+      }
+    }
+  }
+
+  /**
+   * Toggle user status
+   */
+  static async toggleUserStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.params.id;
+      const currentStatus = req.body.currentStatus;
+
+      // Prevent admin from deactivating themselves
+      if (userId === req.user?._id) {
+        res.status(400).json({
+          success: false,
+          message: 'You cannot deactivate your own account.',
+        } as ApiResponse);
+        return;
+      }
+
+      const user = await UserService.toggleUserStatus(userId, currentStatus);
+
+      res.json({
+        success: true,
+        message: 'User status updated successfully.',
+        data: user,
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Toggle user status error:', error);
+      if (error instanceof Error && error.message === 'User not found') {
+        res.status(404).json({
+          success: false,
+          message: 'User not found.',
+        } as ApiResponse);
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Server error while updating user status.',
+        } as ApiResponse);
+      }
+    }
+  }
+
+  /**
+   * Reset user password
+   */
+  static async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 6) {
+        res.status(400).json({
+          success: false,
+          message: 'New password must be at least 6 characters long.',
+        } as ApiResponse);
+        return;
+      }
+
+      await UserService.resetPassword(req.params.id, newPassword);
+
+      res.json({
+        success: true,
+        message: 'Password reset successfully.',
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Reset password error:', error);
+      if (error instanceof Error && error.message === 'User not found') {
+        res.status(404).json({
+          success: false,
+          message: 'User not found.',
+        } as ApiResponse);
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Server error while resetting password.',
+        } as ApiResponse);
+      }
+    }
+  }
+}

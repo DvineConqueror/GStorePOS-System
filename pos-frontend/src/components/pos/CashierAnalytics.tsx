@@ -63,7 +63,7 @@ export function CashierAnalytics() {
   return (
     <Card className="bg-transparent border-0 shadow-none">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg sm:text-xl text-white">Employee Performance</CardTitle>
+        <CardTitle className="text-lg sm:text-xl text-white">Employee Sales</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2 sm:space-y-4">

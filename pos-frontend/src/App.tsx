@@ -13,6 +13,12 @@ import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import PosPage from './pages/PosPage';
 
+// Import new modular components
+import { AdminLayout } from '@/layouts/AdminLayout';
+import { CashierLayout } from '@/layouts/CashierLayout';
+import { AdminDashboard } from '@/pages/admin/AdminDashboard';
+import { CashierDashboard } from '@/pages/cashier/CashierDashboard';
+
 const App = () => {
   const queryClient = new QueryClient();
 
@@ -25,12 +31,43 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <Routes>
+                {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
+                
+                {/* Role-based Routes */}
                 <Route path="/" element={
                   <ProtectedRoute>
                     <Index />
                   </ProtectedRoute>
                 } />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" element={
+                  <AdminRoute>
+                    <AdminLayout />
+                  </AdminRoute>
+                }>
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="cashiers" element={<AdminPage />} />
+                  <Route path="products" element={<AdminPage />} />
+                  <Route path="pos" element={<AdminPage />} />
+                  <Route path="analytics" element={<AdminPage />} />
+                  <Route path="settings" element={<AdminPage />} />
+                </Route>
+                
+                {/* Cashier Routes */}
+                <Route path="/cashier" element={
+                  <ProtectedRoute>
+                    <CashierLayout />
+                  </ProtectedRoute>
+                }>
+                  <Route path="pos" element={<PosPage />} />
+                  <Route path="analytics" element={<PosPage />} />
+                  <Route path="history" element={<PosPage />} />
+                  <Route path="profile" element={<PosPage />} />
+                </Route>
+                
+                {/* Legacy Routes (for backward compatibility) */}
                 <Route path="/pos" element={
                   <ProtectedRoute>
                     <PosPage />
@@ -41,6 +78,8 @@ const App = () => {
                     <AdminPage />
                   </AdminRoute>
                 } />
+                
+                {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
