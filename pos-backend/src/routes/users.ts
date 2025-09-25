@@ -20,9 +20,10 @@ router.get('/', authenticate, requireAdmin, async (req, res): Promise<void> => {
       order = 'desc'
     } = req.query;
 
-    const filters: any = {};
+    const filters: any = {
+      role: 'cashier' // Only return cashiers, exclude admins/managers
+    };
 
-    if (role) filters.role = role;
     if (isActive !== undefined) filters.isActive = isActive === 'true';
     if (search) {
       filters.$or = [
@@ -83,15 +84,20 @@ router.get('/stats', authenticate, requireAdmin, async (req, res): Promise<void>
     const adminUsers = await User.countDocuments({ role: 'admin', isActive: true });
     console.log('Admin users:', adminUsers);
     
-    const cashierUsers = await User.countDocuments({ role: 'cashier', isActive: true });
-    console.log('Cashier users:', cashierUsers);
+    const activeCashierUsers = await User.countDocuments({ role: 'cashier', isActive: true });
+    console.log('Active cashier users:', activeCashierUsers);
+    
+    const totalCashierUsers = await User.countDocuments({ role: 'cashier' });
+    console.log('Total cashier users:', totalCashierUsers);
 
     const stats = {
       totalUsers,
       activeUsers,
       inactiveUsers: totalUsers - activeUsers,
       adminUsers,
-      cashierUsers,
+      cashierUsers: activeCashierUsers, // Keep for backward compatibility
+      totalCashierUsers, // New field for total cashiers (active + inactive)
+      activeCashierUsers, // New field for active cashiers only
     };
     
     console.log('Stats to return:', stats);

@@ -60,14 +60,16 @@ const AdminPageContent = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
+  // Removed roleFilter since we only show cashiers now
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [userStats, setUserStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
     inactiveUsers: 0,
     adminUsers: 0,
-    cashierUsers: 0
+    cashierUsers: 0,
+    totalCashierUsers: 0,
+    activeCashierUsers: 0
   });
   const [showAddProductForm, setShowAddProductForm] = useState(false);
   const [newProduct, setNewProduct] = useState({
@@ -96,7 +98,7 @@ const AdminPageContent = () => {
     if (user?.role === 'admin') {
       fetchUsers();
     }
-  }, [searchTerm, roleFilter, statusFilter]);
+  }, [searchTerm, statusFilter]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -104,7 +106,6 @@ const AdminPageContent = () => {
       const params: any = {};
       
       if (searchTerm) params.search = searchTerm;
-      if (roleFilter !== 'all') params.role = roleFilter;
       if (statusFilter !== 'all') params.isActive = statusFilter === 'active';
       
       const response = await usersAPI.getUsers(params);
@@ -341,7 +342,7 @@ const AdminPageContent = () => {
     );
   }
 
-  // Filter users for display
+  // Filter users for display (only cashiers now)
   const filteredUsers = users.filter(user => {
     const matchesSearch = !searchTerm || 
       user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -349,12 +350,11 @@ const AdminPageContent = () => {
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'active' && user.isActive) ||
       (statusFilter === 'inactive' && !user.isActive);
     
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -363,13 +363,13 @@ const AdminPageContent = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-2">Manage users, products, and system settings</p>
+            <h1 className="text-3xl font-bold text-gray-900">Manager Dashboard</h1>
+            <p className="text-gray-600 mt-2">Manage cashiers, products, and system settings</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-gray-700">
               <Shield className="h-4 w-4" />
-              <span className="text-sm font-medium">Admin: {user?.firstName} {user?.lastName}</span>
+              <span className="text-sm font-medium">Manager: {user?.firstName} {user?.lastName}</span>
             </div>
             <Button onClick={handleLogout} variant="outline">
               <LogOut className="mr-2 h-4 w-4" />
@@ -383,8 +383,8 @@ const AdminPageContent = () => {
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
             <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">User Management</span>
-              <span className="sm:hidden">Users</span>
+              <span className="hidden sm:inline">Cashier Management</span>
+              <span className="sm:hidden">Cashiers</span>
             </TabsTrigger>
             <TabsTrigger value="products" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Package className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -418,7 +418,7 @@ const AdminPageContent = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{userStats.cashierUsers || 0}</div>
+                  <div className="text-2xl font-bold">{userStats.totalCashierUsers || userStats.cashierUsers || 0}</div>
                 </CardContent>
               </Card>
               <Card>
@@ -427,12 +427,12 @@ const AdminPageContent = () => {
                   <UserCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{userStats.cashierUsers || 0}</div>
+                  <div className="text-2xl font-bold">{userStats.activeCashierUsers || userStats.cashierUsers || 0}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Admins</CardTitle>
+                  <CardTitle className="text-sm font-medium">Managers</CardTitle>
                   <Shield className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -445,10 +445,10 @@ const AdminPageContent = () => {
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <CardTitle>User Management</CardTitle>
+              <CardTitle>Cashier Management</CardTitle>
               <Button onClick={handleAddUser} className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
-                Add User
+                Add Cashier
               </Button>
             </div>
             
@@ -457,22 +457,12 @@ const AdminPageContent = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search users..."
+                  placeholder="Search cashiers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="cashier">Cashier</SelectItem>
-                </SelectContent>
-              </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Filter by status" />
@@ -497,7 +487,6 @@ const AdminPageContent = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Username</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
@@ -506,8 +495,8 @@ const AdminPageContent = () => {
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        No users found matching your criteria
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        No cashiers found matching your criteria
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -518,11 +507,6 @@ const AdminPageContent = () => {
                         </TableCell>
                         <TableCell>{userProfile.username}</TableCell>
                         <TableCell>{userProfile.email}</TableCell>
-                        <TableCell>
-                          <Badge variant={userProfile.role === 'admin' ? 'default' : 'secondary'}>
-                            {userProfile.role}
-                          </Badge>
-                        </TableCell>
                         <TableCell>
                           <Badge variant={userProfile.isActive ? 'default' : 'destructive'}>
                             {userProfile.isActive ? 'Active' : 'Inactive'}

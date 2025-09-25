@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { signIn, signUp, signUpCashier, setup } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -57,15 +58,18 @@ export default function LoginPage() {
       if (data.success) {
         const userRole = data.data.user.role;
         
+        // Set cookie expiration based on "Remember Me" option
+        const cookieExpiration = rememberMe ? 30 : 7; // 30 days if remember me, 7 days otherwise
+        
         // Enforce role-based access
         if (!isAdminMode && userRole === 'cashier') {
           // Cashiers can only login in cashier mode
-          Cookies.set('auth_token', data.data.token, { expires: 7 });
+          Cookies.set('auth_token', data.data.token, { expires: cookieExpiration });
           window.location.href = '/pos';
           return { success: true };
         } else if (isAdminMode && userRole === 'admin') {
           // Admins can only login in admin mode -> dashboard
-          Cookies.set('auth_token', data.data.token, { expires: 7 });
+          Cookies.set('auth_token', data.data.token, { expires: cookieExpiration });
           window.location.href = '/dashboard';
           return { success: true };
         } else {
@@ -73,7 +77,7 @@ export default function LoginPage() {
           return { 
             success: false, 
             message: userRole === 'admin' 
-              ? 'Admin access required. Please use Admin Mode to login.' 
+              ? 'Manager access required. Please use Manager Mode to login.' 
               : 'Cashier access required. Please use Cashier Mode to login.' 
           };
         }
@@ -212,7 +216,7 @@ export default function LoginPage() {
             </div>
             <div className="text-center space-y-4">
               <h2 className={`text-2xl font-bold ${colors.primaryText} transition-colors duration-500`}>
-                {isAdminMode ? 'Admin Dashboard' : 'Cashier POS'}
+                {isAdminMode ? 'Manager Dashboard' : 'Cashier POS'}
               </h2>
               <p className="text-gray-600">
                 {isAdminMode 
@@ -245,15 +249,15 @@ export default function LoginPage() {
                     ) : (
                       <>
                         <ShieldCheck className="mr-2 h-4 w-4" />
-                        Admin Mode
+                        Manager Mode
                       </>
                     )}
                   </Button>
                 </div>
                 <CardDescription className="text-base">
                   {isSignUp 
-                    ? `Create a new ${isAdminMode ? 'admin' : 'cashier'} account` 
-                    : `Sign in to continue to your ${isAdminMode ? 'admin dashboard' : 'POS system'}`}
+                  ? `Create a new ${isAdminMode ? 'manager' : 'cashier'} account` 
+                  : `Sign in to continue to your ${isAdminMode ? 'manager dashboard' : 'POS system'}`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -340,13 +344,30 @@ export default function LoginPage() {
                       </button>
                     </div>
                   </div>
+                  
+                  {/* Remember Me checkbox - only show for login, not signup */}
+                  {!isSignUp && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        id="remember-me"
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <Label htmlFor="remember-me" className="text-sm font-medium text-gray-700">
+                        Remember me for 30 days
+                      </Label>
+                    </div>
+                  )}
+                  
                   <div className="flex flex-col gap-3">
                     <Button 
                       type="submit" 
                       disabled={isLoading}
                       className={`w-full h-11 ${colors.primaryButton} duration-500 text-white font-medium transition-all`}
                     >
-                      {isLoading ? 'Loading...' : (isSignUp ? `Create ${isAdminMode ? 'Admin' : 'Cashier'} Account` : 'Sign In')}
+                      {isLoading ? 'Loading...' : (isSignUp ? `Create ${isAdminMode ? 'Manager' : 'Cashier'} Account` : 'Sign In')}
                     </Button>
                     
                   </div>
