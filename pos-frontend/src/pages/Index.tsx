@@ -10,8 +10,8 @@ const Index = () => {
   useEffect(() => {
     if (!loading && user) {
       // Redirect based on user role
-      if (user.role === 'admin') {
-        navigate('/dashboard');
+      if (user.role === 'manager') {
+        navigate('/admin/dashboard');
       } else {
         navigate('/pos');
       }

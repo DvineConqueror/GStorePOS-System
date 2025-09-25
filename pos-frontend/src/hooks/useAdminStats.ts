@@ -5,7 +5,7 @@ interface UserStats {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
-  adminUsers: number;
+  managerUsers: number;
   cashierUsers: number;
   totalCashierUsers: number;
   activeCashierUsers: number;
@@ -22,7 +22,7 @@ export const useAdminStats = () => {
     totalUsers: 0,
     activeUsers: 0,
     inactiveUsers: 0,
-    adminUsers: 0,
+    managerUsers: 0,
     cashierUsers: 0,
     totalCashierUsers: 0,
     activeCashierUsers: 0

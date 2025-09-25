@@ -72,7 +72,7 @@ export function AdvancedAnalytics() {
       if (transactionsResponse.success && productsResponse.success) {
         const transactions = transactionsResponse.data.filter((t: any) => 
           t.status === 'completed' && 
-          (user?.role === 'admin' || t.cashierId === user?.id)
+          (user?.role === 'manager' || t.cashierId === user?.id)
         );
         
         // Calculate hourly sales

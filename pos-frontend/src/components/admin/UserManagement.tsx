@@ -13,7 +13,7 @@ interface UserProfile {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'cashier';
+  role: 'manager' | 'cashier';
   isActive: boolean;
   createdAt: string;
 }
@@ -22,7 +22,7 @@ interface UserStats {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
-  adminUsers: number;
+  managerUsers: number;
   cashierUsers: number;
   totalCashierUsers: number;
   activeCashierUsers: number;
@@ -83,7 +83,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.adminUsers || 0}</div>
+            <div className="text-2xl font-bold">{userStats.managerUsers || 0}</div>
           </CardContent>
         </Card>
       </div>

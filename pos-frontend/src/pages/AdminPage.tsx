@@ -49,7 +49,7 @@ const AdminPageContent = () => {
             <CardTitle className="text-center">Access Denied</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-gray-600 mb-4">You don't have admin privileges.</p>
+            <p className="text-gray-600 mb-4">You don't have manager privileges.</p>
           </CardContent>
         </Card>
       </div>

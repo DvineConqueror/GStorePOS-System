@@ -149,25 +149,25 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      {/* Header - Responsive */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">All Users</h2>
-          <p className="text-slate-400">Manage all system users (excluding superadmin)</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white">All Users</h2>
+          <p className="text-slate-400 text-sm sm:text-base">Manage all system users (excluding superadmin)</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="text-slate-300 border-slate-600">
+          <Badge variant="outline" className="text-slate-300 border-slate-600 text-xs sm:text-sm">
             <Users className="h-3 w-3 mr-1" />
             {totalUsers} Total Users
           </Badge>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Responsive */}
       <Card className="bg-slate-800/50 border-slate-700">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -179,9 +179,9 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-32 bg-slate-700/50 border-slate-600 text-white">
+                <SelectTrigger className="w-full sm:w-32 bg-slate-700/50 border-slate-600 text-white">
                   <SelectValue placeholder="Role" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-600">
@@ -191,7 +191,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32 bg-slate-700/50 border-slate-600 text-white">
+                <SelectTrigger className="w-full sm:w-32 bg-slate-700/50 border-slate-600 text-white">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-600">
@@ -207,11 +207,11 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
         </CardContent>
       </Card>
 
-      {/* Users Table */}
+      {/* Users Table - Responsive */}
       <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center">
-            <Users className="h-5 w-5 mr-2" />
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white flex items-center text-base sm:text-lg">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
             Users ({filteredUsers.length})
           </CardTitle>
         </CardHeader>
@@ -226,32 +226,34 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
               <p className="text-slate-400">No users found</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {filteredUsers.map((user) => (
                 <div
                   key={user._id}
-                  className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600/50 hover:bg-slate-700/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-slate-700/30 rounded-lg border border-slate-600/50 hover:bg-slate-700/50 transition-colors gap-3 sm:gap-0"
                 >
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-slate-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-600 rounded-full flex items-center justify-center">
+                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-slate-300" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
                         <p className="text-sm font-medium text-white truncate">
                           {user.firstName} {user.lastName}
                         </p>
-                        <Badge className={getRoleBadgeColor(user.role)}>
-                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                        </Badge>
-                        {getStatusBadge(user)}
+                        <div className="flex flex-wrap gap-1 sm:gap-2">
+                          <Badge className={`${getRoleBadgeColor(user.role)} text-xs`}>
+                            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                          </Badge>
+                          {getStatusBadge(user)}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-4 text-xs text-slate-400">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs text-slate-400">
                         <div className="flex items-center">
                           <Mail className="h-3 w-3 mr-1" />
-                          {user.email}
+                          <span className="truncate">{user.email}</span>
                         </div>
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
@@ -260,7 +262,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-end sm:justify-start space-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -274,10 +276,10 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Pagination - Responsive */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-slate-400">
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+              <div className="text-xs sm:text-sm text-slate-400 text-center sm:text-left">
                 Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, totalUsers)} of {totalUsers} users
               </div>
               <div className="flex items-center space-x-2">
@@ -286,11 +288,11 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600"
+                  className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600 text-xs sm:text-sm"
                 >
                   Previous
                 </Button>
-                <span className="text-sm text-slate-400">
+                <span className="text-xs sm:text-sm text-slate-400">
                   Page {currentPage} of {totalPages}
                 </span>
                 <Button
@@ -298,7 +300,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600"
+                  className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600 text-xs sm:text-sm"
                 >
                   Next
                 </Button>

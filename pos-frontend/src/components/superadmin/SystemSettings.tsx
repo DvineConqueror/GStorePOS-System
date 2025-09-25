@@ -81,18 +81,18 @@ export default function SystemSettings() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      {/* Header - Responsive */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">System Settings</h2>
-          <p className="text-slate-400">Configure system-wide settings and preferences</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white">System Settings</h2>
+          <p className="text-slate-400 text-sm sm:text-base">Configure system-wide settings and preferences</p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={handleReset}
-            className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600"
+            className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600 text-sm sm:text-base"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Reset
@@ -100,7 +100,7 @@ export default function SystemSettings() {
           <Button
             onClick={handleSave}
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base"
           >
             {loading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -112,16 +112,16 @@ export default function SystemSettings() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* System Settings */}
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <Settings className="h-5 w-5 mr-2" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center text-base sm:text-lg">
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               System Configuration
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <div className="space-y-2">
               <Label htmlFor="systemName" className="text-slate-300">System Name</Label>
               <Input
@@ -156,13 +156,13 @@ export default function SystemSettings() {
 
         {/* Security Settings */}
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <Shield className="h-5 w-5 mr-2" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center text-base sm:text-lg">
+              <Shield className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Security Settings
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <div className="space-y-2">
               <Label htmlFor="sessionTimeout" className="text-slate-300">Session Timeout (minutes)</Label>
               <Input
@@ -209,13 +209,13 @@ export default function SystemSettings() {
 
         {/* Notification Settings */}
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <Bell className="h-5 w-5 mr-2" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center text-base sm:text-lg">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Notification Settings
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="emailNotifications" className="text-slate-300">Email Notifications</Label>
@@ -254,13 +254,13 @@ export default function SystemSettings() {
 
         {/* Database Settings */}
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <Database className="h-5 w-5 mr-2" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center text-base sm:text-lg">
+              <Database className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Database Settings
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="autoBackup" className="text-slate-300">Automatic Backup</Label>
@@ -300,14 +300,14 @@ export default function SystemSettings() {
 
         {/* Store Settings */}
         <Card className="bg-slate-800/50 border-slate-700 lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <Mail className="h-5 w-5 mr-2" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center text-base sm:text-lg">
+              <Mail className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Store Information
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label htmlFor="storeName" className="text-slate-300">Store Name</Label>
                 <Input

@@ -21,6 +21,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { superadminAPI } from '@/lib/api';
+import { useRefresh } from '@/context/RefreshContext';
 
 interface PendingUser {
   _id: string;
@@ -52,6 +53,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [bulkAction, setBulkAction] = useState<'approve' | 'reject' | ''>('');
   const { toast } = useToast();
+  const { triggerRefresh } = useRefresh();
 
   useEffect(() => {
     fetchPendingUsers();
@@ -107,6 +109,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
           description: "User approved successfully",
         });
         fetchPendingUsers();
+        triggerRefresh(); // Refresh quick stats
         onApprovalChange?.();
       } else {
         throw new Error(response.message || 'Failed to approve user');
@@ -131,6 +134,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
           description: "User rejected successfully",
         });
         fetchPendingUsers();
+        triggerRefresh(); // Refresh quick stats
         onApprovalChange?.();
       } else {
         throw new Error(response.message || 'Failed to reject user');
@@ -156,40 +160,29 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
     }
 
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/superadmin/bulk-approve`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userIds: selectedUsers,
-            approved: bulkAction === 'approve',
-          }),
-        }
+      const response = await superadminAPI.bulkApproveUsers(
+        selectedUsers,
+        bulkAction === 'approve'
       );
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.success) {
         toast({
           title: "Success",
-          description: `${data.data.summary.successful} users ${bulkAction === 'approve' ? 'approved' : 'rejected'} successfully`,
+          description: `${response.data.summary.successful} users ${bulkAction === 'approve' ? 'approved' : 'rejected'} successfully`,
         });
         setSelectedUsers([]);
         setBulkAction('');
         fetchPendingUsers();
+        triggerRefresh(); // Refresh quick stats
         onApprovalChange?.();
       } else {
-        throw new Error('Failed to process bulk action');
+        throw new Error(response.message || 'Failed to process bulk action');
       }
     } catch (error) {
       console.error('Error processing bulk action:', error);
       toast({
         title: "Error",
-        description: "Failed to process bulk action",
+        description: error instanceof Error ? error.message : "Failed to process bulk action",
         variant: "destructive",
       });
     }
@@ -231,25 +224,25 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      {/* Header - Responsive */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Pending User Approvals</h1>
-          <p className="text-slate-400">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Pending User Approvals</h1>
+          <p className="text-slate-400 text-sm sm:text-base">
             Review and approve new user registrations
           </p>
         </div>
-        <Badge variant="destructive" className="bg-yellow-600 hover:bg-yellow-700">
+        <Badge variant="destructive" className="bg-yellow-600 hover:bg-yellow-700 text-xs sm:text-sm">
           <Clock className="h-3 w-3 mr-1" />
           {pendingUsers.length} Pending
         </Badge>
       </div>
 
-      {/* Filters and Search */}
+      {/* Filters and Search - Responsive */}
       <Card className="bg-slate-800/50 border-slate-700">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -262,7 +255,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
               </div>
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full md:w-48 bg-slate-700 border-slate-600 text-white">
+              <SelectTrigger className="w-full sm:w-48 bg-slate-700 border-slate-600 text-white">
                 <SelectValue placeholder="Filter by role" />
               </SelectTrigger>
               <SelectContent>
@@ -275,46 +268,50 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         </CardContent>
       </Card>
 
-      {/* Bulk Actions */}
+      {/* Bulk Actions - Responsive */}
       {selectedUsers.length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <span className="text-white">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                <span className="text-white text-sm sm:text-base">
                   {selectedUsers.length} user(s) selected
                 </span>
-                <Select value={bulkAction} onValueChange={(value: 'approve' | 'reject' | '') => setBulkAction(value)}>
-                  <SelectTrigger className="w-32 bg-slate-700 border-slate-600 text-white">
-                    <SelectValue placeholder="Action" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="approve">Approve</SelectItem>
-                    <SelectItem value="reject">Reject</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={handleBulkAction}
-                  disabled={!bulkAction}
-                  className={bulkAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
-                >
-                  {bulkAction === 'approve' ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve All
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Reject All
-                    </>
-                  )}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <Select value={bulkAction} onValueChange={(value: 'approve' | 'reject' | '') => setBulkAction(value)}>
+                    <SelectTrigger className="w-full sm:w-32 bg-slate-700 border-slate-600 text-white">
+                      <SelectValue placeholder="Action" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approve">Approve</SelectItem>
+                      <SelectItem value="reject">Reject</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleBulkAction}
+                    disabled={!bulkAction}
+                    className={`${bulkAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-xs sm:text-sm`}
+                  >
+                    {bulkAction === 'approve' ? (
+                      <>
+                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Approve All</span>
+                        <span className="sm:hidden">Approve</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Reject All</span>
+                        <span className="sm:hidden">Reject</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
               <Button
                 variant="ghost"
                 onClick={() => setSelectedUsers([])}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white text-xs sm:text-sm"
               >
                 Clear Selection
               </Button>
@@ -323,14 +320,14 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         </Card>
       )}
 
-      {/* Users List */}
-      <div className="space-y-4">
+      {/* Users List - Responsive */}
+      <div className="space-y-3 sm:space-y-4">
         {pendingUsers.length === 0 ? (
           <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="p-8 text-center">
+            <CardContent className="p-6 sm:p-8 text-center">
               <UserCheck className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">No Pending Approvals</h3>
-              <p className="text-slate-400">
+              <h3 className="text-base sm:text-lg font-semibold text-white mb-2">No Pending Approvals</h3>
+              <p className="text-slate-400 text-sm sm:text-base">
                 All users have been reviewed and approved.
               </p>
             </CardContent>
@@ -338,35 +335,35 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         ) : (
           pendingUsers.map((user) => (
             <Card key={user._id} className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
                     <Checkbox
                       checked={selectedUsers.includes(user._id)}
                       onCheckedChange={(checked) => handleSelectUser(user._id, checked as boolean)}
                     />
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-slate-300" />
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-slate-300" />
                       </div>
-                      <div>
-                        <div className="text-white font-semibold">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-white font-semibold text-sm sm:text-base truncate">
                           {user.firstName} {user.lastName}
                         </div>
-                        <div className="text-sm text-slate-400">
+                        <div className="text-xs sm:text-sm text-slate-400 truncate">
                           @{user.username}
                         </div>
                         <div className="flex items-center space-x-2 mt-1">
-                          <Mail className="h-3 w-3 text-slate-500" />
-                          <span className="text-xs text-slate-500">{user.email}</span>
+                          <Mail className="h-3 w-3 text-slate-500 flex-shrink-0" />
+                          <span className="text-xs text-slate-500 truncate">{user.email}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <Badge className={getRoleBadgeColor(user.role)}>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                    <div className="text-left sm:text-right">
+                      <Badge className={`${getRoleBadgeColor(user.role)} text-xs`}>
                         {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                       </Badge>
                       <div className="flex items-center space-x-1 mt-1">
@@ -382,22 +379,22 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                       )}
                     </div>
 
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                       <Button
                         size="sm"
                         onClick={() => handleApproveUser(user._id)}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
                       >
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         Approve
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleRejectUser(user._id)}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
                       >
-                        <XCircle className="h-4 w-4 mr-1" />
+                        <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         Reject
                       </Button>
                     </div>

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from '@/context/AuthContext';
+import { RefreshProvider } from '@/context/RefreshContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminRoute from '@/components/auth/AdminRoute';
 import SuperadminRoute from '@/components/auth/SuperadminRoute';
@@ -56,6 +57,7 @@ const App = () => {
                     <AdminLayout />
                   </AdminRoute>
                 }>
+                  <Route index element={<AdminDashboard />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
                   <Route path="cashiers" element={<AdminPage />} />
                   <Route path="products" element={<AdminPage />} />
@@ -79,7 +81,9 @@ const App = () => {
                 {/* Superadmin Routes (Hidden - accessible via direct URL) */}
                 <Route path="/superadmin" element={
                   <SuperadminRoute>
-                    <SuperadminLayout />
+                    <RefreshProvider>
+                      <SuperadminLayout />
+                    </RefreshProvider>
                   </SuperadminRoute>
                 }>
                   <Route index element={<SuperadminDashboard />} />

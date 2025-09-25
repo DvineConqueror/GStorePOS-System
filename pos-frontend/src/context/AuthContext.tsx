@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(response.data.user);
         toast({
           title: "Success",
-          description: "Initial admin account created successfully.",
+          description: "Initial manager account created successfully.",
         });
         return { success: true };
       }
@@ -167,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.success) {
         toast({
           title: "Success",
-          description: "Cashier account created successfully. Please wait for admin approval.",
+          description: "Cashier account created successfully. Please wait for manager approval.",
         });
         return { success: true };
       }
@@ -227,11 +227,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await authAPI.logout();
       Cookies.remove('auth_token');
       setUser(null);
+      
+      // Show logout success toast
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
     } catch (error: any) {
       // Even if logout fails on server, clear local data
       Cookies.remove('auth_token');
       setUser(null);
       console.error('Logout error:', error);
+      
+      // Show logout success toast even if server logout failed
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
     } finally {
       setAuthLoading(false);
     }
