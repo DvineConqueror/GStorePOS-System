@@ -38,8 +38,8 @@ export default function LoginPage() {
 
   return (
     <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br ${colors.primary} transition-all duration-500 ease-in-out`}>
-      <div className="container mx-auto flex items-center justify-center px-4">
-        <div className={`login-container grid md:grid-cols-2 gap-8 w-full max-w-[1000px] ${colors.cardBg} rounded-2xl shadow-2xl p-8 transition-all duration-500 ease-in-out`}>
+      <div className="container mx-auto flex items-center justify-center px-4 py-4">
+        <div className={`login-container grid md:grid-cols-2 gap-6 w-full max-w-[900px] ${colors.cardBg} rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500 ease-in-out`}>
           <LoginLogo isAdminMode={isAdminMode} colors={colors} />
           
           <LoginForm
