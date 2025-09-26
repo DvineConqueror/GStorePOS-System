@@ -404,6 +404,18 @@ export const superadminAPI = {
     const response = await api.post('/superadmin/create-manager', managerData);
     return response.data;
   },
+
+  deleteUser: async (userId: string) => {
+    const response = await api.delete(`/superadmin/users/${userId}`);
+    return response.data;
+  },
+
+  bulkDeleteUsers: async (userIds: string[]) => {
+    const response = await api.post('/superadmin/bulk-delete', {
+      userIds,
+    });
+    return response.data;
+  },
 };
 
 export default api;

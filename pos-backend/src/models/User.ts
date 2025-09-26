@@ -43,9 +43,11 @@ const userSchema = new Schema<IUser>({
     trim: true,
     maxlength: [50, 'Last name cannot exceed 50 characters'],
   },
-  isActive: {
-    type: Boolean,
-    default: true,
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'deleted'],
+    default: 'active',
+    required: true,
   },
   isApproved: {
     type: Boolean,
@@ -80,7 +82,7 @@ const userSchema = new Schema<IUser>({
 
 // Index for better query performance
 userSchema.index({ role: 1 });
-userSchema.index({ isActive: 1 });
+userSchema.index({ status: 1 });
 userSchema.index({ isApproved: 1 });
 userSchema.index({ createdBy: 1 });
 userSchema.index({ approvedBy: 1 });
@@ -119,7 +121,7 @@ userSchema.statics.findByCredentials = async function(emailOrUsername: string, p
           { username: emailOrUsername }
         ]
       },
-      { isActive: true },
+      { status: 'active' },
       {
         $or: [
           { isApproved: true },

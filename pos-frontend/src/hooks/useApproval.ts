@@ -9,7 +9,7 @@ interface PendingUser {
   role: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   isApproved: boolean;
   createdAt: string;
   createdBy?: {
@@ -50,7 +50,7 @@ export const useApproval = ({ userRole }: UseApprovalProps) => {
         response = await usersAPI.getUsers({
           ...filters,
           role: 'cashier',
-          isActive: true,
+          status: 'active',
           isApproved: false,
         });
       }
@@ -118,7 +118,7 @@ export const useApproval = ({ userRole }: UseApprovalProps) => {
         // Managers can only reject cashiers
         response = await usersAPI.updateUser(userId, { 
           isApproved: false, 
-          isActive: false 
+          status: 'inactive' 
         });
       }
       

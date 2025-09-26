@@ -27,7 +27,7 @@ interface AllUser {
   role: 'manager' | 'cashier';
   firstName: string;
   lastName: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   isApproved: boolean;
   approvedBy?: {
     username: string;
@@ -79,13 +79,11 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
       
       if (statusFilter !== 'all') {
         if (statusFilter === 'active') {
-          params.isActive = true;
+          params.status = 'active';
         } else if (statusFilter === 'inactive') {
-          params.isActive = false;
-        } else if (statusFilter === 'approved') {
-          params.isApproved = true;
-        } else if (statusFilter === 'pending') {
-          params.isApproved = false;
+          params.status = 'inactive';
+        } else if (statusFilter === 'deleted') {
+          params.status = 'deleted';
         }
       }
       
@@ -126,7 +124,10 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
   };
 
   const getStatusBadge = (user: AllUser) => {
-    if (!user.isActive) {
+    if (user.status === 'deleted') {
+      return <Badge variant="destructive" className="bg-red-800 hover:bg-red-900">Deleted</Badge>;
+    }
+    if (user.status === 'inactive') {
       return <Badge variant="destructive">Inactive</Badge>;
     }
     if (!user.isApproved) {
@@ -198,8 +199,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="deleted">Deleted</SelectItem>
                 </SelectContent>
               </Select>
             </div>

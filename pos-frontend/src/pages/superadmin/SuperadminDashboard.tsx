@@ -36,7 +36,7 @@ interface RecentUser {
   role: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   isApproved: boolean;
   createdAt: string;
 }
@@ -105,8 +105,8 @@ export default function SuperadminDashboard() {
     }
   };
 
-  const getStatusIcon = (isActive: boolean, isApproved: boolean) => {
-    if (!isActive) return <AlertTriangle className="h-4 w-4 text-red-500" />;
+  const getStatusIcon = (status: string, isApproved: boolean) => {
+    if (status !== 'active') return <AlertTriangle className="h-4 w-4 text-red-500" />;
     if (!isApproved) return <Clock className="h-4 w-4 text-yellow-500" />;
     return <CheckCircle className="h-4 w-4 text-green-500" />;
   };
@@ -121,18 +121,6 @@ export default function SuperadminDashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-      {/* Welcome Section - Responsive */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-lg p-4 sm:p-6 text-white">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Superadmin Dashboard</h1>
-            <p className="text-red-100 text-sm sm:text-base">
-              Complete system administration and user management
-            </p>
-          </div>
-          <Shield className="h-12 w-12 sm:h-16 sm:w-16 text-red-200 flex-shrink-0" />
-        </div>
-      </div>
 
       {/* Quick Actions - Responsive Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -283,7 +271,7 @@ export default function SuperadminDashboard() {
               recentUsers.map((user) => (
                 <div key={user._id} className="flex items-center justify-between p-2 sm:p-3 bg-slate-700/50 rounded-lg">
                   <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                    {getStatusIcon(user.isActive, user.isApproved)}
+                    {getStatusIcon(user.status, user.isApproved)}
                     <div className="min-w-0 flex-1">
                       <div className="text-white font-medium text-sm sm:text-base truncate">
                         {user.firstName} {user.lastName}

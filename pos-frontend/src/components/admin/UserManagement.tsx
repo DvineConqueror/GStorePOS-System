@@ -14,7 +14,7 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   role: 'manager' | 'cashier';
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   createdAt: string;
 }
 
@@ -155,8 +155,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       <TableCell>{userProfile.username}</TableCell>
                       <TableCell>{userProfile.email}</TableCell>
                       <TableCell>
-                        <Badge variant={userProfile.isActive ? 'default' : 'destructive'}>
-                          {userProfile.isActive ? 'Active' : 'Inactive'}
+                        <Badge variant={userProfile.status === 'active' ? 'default' : userProfile.status === 'inactive' ? 'secondary' : 'destructive'}>
+                          {userProfile.status === 'active' ? 'Active' : userProfile.status === 'inactive' ? 'Inactive' : 'Deleted'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -167,10 +167,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => onToggleUserStatus(userProfile._id, userProfile.isActive)}
+                            onClick={() => onToggleUserStatus(userProfile._id, userProfile.status === 'active')}
                             disabled={userProfile._id === currentUserId} // Prevent admin from deactivating themselves
                           >
-                            {userProfile.isActive ? (
+                            {userProfile.status === 'active' ? (
                               <>
                                 <UserX className="mr-2 h-4 w-4" />
                                 Deactivate

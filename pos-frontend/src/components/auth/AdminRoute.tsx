@@ -15,7 +15,7 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
     );
   }
 
-  if (!user || !user.isActive) {
+  if (!user || user.status !== 'active') {
     return <Navigate to="/login" />;
   }
 

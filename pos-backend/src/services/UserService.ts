@@ -37,7 +37,7 @@ export class UserService {
         { email: emailOrUsername },
         { username: emailOrUsername }
       ],
-      isActive: true
+      status: 'active'
     }).select('+password');
 
     if (!user) {
@@ -59,7 +59,7 @@ export class UserService {
     page?: number;
     limit?: number;
     role?: string;
-    isActive?: boolean;
+    status?: string;
     search?: string;
     sort?: string;
     order?: 'asc' | 'desc';
@@ -68,7 +68,7 @@ export class UserService {
       page = 1,
       limit = 20,
       role,
-      isActive,
+      status,
       search,
       sort = 'createdAt',
       order = 'desc'
@@ -78,7 +78,7 @@ export class UserService {
       role: 'cashier' // Only return cashiers, exclude managers/superadmins
     };
 
-    if (isActive !== undefined) query.isActive = isActive;
+    if (status) query.status = status;
     if (search) {
       query.$or = [
         { firstName: { $regex: search, $options: 'i' } },
@@ -128,9 +128,9 @@ export class UserService {
    */
   static async getUserStats() {
     const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ isActive: true });
-    const managerUsers = await User.countDocuments({ role: 'manager', isActive: true });
-    const activeCashierUsers = await User.countDocuments({ role: 'cashier', isActive: true });
+    const activeUsers = await User.countDocuments({ status: 'active' });
+    const managerUsers = await User.countDocuments({ role: 'manager', status: 'active' });
+    const activeCashierUsers = await User.countDocuments({ role: 'cashier', status: 'active' });
     const totalCashierUsers = await User.countDocuments({ role: 'cashier' });
 
     return {

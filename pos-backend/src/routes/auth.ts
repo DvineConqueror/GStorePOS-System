@@ -72,7 +72,7 @@ router.post('/setup', async (req, res): Promise<void> => {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
-          isActive: user.isActive,
+          status: user.status,
         },
         token,
       },
@@ -123,7 +123,7 @@ router.post('/register-cashier', async (req, res): Promise<void> => {
       role: 'cashier',
       firstName,
       lastName,
-      isActive: true, // Active but not approved
+      status: 'inactive', // Inactive until approved
       isApproved: false, // Requires manager/superadmin approval
     });
 
@@ -140,7 +140,7 @@ router.post('/register-cashier', async (req, res): Promise<void> => {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
-          isActive: user.isActive,
+          status: user.status,
         },
       },
     } as ApiResponse);
@@ -238,7 +238,7 @@ router.post('/register', authenticate, async (req, res): Promise<void> => {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
-          isActive: user.isActive,
+          status: user.status,
         },
         token,
       },
@@ -320,7 +320,7 @@ router.post('/login', async (req, res): Promise<void> => {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
-          isActive: user.isActive,
+          status: user.status,
           isApproved: user.isApproved,
           lastLogin: user.lastLogin,
         },
@@ -362,7 +362,7 @@ router.get('/me', authenticate, async (req, res): Promise<void> => {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
-          isActive: user.isActive,
+          status: user.status,
           isApproved: user.isApproved,
           lastLogin: user.lastLogin,
           createdAt: user.createdAt,
@@ -423,7 +423,7 @@ router.put('/profile', authenticate, async (req, res): Promise<void> => {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
-          isActive: user.isActive,
+          status: user.status,
         },
       },
     } as ApiResponse);

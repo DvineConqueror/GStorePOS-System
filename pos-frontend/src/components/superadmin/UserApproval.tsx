@@ -30,7 +30,7 @@ interface PendingUser {
   role: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   isApproved: boolean;
   createdAt: string;
   createdBy?: {
@@ -51,7 +51,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [bulkAction, setBulkAction] = useState<'approve' | 'reject' | ''>('');
+  const [bulkAction, setBulkAction] = useState<'approve' | 'delete' | ''>('');
   const { toast } = useToast();
   const { triggerRefresh } = useRefresh();
 
@@ -124,26 +124,26 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
     }
   };
 
-  const handleRejectUser = async (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     try {
-      const response = await superadminAPI.approveUser(userId, false);
+      const response = await superadminAPI.deleteUser(userId);
 
       if (response.success) {
         toast({
           title: "Success",
-          description: "User rejected successfully",
+          description: "User deleted successfully",
         });
         fetchPendingUsers();
         triggerRefresh(); // Refresh quick stats
         onApprovalChange?.();
       } else {
-        throw new Error(response.message || 'Failed to reject user');
+        throw new Error(response.message || 'Failed to delete user');
       }
     } catch (error) {
-      console.error('Error rejecting user:', error);
+      console.error('Error deleting user:', error);
       toast({
         title: "Error",
-        description: "Failed to reject user",
+        description: "Failed to delete user",
         variant: "destructive",
       });
     }
@@ -160,15 +160,19 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
     }
 
     try {
-      const response = await superadminAPI.bulkApproveUsers(
-        selectedUsers,
-        bulkAction === 'approve'
-      );
+      let response;
+      
+      if (bulkAction === 'approve') {
+        response = await superadminAPI.bulkApproveUsers(selectedUsers, true);
+      } else if (bulkAction === 'delete') {
+        response = await superadminAPI.bulkDeleteUsers(selectedUsers);
+      }
 
-      if (response.success) {
+      if (response && response.success) {
+        const action = bulkAction === 'approve' ? 'approved' : 'deleted';
         toast({
           title: "Success",
-          description: `${response.data.summary.successful} users ${bulkAction === 'approve' ? 'approved' : 'rejected'} successfully`,
+          description: `${response.data.summary.successful} users ${action} successfully`,
         });
         setSelectedUsers([]);
         setBulkAction('');
@@ -176,7 +180,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         triggerRefresh(); // Refresh quick stats
         onApprovalChange?.();
       } else {
-        throw new Error(response.message || 'Failed to process bulk action');
+        throw new Error(response?.message || 'Failed to process bulk action');
       }
     } catch (error) {
       console.error('Error processing bulk action:', error);
@@ -278,13 +282,13 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                   {selectedUsers.length} user(s) selected
                 </span>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                  <Select value={bulkAction} onValueChange={(value: 'approve' | 'reject' | '') => setBulkAction(value)}>
+                  <Select value={bulkAction} onValueChange={(value: 'approve' | 'delete' | '') => setBulkAction(value)}>
                     <SelectTrigger className="w-full sm:w-32 bg-slate-700 border-slate-600 text-white">
                       <SelectValue placeholder="Action" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="approve">Approve</SelectItem>
-                      <SelectItem value="reject">Reject</SelectItem>
+                      <SelectItem value="delete">Delete</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button
@@ -301,8 +305,8 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                     ) : (
                       <>
                         <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Reject All</span>
-                        <span className="sm:hidden">Reject</span>
+                        <span className="hidden sm:inline">Delete All</span>
+                        <span className="sm:hidden">Delete</span>
                       </>
                     )}
                   </Button>
@@ -391,11 +395,11 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleRejectUser(user._id)}
+                        onClick={() => handleDeleteUser(user._id)}
                         className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
                       >
                         <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        Reject
+                        Delete
                       </Button>
                     </div>
                   </div>

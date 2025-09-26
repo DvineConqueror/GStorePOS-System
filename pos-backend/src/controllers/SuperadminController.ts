@@ -14,7 +14,7 @@ export class SuperadminController {
         page = 1,
         limit = 20,
         role,
-        isActive,
+        status,
         isApproved,
         search,
         sort = 'createdAt',
@@ -28,7 +28,9 @@ export class SuperadminController {
       if (role && role !== 'all') {
         filters.role = role; // Override with specific role filter
       }
-      if (isActive !== undefined) filters.isActive = isActive === 'true';
+      if (status && status !== 'all') {
+        filters.status = status; // Filter by status (active, inactive, deleted)
+      }
       if (isApproved !== undefined) filters.isApproved = isApproved === 'true';
       if (search) {
         filters.$or = [
@@ -93,7 +95,8 @@ export class SuperadminController {
               { isApproved: { $exists: false } } // Handle users without isApproved field
             ]
           },
-          { role: { $ne: 'superadmin' } } // Exclude superadmin from pending approvals
+          { role: { $ne: 'superadmin' } }, // Exclude superadmin from pending approvals
+          { status: { $ne: 'deleted' } } // Exclude deleted users from pending approvals
         ]
       };
 
@@ -171,11 +174,11 @@ export class SuperadminController {
       if (approved) {
         user.approvedBy = req.user!._id;
         user.approvedAt = new Date();
+        user.status = 'active'; // Set to active when approved
       } else {
         user.approvedBy = undefined;
         user.approvedAt = undefined;
-        // Optionally deactivate the user if rejected
-        user.isActive = false;
+        user.status = 'inactive'; // Set to inactive when rejected
       }
 
       await user.save();
@@ -193,7 +196,7 @@ export class SuperadminController {
             isApproved: user.isApproved,
             approvedBy: user.approvedBy,
             approvedAt: user.approvedAt,
-            isActive: user.isActive,
+            status: user.status,
           },
           reason: reason || null,
         },
@@ -244,7 +247,7 @@ export class SuperadminController {
         role: 'manager',
         firstName,
         lastName,
-        isActive: true,
+        status: 'active', // Active and approved when created by superadmin
         isApproved: true, // Auto-approved when created by superadmin
         approvedBy: req.user!._id,
         approvedAt: new Date(),
@@ -264,7 +267,7 @@ export class SuperadminController {
             role: manager.role,
             firstName: manager.firstName,
             lastName: manager.lastName,
-            isActive: manager.isActive,
+            status: manager.status,
             isApproved: manager.isApproved,
             approvedBy: manager.approvedBy,
             approvedAt: manager.approvedAt,
@@ -290,16 +293,17 @@ export class SuperadminController {
       const stats = await User.aggregate([
         {
           $match: {
-            role: { $ne: 'superadmin' } // Exclude superadmin from counts
+            role: { $ne: 'superadmin' }, // Exclude superadmin from counts
+            status: { $ne: 'deleted' } // Exclude deleted users from counts
           }
         },
         {
           $group: {
             _id: null,
             totalUsers: { $sum: 1 },
-            activeUsers: { $sum: { $cond: ['$isActive', 1, 0] } },
+            activeUsers: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
             approvedUsers: { $sum: { $cond: [{ $or: ['$isApproved', { $eq: ['$isApproved', null] }] }, 1, 0] } },
-            pendingApprovals: { $sum: { $cond: [{ $or: [{ $eq: ['$isApproved', false] }, { $eq: ['$isApproved', null] }] }, 1, 0] } },
+            pendingApprovals: { $sum: { $cond: [{ $and: [{ $or: [{ $eq: ['$isApproved', false] }, { $eq: ['$isApproved', null] }] }, { $ne: ['$status', 'deleted'] }] }, 1, 0] } },
             managerCount: { $sum: { $cond: [{ $eq: ['$role', 'manager'] }, 1, 0] } },
             cashierCount: { $sum: { $cond: [{ $eq: ['$role', 'cashier'] }, 1, 0] } },
           }
@@ -310,24 +314,28 @@ export class SuperadminController {
       const roleStats = await User.aggregate([
         {
           $match: {
-            role: { $ne: 'superadmin' } // Exclude superadmin from role stats
+            role: { $ne: 'superadmin' }, // Exclude superadmin from role stats
+            status: { $ne: 'deleted' } // Exclude deleted users from role stats
           }
         },
         {
           $group: {
             _id: '$role',
             total: { $sum: 1 },
-            active: { $sum: { $cond: ['$isActive', 1, 0] } },
+            active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
             approved: { $sum: { $cond: [{ $or: ['$isApproved', { $eq: ['$isApproved', null] }] }, 1, 0] } },
-            pending: { $sum: { $cond: [{ $or: [{ $eq: ['$isApproved', false] }, { $eq: ['$isApproved', null] }] }, 1, 0] } },
+            pending: { $sum: { $cond: [{ $and: [{ $or: [{ $eq: ['$isApproved', false] }, { $eq: ['$isApproved', null] }] }, { $ne: ['$status', 'deleted'] }] }, 1, 0] } },
           }
         }
       ]);
 
-      const recentUsers = await User.find({ role: { $ne: 'superadmin' } })
+      const recentUsers = await User.find({ 
+        role: { $ne: 'superadmin' },
+        status: { $ne: 'deleted' }
+      })
         .sort({ createdAt: -1 })
         .limit(5)
-        .select('username email role firstName lastName isActive isApproved createdAt');
+        .select('username email role firstName lastName status isApproved createdAt');
 
       res.json({
         success: true,
@@ -402,7 +410,7 @@ export class SuperadminController {
           } else {
             user.approvedBy = undefined;
             user.approvedAt = undefined;
-            user.isActive = false;
+            user.status = 'inactive';
           }
 
           await user.save();
@@ -435,6 +443,115 @@ export class SuperadminController {
       res.status(500).json({
         success: false,
         message: 'Server error while processing bulk approval.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Delete a user (soft delete - set status to 'deleted')
+   */
+  static async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found.',
+        } as ApiResponse);
+        return;
+      }
+
+      // Prevent deleting superadmin users
+      if (user.role === 'superadmin') {
+        res.status(400).json({
+          success: false,
+          message: 'Cannot delete superadmin users.',
+        } as ApiResponse);
+        return;
+      }
+
+      // Soft delete - set status to 'deleted'
+      user.status = 'deleted';
+      await user.save();
+
+      res.json({
+        success: true,
+        message: 'User deleted successfully.',
+        data: {
+          user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            status: user.status,
+          },
+        },
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Delete user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while deleting user.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Bulk delete users (soft delete - set status to 'deleted')
+   */
+  static async bulkDeleteUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const { userIds } = req.body;
+
+      if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'User IDs array is required.',
+        } as ApiResponse);
+        return;
+      }
+
+      const users = await User.find({ _id: { $in: userIds } });
+      
+      // Filter out superadmin users
+      const deletableUsers = users.filter(user => user.role !== 'superadmin');
+      const superadminUsers = users.filter(user => user.role === 'superadmin');
+
+      if (deletableUsers.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'No valid users to delete.',
+        } as ApiResponse);
+        return;
+      }
+
+      // Soft delete - set status to 'deleted'
+      const result = await User.updateMany(
+        { _id: { $in: deletableUsers.map(u => u._id) } },
+        { status: 'deleted' }
+      );
+
+      res.json({
+        success: true,
+        message: 'Bulk delete completed successfully.',
+        data: {
+          summary: {
+            requested: userIds.length,
+            successful: result.modifiedCount,
+            failed: userIds.length - result.modifiedCount,
+            superadminSkipped: superadminUsers.length,
+          },
+        },
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Bulk delete users error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while processing bulk delete.',
       } as ApiResponse);
     }
   }

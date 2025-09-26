@@ -11,7 +11,7 @@ interface User {
   role: 'superadmin' | 'manager' | 'cashier';
   firstName: string;
   lastName: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   isApproved: boolean;
   approvedBy?: string;
   approvedAt?: string;

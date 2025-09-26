@@ -19,7 +19,7 @@ interface User {
   role: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   isApproved: boolean;
   createdAt: string;
   createdBy?: {

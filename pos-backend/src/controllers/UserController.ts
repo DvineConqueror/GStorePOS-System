@@ -12,7 +12,7 @@ export class UserController {
         page = 1,
         limit = 20,
         role,
-        isActive,
+        status,
         search,
         sort = 'createdAt',
         order = 'desc'
@@ -22,7 +22,7 @@ export class UserController {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
         role: role as string,
-        isActive: isActive ? isActive === 'true' : undefined,
+        status: status as string,
         search: search as string,
         sort: sort as string,
         order: order as 'asc' | 'desc'

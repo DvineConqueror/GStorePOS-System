@@ -41,4 +41,14 @@ router.post('/create-manager', SuperadminController.createManager);
 // @access  Private (Superadmin only)
 router.get('/stats', SuperadminController.getSystemStats);
 
+// @desc    Delete a user (soft delete)
+// @route   DELETE /api/v1/superadmin/users/:userId
+// @access  Private (Superadmin only)
+router.delete('/users/:userId', SuperadminController.deleteUser);
+
+// @desc    Bulk delete users (soft delete)
+// @route   POST /api/v1/superadmin/bulk-delete
+// @access  Private (Superadmin only)
+router.post('/bulk-delete', SuperadminController.bulkDeleteUsers);
+
 export default router;

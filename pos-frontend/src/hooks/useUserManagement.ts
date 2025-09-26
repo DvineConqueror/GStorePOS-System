@@ -9,7 +9,7 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   role: 'manager' | 'cashier';
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   createdAt: string;
 }
 
@@ -46,7 +46,7 @@ export const useUserManagement = () => {
       const params: any = {};
       
       if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.isActive = statusFilter === 'active';
+      if (statusFilter !== 'all') params.status = statusFilter;
       
       const response = await usersAPI.getUsers(params);
       
@@ -123,8 +123,9 @@ export const useUserManagement = () => {
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && user.isActive) ||
-      (statusFilter === 'inactive' && !user.isActive);
+      (statusFilter === 'active' && user.status === 'active') ||
+      (statusFilter === 'inactive' && user.status === 'inactive') ||
+      (statusFilter === 'deleted' && user.status === 'deleted');
     
     return matchesSearch && matchesStatus;
   });
