@@ -52,11 +52,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     <div className={`form-section flex flex-col justify-center transition-all duration-500 ease-in-out ${isAdminMode ? 'order-1' : 'order-2'}`}>
       <Card className="border-0 shadow-none">
         <CardHeader className={`${isSignUp ? 'space-y-1 pb-2' : 'space-y-1 pb-4'}`}>
-          <CardTitle className={`${isSignUp ? 'text-xl' : 'text-2xl'} font-bold ${colors.primaryText} transition-colors duration-500 text-center`}>
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          <CardTitle className={`${isSignUp && !isAdminMode ? 'text-xl' : 'text-2xl'} font-bold ${colors.primaryText} transition-colors duration-500 text-center`}>
+            {isSignUp && !isAdminMode ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
           <CardDescription className={`${isSignUp ? 'text-xs' : 'text-sm'} text-center`}>
-            {isSignUp 
+            {isSignUp && !isAdminMode
             ? `Create a new cashier account` 
             : `Sign in to continue to your ${isAdminMode ? 'manager dashboard' : 'POS system'}`}
           </CardDescription>
@@ -97,7 +97,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           )}
 
           <form onSubmit={onFormSubmit} className={`${isSignUp ? 'space-y-2' : 'space-y-4'}`}>
-            {isSignUp && (
+            {isSignUp && !isAdminMode && (
               <>
                 <div className="space-y-0.5">
                   <Label htmlFor="username" className="text-xs font-medium">
@@ -144,15 +144,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             )}
             <div className={`${isSignUp ? 'space-y-0.5' : 'space-y-1'}`}>
               <Label htmlFor="email" className="text-xs font-medium">
-                {isSignUp ? 'Email' : 'Email or Username'}
+                {isSignUp && !isAdminMode ? 'Email' : 'Email or Username'}
               </Label>
               <Input
                 id="email"
-                type={isSignUp ? 'email' : 'text'}
+                type={isSignUp && !isAdminMode ? 'email' : 'text'}
                 value={formData.email}
                 onChange={(e) => onInputChange('email', e.target.value)}
                 className={`h-8 px-3 text-sm ${colors.primaryBorder} transition-all duration-300`}
-                placeholder={isSignUp ? 'you@example.com' : 'email@example.com or username'}
+                placeholder={isSignUp && !isAdminMode ? 'you@example.com' : 'email@example.com or username'}
                 required
               />
             </div>
@@ -161,7 +161,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 <Label htmlFor="password" className="text-xs font-medium">
                   Password
                 </Label>
-                {isSignUp && <PasswordHelpTooltip />}
+                {isSignUp && !isAdminMode && <PasswordHelpTooltip />}
               </div>
               <div className="relative">
                 <Input
@@ -182,7 +182,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 </button>
               </div>
               {/* Password validation feedback for signup only - no reserved space when empty */}
-              {isSignUp && formData.password && (
+              {isSignUp && !isAdminMode && formData.password && (
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-600">Strength:</span>
@@ -222,10 +222,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <div className={`flex flex-col ${isSignUp ? 'gap-1' : 'gap-2'}`}>
               <Button 
                 type="submit" 
-                disabled={isLoading || (isSignUp && !passwordValidation.isValid)}
+                disabled={isLoading || (isSignUp && !isAdminMode && !passwordValidation.isValid)}
                 className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-sm ${colors.primaryButton} duration-500 text-white font-medium transition-all`}
               >
-                {isLoading ? 'Loading...' : (isSignUp ? 'Create Cashier Account' : 'Sign In')}
+                {isLoading ? 'Loading...' : (isSignUp && !isAdminMode ? 'Create Cashier Account' : 'Sign In')}
               </Button>
             </div>
             
@@ -263,6 +263,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   ? 'Already have an account? Sign in' 
                   : "Don't have an account? Sign up as Cashier"}
               </Button>
+            )}
+            {isAdminMode && (
+              <p className="text-[11px] text-center text-gray-600 pt-2">
+                Managers cannot self-register. Please contact a superadmin to create your account.
+              </p>
             )}
           </form>
         </CardContent>

@@ -24,6 +24,15 @@ export default function LoginPage() {
     resetForm();
   };
 
+  // Ensure manager mode never shows signup UI
+  const handleToggleRoleMode = () => {
+    if (isSignUp) {
+      setIsSignUp(false);
+    }
+    resetForm();
+    toggleRoleMode();
+  };
+
   const handleTogglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -54,7 +63,7 @@ export default function LoginPage() {
             onFormSubmit={handleSubmit}
             onInputChange={handleInputChange}
             onToggleSignUp={handleToggleSignUp}
-            onToggleRoleMode={toggleRoleMode}
+          onToggleRoleMode={handleToggleRoleMode}
             onTogglePasswordVisibility={handleTogglePasswordVisibility}
             onToggleRememberMe={handleToggleRememberMe}
           />
