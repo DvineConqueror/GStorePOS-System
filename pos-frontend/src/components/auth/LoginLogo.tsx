@@ -29,19 +29,19 @@ export const LoginLogo: React.FC<LoginLogoProps> = ({ isAdminMode, colors }) => 
       </div>
       
       {/* Desktop Logo Section */}
-      <div className={`logo-section hidden md:flex flex-col items-center justify-center p-12 ${colors.logoBg} rounded-xl transition-all duration-500 ease-in-out ${isAdminMode ? 'order-2' : 'order-1'} shadow-lg`}>
-        <div className={`w-56 h-56 mb-8 ${colors.logoIcon} rounded-full flex items-center justify-center transition-all duration-500 transform hover:scale-105 shadow-xl`}>
+      <div className={`logo-section hidden sm:flex flex-col items-center justify-center py-4 px-6 ${colors.logoBg} rounded-xl transition-all duration-500 ease-in-out ${isAdminMode ? 'order-2' : 'order-1'} shadow-lg`}>
+        <div className={`w-56 h-56 mb-4 ${colors.logoIcon} rounded-full flex items-center justify-center transition-all duration-500 transform hover:scale-105 shadow-xl`}>
           <img
             src={isAdminMode ? "/images/Manager_Logo.png" : "/images/Cashier_Logo.png"}
             alt={isAdminMode ? "Manager Logo" : "Cashier Logo"}
-            className="w-44 h-44 object-contain transition-all duration-500"
+            className="w-48 h-48 object-contain transition-all duration-500"
           />
         </div>
-        <div className="text-center space-y-2">
-          <h2 className={`text-2xl font-bold ${colors.primaryText} transition-colors duration-500`}>
+        <div className="text-center space-y-1">
+          <h2 className={`text-xl font-bold ${colors.primaryText} transition-colors duration-500`}>
             {isAdminMode ? 'Manager Dashboard' : 'Cashier POS'}
           </h2>
-          <p className="text-gray-600 transition-colors duration-500 text-sm leading-relaxed max-w-xs">
+          <p className="text-gray-600 transition-colors duration-500 text-xs leading-relaxed max-w-xs">
             {isAdminMode 
               ? 'Manage operations & analytics' 
               : 'Process sales & track performance'}

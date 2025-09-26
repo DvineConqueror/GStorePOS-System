@@ -41,7 +41,7 @@ router.post('/setup', async (req, res): Promise<void> => {
       role: 'manager',
       firstName,
       lastName,
-      isActive: true,
+      status: 'active', // Initial manager is active
       isApproved: true, // Initial manager is auto-approved
       approvedBy: undefined, // System-created
       approvedAt: new Date(),
@@ -207,7 +207,7 @@ router.post('/register', authenticate, async (req, res): Promise<void> => {
       role: userRole,
       firstName,
       lastName,
-      isActive: true,
+      status: 'active', // New users are active
       isApproved: isAutoApproved,
       approvedBy: isAutoApproved ? req.user?._id : undefined,
       approvedAt: isAutoApproved ? new Date() : undefined,
@@ -273,7 +273,7 @@ router.post('/login', async (req, res): Promise<void> => {
         { email: emailOrUsername },
         { username: emailOrUsername }
       ],
-      isActive: true
+      status: 'active'
     }).select('+password');
 
     if (!user) {

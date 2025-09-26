@@ -11,12 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
-import { AdminAdvancedAnalytics } from '@/components/pos/AdminAdvancedAnalytics';
 import { CashierProductCatalog } from '@/components/pos/CashierProductCatalog';
 import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { PosProvider } from '@/context/PosContext';
-import { Users, Package, BarChart3, ShoppingCart, Zap } from 'lucide-react';
+import { Users, Package, BarChart3, ShoppingCart } from 'lucide-react';
 
 const AdminPageContent = () => {
   const { user, signOut } = useAuth();
@@ -66,7 +65,7 @@ const AdminPageContent = () => {
 
         {/* Tabs for different admin sections */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Users className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Cashier Management</span>
@@ -86,11 +85,6 @@ const AdminPageContent = () => {
               <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Analytics</span>
               <span className="sm:hidden">Analytics</span>
-            </TabsTrigger>
-            <TabsTrigger value="advanced" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Advanced</span>
-              <span className="sm:hidden">Advanced</span>
             </TabsTrigger>
           </TabsList>
 
@@ -183,20 +177,6 @@ const AdminPageContent = () => {
             </div>
           </TabsContent>
 
-          {/* Advanced Analytics Tab */}
-          <TabsContent value="advanced" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  Advanced Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="bg-slate-800">
-                <AdminAdvancedAnalytics />
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </div>

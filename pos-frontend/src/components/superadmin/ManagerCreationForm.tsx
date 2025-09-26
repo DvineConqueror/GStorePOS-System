@@ -18,6 +18,8 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { superadminAPI } from '@/lib/api';
 import { useRefresh } from '@/context/RefreshContext';
+import { PasswordHelpTooltip } from '@/components/ui/password-help-tooltip';
+import { validatePassword, PasswordValidationResult, getPasswordStrengthColor } from '@/utils/passwordValidation';
 
 interface ManagerFormData {
   username: string;
@@ -45,6 +47,11 @@ export default function ManagerCreationForm({ onManagerCreated }: ManagerCreatio
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<ManagerFormData>>({});
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult>({
+    isValid: false,
+    errors: [],
+    strength: 'weak'
+  });
   const { toast } = useToast();
   const { triggerRefresh } = useRefresh();
 
@@ -70,8 +77,11 @@ export default function ManagerCreationForm({ onManagerCreated }: ManagerCreatio
     // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else {
+      const validation = validatePassword(formData.password);
+      if (!validation.isValid) {
+        newErrors.password = 'Password does not meet requirements';
+      }
     }
 
     // Confirm password validation
@@ -97,9 +107,16 @@ export default function ManagerCreationForm({ onManagerCreated }: ManagerCreatio
 
   const handleInputChange = (field: keyof ManagerFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+    
+    // Validate password in real-time
+    if (field === 'password') {
+      const validation = validatePassword(value);
+      setPasswordValidation(validation);
     }
   };
 
@@ -287,9 +304,12 @@ export default function ManagerCreationForm({ onManagerCreated }: ManagerCreatio
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-300 text-sm sm:text-base">
-                    Password *
-                  </Label>
+                  <div className="flex items-center gap-1">
+                    <Label htmlFor="password" className="text-slate-300 text-sm sm:text-base">
+                      Password *
+                    </Label>
+                    <PasswordHelpTooltip className="text-slate-400" />
+                  </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
@@ -313,6 +333,28 @@ export default function ManagerCreationForm({ onManagerCreated }: ManagerCreatio
                         <Eye className="h-4 w-4 text-slate-400" />
                       )}
                     </Button>
+                  </div>
+                  {/* Password validation feedback - reserved space to prevent layout shift */}
+                  <div className="min-h-[3rem]">
+                    {formData.password && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-400">Strength:</span>
+                          <span className={`text-xs font-medium ${getPasswordStrengthColor(passwordValidation.strength)}`}>
+                            {passwordValidation.strength.charAt(0).toUpperCase() + passwordValidation.strength.slice(1)}
+                          </span>
+                        </div>
+                        {passwordValidation.errors.length > 0 && (
+                          <div className="text-xs text-red-400">
+                            <ul className="list-disc list-inside space-y-0.5">
+                              {passwordValidation.errors.map((error, index) => (
+                                <li key={index}>{error}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   {errors.password && (
                     <p className="text-xs sm:text-sm text-red-400 flex items-center">
@@ -382,7 +424,7 @@ export default function ManagerCreationForm({ onManagerCreated }: ManagerCreatio
               </Button>
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !passwordValidation.isValid}
                 className="bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base order-1 sm:order-2"
               >
                 {loading ? (

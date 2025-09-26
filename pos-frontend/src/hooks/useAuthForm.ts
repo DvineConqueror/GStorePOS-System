@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import { validatePassword, PasswordValidationResult } from '@/utils/passwordValidation';
 
 interface AuthFormData {
   email: string;
@@ -27,6 +28,11 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
     lastName: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult>({
+    isValid: false,
+    errors: [],
+    strength: 'weak'
+  });
   
   const { signIn, signUp, signUpCashier, setup, refreshSession } = useAuth();
   const { toast } = useToast();
@@ -137,6 +143,12 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
 
   const updateFormData = (field: keyof AuthFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Validate password when it changes
+    if (field === 'password' && isSignUp) {
+      const validation = validatePassword(value);
+      setPasswordValidation(validation);
+    }
   };
 
   const resetForm = () => {
@@ -147,11 +159,17 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
       firstName: '',
       lastName: ''
     });
+    setPasswordValidation({
+      isValid: false,
+      errors: [],
+      strength: 'weak'
+    });
   };
 
   return {
     formData,
     isLoading,
+    passwordValidation,
     handleSubmit,
     updateFormData,
     resetForm

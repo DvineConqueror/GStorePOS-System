@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Eye, EyeOff, ShieldCheck, Users, Github, Chrome } from 'lucide-react';
+import { PasswordHelpTooltip } from '@/components/ui/password-help-tooltip';
 import { ColorScheme } from '@/utils/colorSchemes';
+import { PasswordValidationResult, getPasswordStrengthColor } from '@/utils/passwordValidation';
 
 interface LoginFormProps {
   isAdminMode: boolean;
@@ -19,6 +21,7 @@ interface LoginFormProps {
     firstName: string;
     lastName: string;
   };
+  passwordValidation: PasswordValidationResult;
   rememberMe: boolean;
   showPassword: boolean;
   onFormSubmit: (e: React.FormEvent) => void;
@@ -35,6 +38,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   isLoading,
   colors,
   formData,
+  passwordValidation,
   rememberMe,
   showPassword,
   onFormSubmit,
@@ -140,22 +144,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             )}
             <div className={`${isSignUp ? 'space-y-0.5' : 'space-y-1'}`}>
               <Label htmlFor="email" className="text-xs font-medium">
-                Email
+                {isSignUp ? 'Email' : 'Email or Username'}
               </Label>
               <Input
                 id="email"
-                type="email"
+                type={isSignUp ? 'email' : 'text'}
                 value={formData.email}
                 onChange={(e) => onInputChange('email', e.target.value)}
                 className={`h-8 px-3 text-sm ${colors.primaryBorder} transition-all duration-300`}
-                placeholder="you@example.com"
+                placeholder={isSignUp ? 'you@example.com' : 'email@example.com or username'}
                 required
               />
             </div>
             <div className={`${isSignUp ? 'space-y-0.5' : 'space-y-1'}`}>
-              <Label htmlFor="password" className="text-xs font-medium">
-                Password
-              </Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="password" className="text-xs font-medium">
+                  Password
+                </Label>
+                {isSignUp && <PasswordHelpTooltip />}
+              </div>
               <div className="relative">
                 <Input
                   id="password"
@@ -174,6 +181,26 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   {showPassword ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                 </button>
               </div>
+              {/* Password validation feedback for signup only - no reserved space when empty */}
+              {isSignUp && formData.password && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-600">Strength:</span>
+                    <span className={`text-xs font-medium ${getPasswordStrengthColor(passwordValidation.strength)}`}>
+                      {passwordValidation.strength.charAt(0).toUpperCase() + passwordValidation.strength.slice(1)}
+                    </span>
+                  </div>
+                  {passwordValidation.errors.length > 0 && (
+                    <div className="text-xs text-red-500">
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {passwordValidation.errors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             {/* Remember Me checkbox - only show for login, not signup */}
@@ -195,7 +222,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <div className={`flex flex-col ${isSignUp ? 'gap-1' : 'gap-2'}`}>
               <Button 
                 type="submit" 
-                disabled={isLoading}
+                disabled={isLoading || (isSignUp && !passwordValidation.isValid)}
                 className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-sm ${colors.primaryButton} duration-500 text-white font-medium transition-all`}
               >
                 {isLoading ? 'Loading...' : (isSignUp ? 'Create Cashier Account' : 'Sign In')}

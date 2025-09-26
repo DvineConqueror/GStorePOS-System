@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   
   const { isAdminMode, toggleRoleMode } = useLoginAnimation();
-  const { formData, isLoading, handleSubmit, updateFormData, resetForm } = useAuthForm({
+  const { formData, isLoading, passwordValidation, handleSubmit, updateFormData, resetForm } = useAuthForm({
     isAdminMode,
     isSignUp,
     rememberMe
@@ -48,6 +48,7 @@ export default function LoginPage() {
             isLoading={isLoading}
             colors={colors}
             formData={formData}
+            passwordValidation={passwordValidation}
             rememberMe={rememberMe}
             showPassword={showPassword}
             onFormSubmit={handleSubmit}

@@ -6,12 +6,11 @@ import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { PersonalCashierAnalytics } from '@/components/pos/PersonalCashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
-import { AdvancedAnalytics } from '@/components/pos/AdvancedAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { PosProvider } from '@/context/PosContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, ShoppingCart, BarChart3, History, User, Zap } from 'lucide-react';
+import { LogOut, ShoppingCart, BarChart3, History, User } from 'lucide-react';
 
 function PosPageContent() {
   const { user, signOut } = useAuth();
@@ -39,7 +38,7 @@ function PosPageContent() {
 
         {/* Tabs for different sections */}
         <Tabs defaultValue="pos" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Point of Sale</span>
@@ -49,11 +48,6 @@ function PosPageContent() {
               <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Analytics</span>
               <span className="sm:hidden">Analytics</span>
-            </TabsTrigger>
-            <TabsTrigger value="advanced" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Advanced</span>
-              <span className="sm:hidden">Advanced</span>
             </TabsTrigger>
           </TabsList>
 
@@ -111,11 +105,6 @@ function PosPageContent() {
           </TabsContent>
 
           {/* Advanced Analytics Tab */}
-          <TabsContent value="advanced" className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
-              <AdvancedAnalytics />
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
     </div>
