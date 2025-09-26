@@ -4,7 +4,7 @@ import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { UnifiedAnalytics } from '@/components/pos/UnifiedAnalytics';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
-import { PersonalCashierAnalytics } from '@/components/pos/PersonalCashierAnalytics';
+import { UnifiedCashierAnalytics } from '@/components/pos/UnifiedCashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
@@ -75,14 +75,7 @@ function PosPageContent() {
                 <>
                   {/* Cashiers see only their personal analytics with blue theme */}
                   <div className="col-span-1 lg:col-span-2">
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
-                      <PersonalCashierAnalytics />
-                    </div>
-                  </div>
-                  <div className="col-span-1">
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
-                      <TransactionHistory />
-                    </div>
+                    <UnifiedCashierAnalytics />
                   </div>
                 </>
               )}
