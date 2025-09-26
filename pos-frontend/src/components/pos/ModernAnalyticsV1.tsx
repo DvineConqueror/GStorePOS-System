@@ -47,10 +47,10 @@ interface AnalyticsData {
 }
 
 const SPARKLINE_COLORS = {
-  primary: '#60a5fa', // blue-400
-  secondary: '#4ade80', // green-400
-  accent: '#fbbf24', // amber-400
-  danger: '#f87171' // red-400
+  primary: '#3b82f6', // blue-500
+  secondary: '#10b981', // emerald-500
+  accent: '#8b5cf6', // violet-500
+  danger: '#ef4444' // red-500
 };
 
 export function ModernAnalyticsV1() {
@@ -175,10 +175,10 @@ export function ModernAnalyticsV1() {
       <div className="space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 bg-slate-200 animate-pulse rounded-lg" />
+            <div key={i} className="h-20 bg-slate-100 animate-pulse rounded-lg" />
           ))}
         </div>
-        <div className="h-64 bg-slate-200 animate-pulse rounded-lg" />
+        <div className="h-64 bg-slate-100 animate-pulse rounded-lg" />
       </div>
     );
   }
@@ -202,10 +202,10 @@ export function ModernAnalyticsV1() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-green-400" />
+                <DollarSign className="h-4 w-4 text-blue-500" />
                 <span className="text-sm font-medium text-slate-600">Total Sales</span>
               </div>
-              <TrendingUp className="h-4 w-4 text-green-400" />
+              <TrendingUp className="h-4 w-4 text-blue-500" />
             </div>
             <div className="text-2xl font-bold text-slate-900 mb-2">
               {formatCurrency(analytics.totalSales)}
@@ -232,10 +232,10 @@ export function ModernAnalyticsV1() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4 text-blue-400" />
+                <ShoppingCart className="h-4 w-4 text-emerald-500" />
                 <span className="text-sm font-medium text-slate-600">Transactions</span>
               </div>
-              <Activity className="h-4 w-4 text-blue-400" />
+              <Activity className="h-4 w-4 text-emerald-500" />
             </div>
             <div className="text-2xl font-bold text-slate-900 mb-2">
               {analytics.totalTransactions}
@@ -261,10 +261,10 @@ export function ModernAnalyticsV1() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-blue-400" />
+                <Target className="h-4 w-4 text-violet-500" />
                 <span className="text-sm font-medium text-slate-600">Avg Transaction</span>
               </div>
-              <BarChart3 className="h-4 w-4 text-blue-400" />
+              <BarChart3 className="h-4 w-4 text-violet-500" />
             </div>
             <div className="text-2xl font-bold text-slate-900 mb-2">
               {formatCurrency(analytics.avgTransaction)}
@@ -291,10 +291,10 @@ export function ModernAnalyticsV1() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-400" />
+                <Clock className="h-4 w-4 text-red-500" />
                 <span className="text-sm font-medium text-slate-600">Peak Hour</span>
               </div>
-              <Award className="h-4 w-4 text-blue-400" />
+              <Award className="h-4 w-4 text-red-500" />
             </div>
             <div className="text-2xl font-bold text-slate-900 mb-2">
               {analytics.peakHour ? `${analytics.peakHour.hour}:00` : 'N/A'}
@@ -323,7 +323,7 @@ export function ModernAnalyticsV1() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2 text-slate-900">
-              <Users className="h-5 w-5 text-blue-400" />
+              <Users className="h-5 w-5 text-blue-500" />
               Top Performer
             </CardTitle>
           </CardHeader>
@@ -364,7 +364,7 @@ export function ModernAnalyticsV1() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2 text-slate-900">
-              <PieChartIcon className="h-5 w-5 text-green-400" />
+              <PieChartIcon className="h-5 w-5 text-emerald-500" />
               Top Category
             </CardTitle>
           </CardHeader>
@@ -419,7 +419,7 @@ export function ModernAnalyticsV1() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2 text-slate-900">
-            <Clock className="h-5 w-5 text-blue-400" />
+            <Clock className="h-5 w-5 text-blue-500" />
             Hourly Performance
           </CardTitle>
         </CardHeader>
@@ -430,8 +430,8 @@ export function ModernAnalyticsV1() {
                 <Area 
                   type="monotone" 
                   dataKey="sales" 
-                  stroke="#60a5fa" 
-                  fill="#60a5fa" 
+                  stroke="#3b82f6" 
+                  fill="#3b82f6" 
                   fillOpacity={0.3}
                   strokeWidth={2}
                 />

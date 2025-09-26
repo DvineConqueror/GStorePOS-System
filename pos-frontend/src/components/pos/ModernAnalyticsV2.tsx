@@ -59,7 +59,7 @@ interface AnalyticsData {
   };
 }
 
-const CATEGORY_COLORS = ['#60a5fa', '#4ade80', '#fbbf24', '#f87171', '#a78bfa', '#22d3ee'];
+const CATEGORY_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#06b6d4'];
 
 export function ModernAnalyticsV2() {
   const { user } = useAuth();
@@ -191,12 +191,12 @@ export function ModernAnalyticsV2() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-slate-200 animate-pulse rounded-xl" />
+            <div key={i} className="h-32 bg-slate-100 animate-pulse rounded-xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-80 bg-slate-200 animate-pulse rounded-xl" />
-          <div className="h-80 bg-slate-200 animate-pulse rounded-xl" />
+          <div className="h-80 bg-slate-100 animate-pulse rounded-xl" />
+          <div className="h-80 bg-slate-100 animate-pulse rounded-xl" />
         </div>
       </div>
     );
@@ -234,7 +234,7 @@ export function ModernAnalyticsV2() {
         <Card className="relative overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <DollarSign className="h-6 w-6 text-green-400" />
+              <DollarSign className="h-6 w-6 text-blue-500" />
               <GrowthIndicator value={analytics.growthMetrics.salesGrowth} label="Sales" />
             </div>
             <div className="space-y-2">
@@ -253,7 +253,7 @@ export function ModernAnalyticsV2() {
         <Card className="relative overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <ShoppingCart className="h-6 w-6 text-blue-400" />
+              <ShoppingCart className="h-6 w-6 text-emerald-500" />
               <GrowthIndicator value={analytics.growthMetrics.transactionGrowth} label="Transactions" />
             </div>
             <div className="space-y-2">
@@ -272,8 +272,8 @@ export function ModernAnalyticsV2() {
         <Card className="relative overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <Clock className="h-6 w-6 text-blue-400" />
-              <Star className="h-4 w-4 text-blue-400" />
+              <Clock className="h-6 w-6 text-violet-500" />
+              <Star className="h-4 w-4 text-violet-500" />
             </div>
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-slate-600">Peak Hour</h3>
@@ -291,8 +291,8 @@ export function ModernAnalyticsV2() {
         <Card className="relative overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <Target className="h-6 w-6 text-green-400" />
-              <Badge className="bg-green-600 text-white border-green-500">
+              <Target className="h-6 w-6 text-emerald-500" />
+              <Badge className="bg-emerald-600 text-white border-emerald-500">
                 Top
               </Badge>
             </div>
@@ -315,7 +315,7 @@ export function ModernAnalyticsV2() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-blue-400" />
+              <Users className="h-5 w-5 text-blue-500" />
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">Top Performer</h3>
                 <p className="text-sm text-slate-600">Leading cashier this period</p>
@@ -370,7 +370,7 @@ export function ModernAnalyticsV2() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <PieChartIcon className="h-5 w-5 text-green-400" />
+              <PieChartIcon className="h-5 w-5 text-emerald-500" />
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">Category Performance</h3>
                 <p className="text-sm text-slate-600">Sales by category breakdown</p>
@@ -417,7 +417,7 @@ export function ModernAnalyticsV2() {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3">
-            <BarChart3 className="h-5 w-5 text-blue-400" />
+            <BarChart3 className="h-5 w-5 text-blue-500" />
             <div>
               <h3 className="text-lg font-semibold text-slate-900">Hourly Performance</h3>
               <p className="text-sm text-slate-600">Sales distribution throughout the day</p>
@@ -458,8 +458,8 @@ export function ModernAnalyticsV2() {
                 />
                 <defs>
                   <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#60a5fa" />
-                    <stop offset="100%" stopColor="#3b82f6" />
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#1d4ed8" />
                   </linearGradient>
                 </defs>
               </BarChart>

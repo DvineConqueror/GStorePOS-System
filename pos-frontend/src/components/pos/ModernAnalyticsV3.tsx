@@ -59,7 +59,7 @@ interface AnalyticsData {
   };
 }
 
-const CATEGORY_COLORS = ['#60a5fa', '#4ade80', '#fbbf24', '#f87171', '#a78bfa', '#22d3ee'];
+const CATEGORY_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#06b6d4'];
 
 export function ModernAnalyticsV3() {
   const { user } = useAuth();
@@ -195,12 +195,12 @@ export function ModernAnalyticsV3() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-48 bg-slate-200 animate-pulse rounded-2xl" />
+            <div key={i} className="h-48 bg-slate-100 animate-pulse rounded-2xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-80 bg-slate-200 animate-pulse rounded-2xl" />
-          <div className="h-80 bg-slate-200 animate-pulse rounded-2xl" />
+          <div className="lg:col-span-2 h-80 bg-slate-100 animate-pulse rounded-2xl" />
+          <div className="h-80 bg-slate-100 animate-pulse rounded-2xl" />
         </div>
       </div>
     );
@@ -239,7 +239,7 @@ export function ModernAnalyticsV3() {
         <div className={`absolute top-0 right-0 w-32 h-32 ${color} opacity-10 rounded-full -translate-y-16 translate-x-16`} />
         <CardContent className="p-6 relative">
           <div className="flex items-center justify-between mb-4">
-            <Icon className="h-6 w-6 text-blue-400" />
+            <Icon className="h-6 w-6 text-blue-500" />
             {trend !== undefined && (
               <div className={`flex items-center gap-1 ${trendColor}`}>
                 <TrendIcon className="h-4 w-4" />
@@ -258,9 +258,9 @@ export function ModernAnalyticsV3() {
   };
 
   const radialData = [
-    { name: 'Sales', value: 75, fill: '#60a5fa' },
-    { name: 'Transactions', value: 60, fill: '#4ade80' },
-    { name: 'Efficiency', value: 85, fill: '#fbbf24' }
+    { name: 'Sales', value: 75, fill: '#3b82f6' },
+    { name: 'Transactions', value: 60, fill: '#10b981' },
+    { name: 'Efficiency', value: 85, fill: '#8b5cf6' }
   ];
 
   return (
@@ -298,7 +298,7 @@ export function ModernAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Award className="h-5 w-5 text-blue-400" />
+              <Award className="h-5 w-5 text-blue-500" />
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">Top Performer</h3>
                 <p className="text-sm text-slate-600">Leading cashier</p>
@@ -351,7 +351,7 @@ export function ModernAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <PieChartIcon className="h-5 w-5 text-green-400" />
+              <PieChartIcon className="h-5 w-5 text-emerald-500" />
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">Categories</h3>
                 <p className="text-sm text-slate-600">Sales breakdown</p>
@@ -400,7 +400,7 @@ export function ModernAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Zap className="h-5 w-5 text-blue-400" />
+              <Zap className="h-5 w-5 text-violet-500" />
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">Efficiency</h3>
                 <p className="text-sm text-slate-600">Performance metrics</p>
@@ -412,7 +412,7 @@ export function ModernAnalyticsV3() {
               <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="80%" data={radialData}>
                   <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-                  <RadialBar dataKey="value" cornerRadius={8} fill="#60a5fa" />
+                  <RadialBar dataKey="value" cornerRadius={8} fill="#3b82f6" />
                 </RadialBarChart>
               </ResponsiveContainer>
             </div>
@@ -444,7 +444,7 @@ export function ModernAnalyticsV3() {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3">
-            <TrendingUpIcon className="h-5 w-5 text-blue-400" />
+            <TrendingUpIcon className="h-5 w-5 text-blue-500" />
             <div>
               <h3 className="text-lg font-semibold text-slate-900">Weekly Trend</h3>
               <p className="text-sm text-slate-600">Sales performance over the last 7 days</p>
@@ -458,10 +458,10 @@ export function ModernAnalyticsV3() {
                 <Line 
                   type="monotone" 
                   dataKey="sales" 
-                  stroke="#60a5fa" 
+                  stroke="#3b82f6" 
                   strokeWidth={4}
-                  dot={{ fill: '#60a5fa', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: '#60a5fa', strokeWidth: 2 }}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 6 }}
+                  activeDot={{ r: 8, stroke: '#3b82f6', strokeWidth: 2 }}
                 />
                 <Tooltip 
                   contentStyle={{
