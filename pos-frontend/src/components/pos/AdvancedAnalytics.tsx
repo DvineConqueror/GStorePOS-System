@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { transactionsAPI, productsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
 import { 
@@ -19,10 +20,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  ScatterChart,
-  Scatter
 } from 'recharts';
-import { TrendingUp, TrendingDown, Clock, Target, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, Target, Zap, Star, Award, Users, ShoppingCart, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
 
 interface HourlySales {
   hour: string;
@@ -55,110 +54,144 @@ const COLORS = ['#3b82f6', '#1d4ed8', '#1e40af', '#1e3a8a', '#312e81', '#7c3aed'
 
 export function AdvancedAnalytics() {
   const { user } = useAuth();
-  const [hourlySales, setHourlySales] = useState<HourlySales[]>([]);
-  const [categoryPerformance, setCategoryPerformance] = useState<CategoryPerformance[]>([]);
-  const [topProducts, setTopProducts] = useState<ProductPerformance[]>([]);
-  const [trendData, setTrendData] = useState<TrendData[]>([]);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Enhanced analytics calculations
+  const analytics = useMemo(() => {
+    if (!analyticsData) return null;
+
+    const { transactions, products } = analyticsData;
+    const userTransactions = transactions.filter((t: any) => 
+      t.status === 'completed' && 
+      (user?.role === 'manager' || t.cashierId === user?.id)
+    );
+
+    // Personal performance metrics
+    const totalSales = userTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+    const totalTransactions = userTransactions.length;
+    const avgTransaction = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+    const totalItems = userTransactions.reduce((sum: number, t: any) => 
+      sum + t.items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0), 0
+    );
+
+    // Today's performance
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTransactions = userTransactions.filter((t: any) => 
+      new Date(t.createdAt || t.timestamp) >= today
+    );
+    const todaySales = todayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+    const todayItems = todayTransactions.reduce((sum: number, t: any) => 
+      sum + t.items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0), 0
+    );
+
+    // Peak performance hour
+    const hourlySales = new Map();
+    userTransactions.forEach((t: any) => {
+      const hour = new Date(t.createdAt || t.timestamp).getHours();
+      const current = hourlySales.get(hour) || { sales: 0, count: 0 };
+      hourlySales.set(hour, { sales: current.sales + t.total, count: current.count + 1 });
+    });
+    const peakHour = Array.from(hourlySales.entries())
+      .sort(([,a], [,b]) => b.sales - a.sales)[0];
+
+    // Best selling category
+    const categorySales = new Map();
+    userTransactions.forEach((t: any) => {
+      t.items.forEach((item: any) => {
+        const category = item.category || 'Others';
+        const current = categorySales.get(category) || 0;
+        categorySales.set(category, current + (item.price * item.quantity));
+      });
+    });
+    const topCategory = Array.from(categorySales.entries())
+      .sort(([,a], [,b]) => b - a)[0];
+
+    // Weekly performance trend
+    const weeklyData = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      
+      const dayTransactions = userTransactions.filter((t: any) => {
+        const txDate = new Date(t.createdAt || t.timestamp);
+        txDate.setHours(0, 0, 0, 0);
+        return txDate.getTime() === date.getTime();
+      });
+      
+      const daySales = dayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+      
+      weeklyData.push({
+        date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        sales: daySales,
+        transactions: dayTransactions.length,
+        items: dayTransactions.reduce((sum: number, t: any) => 
+          sum + t.items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0), 0
+        )
+      });
+    }
+
+    // Performance insights
+    const insights = [];
+    if (peakHour) {
+      insights.push({
+        type: 'success',
+        icon: Clock,
+        title: 'Peak Performance',
+        description: `Your best hour is ${peakHour[0]}:00 with ${formatCurrency(peakHour[1].sales)} in sales`
+      });
+    }
+    
+    if (topCategory) {
+      insights.push({
+        type: 'info',
+        icon: Target,
+        title: 'Top Category',
+        description: `${topCategory[0]} is your best-selling category with ${formatCurrency(topCategory[1])}`
+      });
+    }
+
+    if (avgTransaction > 50) {
+      insights.push({
+        type: 'success',
+        icon: Star,
+        title: 'High Value Sales',
+        description: `Great job! Your average transaction is ${formatCurrency(avgTransaction)}`
+      });
+    }
+
+    return {
+      totalSales,
+      totalTransactions,
+      avgTransaction,
+      totalItems,
+      todaySales,
+      todayTransactions,
+      todayItems,
+      peakHour: peakHour ? { hour: peakHour[0], sales: peakHour[1].sales } : null,
+      topCategory: topCategory ? { name: topCategory[0], sales: topCategory[1] } : null,
+      weeklyData,
+      insights,
+      hourlyData: Array.from(hourlySales.entries())
+        .map(([hour, data]) => ({ hour: `${hour}:00`, sales: data.sales, transactions: data.count }))
+        .sort((a, b) => parseInt(a.hour) - parseInt(b.hour))
+    };
+  }, [analyticsData, user]);
 
   const fetchAdvancedAnalytics = async () => {
     try {
       setLoading(true);
       
-      // Get transactions
       const transactionsResponse = await transactionsAPI.getTransactions();
       const productsResponse = await productsAPI.getProducts();
       
       if (transactionsResponse.success && productsResponse.success) {
-        const transactions = transactionsResponse.data.filter((t: any) => 
-          t.status === 'completed' && 
-          (user?.role === 'manager' || t.cashierId === user?.id)
-        );
-        
-        // Calculate hourly sales
-        const hourlyMap = new Map<string, { sales: number; transactions: number }>();
-        transactions.forEach((transaction: any) => {
-          const hour = new Date(transaction.createdAt || transaction.timestamp).getHours();
-          const hourKey = `${hour}:00`;
-          const current = hourlyMap.get(hourKey) || { sales: 0, transactions: 0 };
-          hourlyMap.set(hourKey, {
-            sales: current.sales + transaction.total,
-            transactions: current.transactions + 1
-          });
+        setAnalyticsData({
+          transactions: transactionsResponse.data,
+          products: productsResponse.data
         });
-        
-        const hourlyData = Array.from(hourlyMap.entries())
-          .map(([hour, data]) => ({ hour, ...data }))
-          .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
-        setHourlySales(hourlyData);
-        
-        // Calculate category performance
-        const categoryMap = new Map<string, { sales: number; items: number }>();
-        transactions.forEach((transaction: any) => {
-          transaction.items.forEach((item: any) => {
-            const category = item.category || 'Others';
-            const current = categoryMap.get(category) || { sales: 0, items: 0 };
-            categoryMap.set(category, {
-              sales: current.sales + (item.totalPrice || item.price * item.quantity),
-              items: current.items + item.quantity
-            });
-          });
-        });
-        
-        const totalSales = Array.from(categoryMap.values()).reduce((sum, cat) => sum + cat.sales, 0);
-        const categoryData = Array.from(categoryMap.entries())
-          .map(([category, data]) => ({
-            category,
-            sales: data.sales,
-            items: data.items,
-            percentage: (data.sales / totalSales) * 100
-          }))
-          .sort((a, b) => b.sales - a.sales)
-          .slice(0, 6);
-        setCategoryPerformance(categoryData);
-        
-        // Calculate top products
-        const productMap = new Map<string, { sales: number; quantity: number; revenue: number }>();
-        transactions.forEach((transaction: any) => {
-          transaction.items.forEach((item: any) => {
-            const productName = item.productName || item.name;
-            const current = productMap.get(productName) || { sales: 0, quantity: 0, revenue: 0 };
-            productMap.set(productName, {
-              sales: current.sales + 1,
-              quantity: current.quantity + item.quantity,
-              revenue: current.revenue + (item.totalPrice || item.price * item.quantity)
-            });
-          });
-        });
-        
-        const topProductsData = Array.from(productMap.entries())
-          .map(([name, data]) => ({ name, ...data }))
-          .sort((a, b) => b.revenue - a.revenue)
-          .slice(0, 8);
-        setTopProducts(topProductsData);
-        
-        // Calculate trend data (last 14 days)
-        const trendMap = new Map<string, { sales: number; transactions: number; totalAmount: number }>();
-        transactions.forEach((transaction: any) => {
-          const date = new Date(transaction.createdAt || transaction.timestamp).toLocaleDateString();
-          const current = trendMap.get(date) || { sales: 0, transactions: 0, totalAmount: 0 };
-          trendMap.set(date, {
-            sales: current.sales + 1,
-            transactions: current.transactions + 1,
-            totalAmount: current.totalAmount + transaction.total
-          });
-        });
-        
-        const trendData = Array.from(trendMap.entries())
-          .map(([date, data]) => ({
-            date,
-            sales: data.totalAmount,
-            transactions: data.transactions,
-            avgTransaction: data.totalAmount / data.transactions
-          }))
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .slice(-14);
-        setTrendData(trendData);
       }
     } catch (error) {
       console.error('Error fetching advanced analytics:', error);
@@ -175,160 +208,158 @@ export function AdvancedAnalytics() {
 
   if (loading) {
     return (
-      <Card className="bg-transparent border-0 shadow-none">
+      <Card className="bg-white border border-blue-200 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-lg sm:text-xl text-blue-800">Advanced Analytics</CardTitle>
+          <CardTitle className="text-xl font-bold text-blue-900">Personal Analytics</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center p-8">
-            <div className="text-blue-500">Loading advanced analytics...</div>
+            <div className="text-blue-600">Loading your performance data...</div>
           </div>
         </CardContent>
       </Card>
     );
   }
 
+  if (!analytics) {
+    return (
+      <Card className="bg-white border border-blue-200 shadow-lg">
+        <CardContent className="p-8 text-center">
+          <AlertTriangle className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-blue-900 mb-2">No Data Available</h3>
+          <p className="text-blue-600">No performance data available at the moment.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="bg-transparent border-0 shadow-none">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg sm:text-xl text-blue-800 flex items-center gap-2">
-          <Zap className="h-5 w-5 text-blue-600" />
-          Advanced Analytics
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6 sm:space-y-8">
-        {/* Hourly Sales Pattern */}
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-800 flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Hourly Sales Pattern
-          </h3>
-          <div className="h-48 sm:h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={hourlySales} margin={{ top: 20, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
-                <XAxis 
-                  dataKey="hour" 
-                  tick={{ fontSize: 10, fill: '#1e40af' }}
-                  axisLine={{ stroke: '#3b82f6' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 10, fill: '#1e40af' }}
-                  axisLine={{ stroke: '#3b82f6' }}
-                  tickFormatter={(value) => `$${value}`}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #3b82f6',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    fontSize: '12px'
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Sales']}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke="#3b82f6" 
-                  fill="#3b82f6" 
-                  fillOpacity={0.3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <Card className="bg-white border border-blue-200 shadow-lg">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-bold text-blue-900 flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Zap className="h-5 w-5 text-blue-600" />
+            </div>
+            Personal Performance Analytics
+          </CardTitle>
+        </CardHeader>
+      </Card>
 
-        {/* Category Performance */}
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-800 flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Category Performance
-          </h3>
-          <div className="h-48 sm:h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryPerformance}
-                  dataKey="sales"
-                  nameKey="category"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  fill="#8884d8"
-                  label={({ category, percentage }) => `${category} (${percentage.toFixed(1)}%)`}
-                >
-                  {categoryPerformance.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => formatCurrency(value as number)}
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #3b82f6',
-                    borderRadius: '8px',
-                    fontSize: '12px'
-                  }}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      {/* Key Performance Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-white border border-blue-200 shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600">Total Sales</p>
+                <p className="text-2xl font-bold text-blue-900">{formatCurrency(analytics.totalSales)}</p>
+                <p className="text-xs text-blue-500 mt-1">{analytics.totalTransactions} transactions</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-blue-400" />
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Top Products */}
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-800 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Top Performing Products
-          </h3>
-          <div className="h-48 sm:h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topProducts} margin={{ top: 20, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 8, fill: '#1e40af' }}
-                  axisLine={{ stroke: '#3b82f6' }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis 
-                  tick={{ fontSize: 10, fill: '#1e40af' }}
-                  axisLine={{ stroke: '#3b82f6' }}
-                  tickFormatter={(value) => `$${value}`}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #3b82f6',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    fontSize: '12px'
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Revenue']}
-                />
-                <Bar 
-                  dataKey="revenue" 
-                  fill="#3b82f6" 
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <Card className="bg-white border border-blue-200 shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600">Today's Sales</p>
+                <p className="text-2xl font-bold text-blue-900">{formatCurrency(analytics.todaySales)}</p>
+                <p className="text-xs text-blue-500 mt-1">{analytics.todayTransactions} transactions</p>
+              </div>
+              <Calendar className="h-8 w-8 text-blue-400" />
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Sales Trend */}
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-800 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Sales Trend (Last 14 Days)
-          </h3>
-          <div className="h-48 sm:h-64 w-full">
+        <Card className="bg-white border border-blue-200 shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600">Avg Transaction</p>
+                <p className="text-2xl font-bold text-blue-900">{formatCurrency(analytics.avgTransaction)}</p>
+                <p className="text-xs text-blue-500 mt-1">per transaction</p>
+              </div>
+              <Target className="h-8 w-8 text-blue-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white border border-blue-200 shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600">Items Sold</p>
+                <p className="text-2xl font-bold text-blue-900">{analytics.totalItems}</p>
+                <p className="text-xs text-blue-500 mt-1">{analytics.todayItems} today</p>
+              </div>
+              <ShoppingCart className="h-8 w-8 text-blue-400" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance Insights */}
+      {analytics.insights.length > 0 && (
+        <Card className="bg-white border border-blue-200 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold text-blue-900 flex items-center gap-2">
+              <Star className="h-5 w-5 text-blue-600" />
+              Performance Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {analytics.insights.map((insight: any, index: number) => {
+                const Icon = insight.icon;
+                return (
+                  <div key={index} className={`p-4 rounded-lg border ${
+                    insight.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        insight.type === 'success' ? 'bg-green-100' : 'bg-blue-100'
+                      }`}>
+                        <Icon className={`h-4 w-4 ${
+                          insight.type === 'success' ? 'text-green-600' : 'text-blue-600'
+                        }`} />
+                      </div>
+                      <div>
+                        <h4 className={`font-semibold ${
+                          insight.type === 'success' ? 'text-green-900' : 'text-blue-900'
+                        }`}>
+                          {insight.title}
+                        </h4>
+                        <p className={`text-sm ${
+                          insight.type === 'success' ? 'text-green-700' : 'text-blue-700'
+                        }`}>
+                          {insight.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Weekly Performance Chart */}
+      <Card className="bg-white border border-blue-200 shadow-lg">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold text-blue-900 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+            Weekly Performance Trend
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData} margin={{ top: 20, right: 20, left: 10, bottom: 5 }}>
+              <AreaChart data={analytics.weeklyData} margin={{ top: 20, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
                 <XAxis 
                   dataKey="date" 
@@ -350,28 +381,21 @@ export function AdvancedAnalytics() {
                   }}
                   formatter={(value: number, name: string) => [
                     name === 'sales' ? formatCurrency(value) : value,
-                    name === 'sales' ? 'Sales' : name === 'transactions' ? 'Transactions' : 'Avg Transaction'
+                    name === 'sales' ? 'Sales' : name === 'transactions' ? 'Transactions' : 'Items'
                   ]}
                 />
-                <Line 
+                <Area 
                   type="monotone" 
                   dataKey="sales" 
                   stroke="#3b82f6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                  fill="#3b82f6" 
+                  fillOpacity={0.3}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="transactions" 
-                  stroke="#10b981" 
-                  strokeWidth={2}
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
-                />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

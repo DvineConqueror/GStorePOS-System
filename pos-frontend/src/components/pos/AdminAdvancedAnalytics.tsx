@@ -188,10 +188,10 @@ export function AdminAdvancedAnalytics() {
   }
 
   return (
-    <Card className="bg-transparent border-0 shadow-none">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg sm:text-xl text-white flex items-center gap-2">
-          <Zap className="h-5 w-5 text-slate-400" />
+    <Card className="bg-slate-800/50 border-slate-700">
+      <CardHeader className="pb-6">
+        <CardTitle className="text-2xl font-bold text-white flex items-center gap-3">
+          <Zap className="h-6 w-6 text-slate-400" />
           Advanced Analytics
         </CardTitle>
       </CardHeader>
@@ -199,7 +199,7 @@ export function AdminAdvancedAnalytics() {
         {/* Hourly Sales Pattern */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
-            <Clock className="h-4 w-4 text-slate-400" />
+            <Clock className="h-5 w-5 text-slate-400" />
             Hourly Sales Pattern
           </h3>
           <div className="h-64 w-full">
@@ -210,10 +210,12 @@ export function AdminAdvancedAnalytics() {
                   dataKey="hour" 
                   tick={{ fontSize: 12, fill: '#e2e8f0' }}
                   axisLine={{ stroke: '#64748b' }}
+                  tickLine={{ stroke: '#64748b' }}
                 />
                 <YAxis 
                   tick={{ fontSize: 12, fill: '#e2e8f0' }}
                   axisLine={{ stroke: '#64748b' }}
+                  tickLine={{ stroke: '#64748b' }}
                   tickFormatter={(value) => `$${value}`}
                 />
                 <Tooltip 
@@ -221,9 +223,10 @@ export function AdminAdvancedAnalytics() {
                     backgroundColor: '#1e293b',
                     border: '1px solid #64748b',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-                    color: '#e2e8f0'
+                    color: '#e2e8f0',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
                   }}
+                  labelStyle={{ color: '#f1f5f9', fontWeight: 'bold' }}
                   formatter={(value: number) => [formatCurrency(value), 'Sales']}
                 />
                 <Area 
@@ -241,7 +244,7 @@ export function AdminAdvancedAnalytics() {
         {/* Category Performance */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
-            <Target className="h-4 w-4 text-slate-400" />
+            <Target className="h-5 w-5 text-slate-400" />
             Category Performance
           </h3>
           <div className="h-64 w-full">
@@ -254,8 +257,11 @@ export function AdminAdvancedAnalytics() {
                   cx="50%"
                   cy="50%"
                   outerRadius={80}
+                  innerRadius={20}
                   fill="#8884d8"
+                  paddingAngle={2}
                   label={({ category, percentage }) => `${category} (${percentage.toFixed(1)}%)`}
+                  labelLine={false}
                 >
                   {categoryPerformance.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -267,10 +273,18 @@ export function AdminAdvancedAnalytics() {
                     backgroundColor: '#1e293b',
                     border: '1px solid #64748b',
                     borderRadius: '8px',
+                    color: '#e2e8f0',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
+                  }}
+                  labelStyle={{ color: '#f1f5f9', fontWeight: 'bold' }}
+                />
+                <Legend 
+                  wrapperStyle={{ 
+                    paddingTop: '20px',
+                    fontSize: '14px',
                     color: '#e2e8f0'
                   }}
                 />
-                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -279,7 +293,7 @@ export function AdminAdvancedAnalytics() {
         {/* Top Products */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-slate-400" />
+            <TrendingUp className="h-5 w-5 text-slate-400" />
             Top Performing Products
           </h3>
           <div className="h-64 w-full">
@@ -290,6 +304,7 @@ export function AdminAdvancedAnalytics() {
                   dataKey="name" 
                   tick={{ fontSize: 10, fill: '#e2e8f0' }}
                   axisLine={{ stroke: '#64748b' }}
+                  tickLine={{ stroke: '#64748b' }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
@@ -297,6 +312,7 @@ export function AdminAdvancedAnalytics() {
                 <YAxis 
                   tick={{ fontSize: 12, fill: '#e2e8f0' }}
                   axisLine={{ stroke: '#64748b' }}
+                  tickLine={{ stroke: '#64748b' }}
                   tickFormatter={(value) => `$${value}`}
                 />
                 <Tooltip 
@@ -304,9 +320,10 @@ export function AdminAdvancedAnalytics() {
                     backgroundColor: '#1e293b',
                     border: '1px solid #64748b',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-                    color: '#e2e8f0'
+                    color: '#e2e8f0',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
                   }}
+                  labelStyle={{ color: '#f1f5f9', fontWeight: 'bold' }}
                   formatter={(value: number) => [formatCurrency(value), 'Revenue']}
                 />
                 <Bar 
@@ -322,7 +339,7 @@ export function AdminAdvancedAnalytics() {
         {/* Sales Trend */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-slate-400" />
+            <TrendingUp className="h-5 w-5 text-slate-400" />
             Sales Trend (Last 14 Days)
           </h3>
           <div className="h-64 w-full">
@@ -333,10 +350,12 @@ export function AdminAdvancedAnalytics() {
                   dataKey="date" 
                   tick={{ fontSize: 12, fill: '#e2e8f0' }}
                   axisLine={{ stroke: '#64748b' }}
+                  tickLine={{ stroke: '#64748b' }}
                 />
                 <YAxis 
                   tick={{ fontSize: 12, fill: '#e2e8f0' }}
                   axisLine={{ stroke: '#64748b' }}
+                  tickLine={{ stroke: '#64748b' }}
                   tickFormatter={(value) => `$${value}`}
                 />
                 <Tooltip 
@@ -344,9 +363,10 @@ export function AdminAdvancedAnalytics() {
                     backgroundColor: '#1e293b',
                     border: '1px solid #64748b',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-                    color: '#e2e8f0'
+                    color: '#e2e8f0',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
                   }}
+                  labelStyle={{ color: '#f1f5f9', fontWeight: 'bold' }}
                   formatter={(value: number, name: string) => [
                     name === 'sales' ? formatCurrency(value) : value,
                     name === 'sales' ? 'Sales' : name === 'transactions' ? 'Transactions' : 'Avg Transaction'
@@ -362,9 +382,9 @@ export function AdminAdvancedAnalytics() {
                 <Line 
                   type="monotone" 
                   dataKey="transactions" 
-                  stroke="#10b981" 
+                  stroke="#94a3b8" 
                   strokeWidth={2}
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
+                  dot={{ fill: '#94a3b8', strokeWidth: 2, r: 3 }}
                 />
               </LineChart>
             </ResponsiveContainer>

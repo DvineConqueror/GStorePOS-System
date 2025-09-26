@@ -2,7 +2,7 @@
 import { CashierProductCatalog } from '@/components/pos/CashierProductCatalog';
 import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
-import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
+import { UnifiedAnalytics } from '@/components/pos/UnifiedAnalytics';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { PersonalCashierAnalytics } from '@/components/pos/PersonalCashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
@@ -68,24 +68,9 @@ function PosPageContent() {
           <TabsContent value="analytics" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {user?.role === 'manager' || user?.role === 'superadmin' ? (
-                <>
-                  {/* Admin sees all analytics with blue theme */}
-                  <div className="col-span-1 lg:col-span-2">
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
-                      <AnalyticsCharts />
-                    </div>
-                  </div>
-                  <div className="col-span-1">
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
-                      <CashierAnalytics />
-                    </div>
-                  </div>
-                  <div className="col-span-1">
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
-                      <TransactionHistory />
-                    </div>
-                  </div>
-                </>
+                <div className="col-span-1 lg:col-span-2">
+                  <UnifiedAnalytics />
+                </div>
               ) : (
                 <>
                   {/* Cashiers see only their personal analytics with blue theme */}

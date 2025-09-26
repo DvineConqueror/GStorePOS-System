@@ -126,53 +126,70 @@ export function PersonalCashierAnalytics() {
   }
 
   return (
-    <Card className="bg-transparent border-0 shadow-none">
+    <Card className="bg-white border border-blue-200 shadow-lg">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-blue-800">
-          <TrendingUp className="h-5 w-5 text-blue-600" />
-          My Performance
+        <CardTitle className="text-xl font-bold text-blue-900 flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+          </div>
+          My Performance Analytics
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Total Sales</span>
+      <CardContent className="p-6">
+        {/* Compact KPI Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-6 w-6 text-blue-600" />
+              <div>
+                <p className="text-sm text-blue-600">Total Sales</p>
+                <p className="text-xl font-bold text-blue-900">{formatCurrency(stats.totalSales)}</p>
+                <p className="text-xs text-blue-500 mt-1">{stats.totalTransactions} transactions</p>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-blue-900">{formatCurrency(stats.totalSales)}</div>
           </div>
-          
-          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <ShoppingCart className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Total Transactions</span>
+
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-6 w-6 text-blue-600" />
+              <div>
+                <p className="text-sm text-blue-600">Today's Sales</p>
+                <p className="text-xl font-bold text-blue-900">{formatCurrency(stats.todaySales)}</p>
+                <p className="text-xs text-blue-500 mt-1">{stats.todayTransactions} transactions</p>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-blue-900">{stats.totalTransactions}</div>
           </div>
-          
-          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Today's Sales</span>
+
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-6 w-6 text-blue-600" />
+              <div>
+                <p className="text-sm text-blue-600">Avg Transaction</p>
+                <p className="text-xl font-bold text-blue-900">{formatCurrency(stats.averageTransaction)}</p>
+                <p className="text-xs text-blue-500 mt-1">per transaction</p>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-blue-900">{formatCurrency(stats.todaySales)}</div>
           </div>
-          
-          <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Avg Transaction</span>
+
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <ShoppingCart className="h-6 w-6 text-blue-600" />
+              <div>
+                <p className="text-sm text-blue-600">Items Sold</p>
+                <p className="text-xl font-bold text-blue-900">{stats.totalItems}</p>
+                <p className="text-xs text-blue-500 mt-1">total items</p>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-blue-900">{formatCurrency(stats.averageTransaction)}</div>
           </div>
         </div>
-        
-        {/* Daily Sales Chart */}
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-800">Last 7 Days Performance</h3>
-          <div className="h-48 sm:h-64 w-full">
+
+        {/* Performance Chart */}
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold mb-4 text-blue-900 flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            Last 7 Days Performance
+          </h3>
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailySales} margin={{ top: 20, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
@@ -208,18 +225,6 @@ export function PersonalCashierAnalytics() {
                 />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-        
-        {/* Additional Stats */}
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-blue-200">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-800">{stats.totalItems}</div>
-            <div className="text-sm text-blue-600">Items Sold</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-800">{stats.todayTransactions}</div>
-            <div className="text-sm text-blue-600">Today's Transactions</div>
           </div>
         </div>
       </CardContent>

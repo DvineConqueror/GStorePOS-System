@@ -19,7 +19,7 @@ export function TransactionHistory() {
   return (
     <Card className="h-full bg-transparent border-0 shadow-none">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg sm:text-xl text-white">Recent Transactions</CardTitle>
+        <CardTitle className="text-lg sm:text-xl text-black">Recent Transactions</CardTitle>
         <CardDescription className="text-xs sm:text-sm text-slate-400">Transaction history and details</CardDescription>
       </CardHeader>
       <CardContent className="p-0">

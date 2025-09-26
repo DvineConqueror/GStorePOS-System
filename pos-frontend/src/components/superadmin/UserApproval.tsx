@@ -211,11 +211,11 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'manager':
-        return 'bg-blue-600 hover:bg-blue-700';
+        return 'bg-red-600 hover:bg-red-700';
       case 'cashier':
         return 'bg-green-600 hover:bg-green-700';
       default:
-        return 'bg-gray-600 hover:bg-gray-700';
+        return 'bg-slate-600 hover:bg-slate-700';
     }
   };
 
@@ -228,186 +228,202 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-      {/* Header - Responsive */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Pending User Approvals</h1>
-          <p className="text-slate-400 text-sm sm:text-base">
-            Review and approve new user registrations
-          </p>
-        </div>
-        <Badge variant="destructive" className="bg-yellow-600 hover:bg-yellow-700 text-xs sm:text-sm">
-          <Clock className="h-3 w-3 mr-1" />
-          {pendingUsers.length} Pending
-        </Badge>
-      </div>
-
-      {/* Filters and Search - Responsive */}
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex flex-col gap-3 sm:gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-slate-700 border-slate-600 text-white"
-                />
+    <div className="min-h-screen bg-slate-950">
+      <div className="space-y-8 p-6">
+        {/* Authority Header */}
+        <div className="border-b border-slate-800 pb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-600 to-amber-700 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25">
+                <UserCheck className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-white tracking-tight">Pending User Approvals</h1>
+                <p className="text-slate-400 text-lg mt-1">Review and approve new user registrations</p>
               </div>
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full sm:w-48 bg-slate-700 border-slate-600 text-white">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="cashier">Cashier</SelectItem>
-              </SelectContent>
-            </Select>
+            <Badge variant="outline" className="text-amber-300 border-amber-600 text-sm px-4 py-2">
+              <Clock className="h-4 w-4 mr-2" />
+              {pendingUsers.length} Pending
+            </Badge>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Bulk Actions - Responsive */}
-      {selectedUsers.length > 0 && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                <span className="text-white text-sm sm:text-base">
-                  {selectedUsers.length} user(s) selected
-                </span>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                  <Select value={bulkAction} onValueChange={(value: 'approve' | 'delete' | '') => setBulkAction(value)}>
-                    <SelectTrigger className="w-full sm:w-32 bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Action" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="approve">Approve</SelectItem>
-                      <SelectItem value="delete">Delete</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    onClick={handleBulkAction}
-                    disabled={!bulkAction}
-                    className={`${bulkAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-xs sm:text-sm`}
-                  >
-                    {bulkAction === 'approve' ? (
-                      <>
-                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Approve All</span>
-                        <span className="sm:hidden">Approve</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Delete All</span>
-                        <span className="sm:hidden">Delete</span>
-                      </>
-                    )}
-                  </Button>
+        {/* Search and Filters */}
+        <Card className="bg-slate-900/50 border-slate-800">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center text-lg">
+              <Filter className="h-5 w-5 mr-2" />
+              Search & Filter Approvals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search by name, email, or username..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-slate-600"
+                  />
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                onClick={() => setSelectedUsers([])}
-                className="text-slate-400 hover:text-white text-xs sm:text-sm"
-              >
-                Clear Selection
-              </Button>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-48 bg-slate-800/50 border-slate-700 text-white">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="cashier">Cashier</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Users List - Responsive */}
-      <div className="space-y-3 sm:space-y-4">
-        {pendingUsers.length === 0 ? (
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="p-6 sm:p-8 text-center">
-              <UserCheck className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-base sm:text-lg font-semibold text-white mb-2">No Pending Approvals</h3>
-              <p className="text-slate-400 text-sm sm:text-base">
-                All users have been reviewed and approved.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          pendingUsers.map((user) => (
-            <Card key={user._id} className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
-                    <Checkbox
-                      checked={selectedUsers.includes(user._id)}
-                      onCheckedChange={(checked) => handleSelectUser(user._id, checked as boolean)}
-                    />
-                    <div className="flex items-center space-x-3 min-w-0 flex-1">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-slate-300" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-white font-semibold text-sm sm:text-base truncate">
-                          {user.firstName} {user.lastName}
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-400 truncate">
-                          @{user.username}
-                        </div>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Mail className="h-3 w-3 text-slate-500 flex-shrink-0" />
-                          <span className="text-xs text-slate-500 truncate">{user.email}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                    <div className="text-left sm:text-right">
-                      <Badge className={`${getRoleBadgeColor(user.role)} text-xs`}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                      </Badge>
-                      <div className="flex items-center space-x-1 mt-1">
-                        <Calendar className="h-3 w-3 text-slate-500" />
-                        <span className="text-xs text-slate-500">
-                          {format(new Date(user.createdAt), 'MMM dd, yyyy')}
-                        </span>
-                      </div>
-                      {user.createdBy && (
-                        <div className="text-xs text-slate-500 mt-1">
-                          Created by: {user.createdBy.firstName} {user.createdBy.lastName}
-                        </div>
+        {/* Bulk Actions */}
+        {selectedUsers.length > 0 && (
+          <Card className="bg-slate-900/50 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center text-lg">
+                <Shield className="h-5 w-5 mr-2" />
+                Bulk Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="text-white text-lg font-medium">
+                    {selectedUsers.length} user(s) selected
+                  </span>
+                  <div className="flex gap-3">
+                    <Select value={bulkAction} onValueChange={(value: 'approve' | 'delete' | '') => setBulkAction(value)}>
+                      <SelectTrigger className="w-32 bg-slate-800/50 border-slate-700 text-white">
+                        <SelectValue placeholder="Action" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        <SelectItem value="approve">Approve</SelectItem>
+                        <SelectItem value="delete">Delete</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={handleBulkAction}
+                      disabled={!bulkAction}
+                      className={`${bulkAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} font-semibold`}
+                    >
+                      {bulkAction === 'approve' ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Approve All
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Delete All
+                        </>
                       )}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleApproveUser(user._id)}
-                        className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
-                      >
-                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteUser(user._id)}
-                        className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
-                      >
-                        <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
+                    </Button>
                   </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => setSelectedUsers([])}
+                  className="text-slate-400 hover:text-white"
+                >
+                  Clear Selection
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Pending Users List */}
+        <div className="space-y-4">
+          {pendingUsers.length === 0 ? (
+            <Card className="bg-slate-900/50 border-slate-800">
+              <CardContent className="p-12 text-center">
+                <UserCheck className="h-16 w-16 text-slate-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No Pending Approvals</h3>
+                <p className="text-slate-400 text-lg">
+                  All users have been reviewed and approved.
+                </p>
               </CardContent>
             </Card>
-          ))
-        )}
+          ) : (
+            pendingUsers.map((user) => (
+              <Card key={user._id} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4 min-w-0 flex-1">
+                      <Checkbox
+                        checked={selectedUsers.includes(user._id)}
+                        onCheckedChange={(checked) => handleSelectUser(user._id, checked as boolean)}
+                        className="flex-shrink-0"
+                      />
+                      <div className="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <User className="h-6 w-6 text-slate-300" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-white font-semibold text-lg truncate">
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div className="text-slate-400 text-sm truncate">
+                          @{user.username}
+                        </div>
+                        <div className="flex items-center space-x-4 mt-2 text-sm text-slate-400">
+                          <div className="flex items-center">
+                            <Mail className="h-4 w-4 mr-2" />
+                            <span className="truncate">{user.email}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            {format(new Date(user.createdAt), 'MMM dd, yyyy')}
+                          </div>
+                        </div>
+                        {user.createdBy && (
+                          <div className="text-xs text-slate-500 mt-2">
+                            Created by: {user.createdBy.firstName} {user.createdBy.lastName}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <Badge className={`${getRoleBadgeColor(user.role)} text-xs px-2 py-1 font-semibold`}>
+                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        </Badge>
+                      </div>
+
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleApproveUser(user._id)}
+                          className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteUser(user._id)}
+                          className="bg-red-600 hover:bg-red-700 font-semibold"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

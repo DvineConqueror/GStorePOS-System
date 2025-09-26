@@ -8,7 +8,7 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import { ProductManagement } from '@/components/admin/ProductManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AnalyticsCharts } from '@/components/pos/AnalyticsCharts';
+import { UnifiedAnalytics } from '@/components/pos/UnifiedAnalytics';
 import { CashierAnalytics } from '@/components/pos/CashierAnalytics';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
 import { CashierProductCatalog } from '@/components/pos/CashierProductCatalog';
@@ -143,38 +143,7 @@ const AdminPageContent = () => {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <div className="col-span-1 lg:col-span-2">
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-white">Sales Analytics</CardTitle>
-                  </CardHeader>
-                  <CardContent className="bg-slate-800">
-                    <AnalyticsCharts />
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="col-span-1">
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-white">Cashier Performance</CardTitle>
-                  </CardHeader>
-                  <CardContent className="bg-slate-800">
-                    <CashierAnalytics />
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="col-span-1">
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-white">Transaction History</CardTitle>
-                  </CardHeader>
-                  <CardContent className="bg-slate-800">
-                    <TransactionHistory />
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            <UnifiedAnalytics />
           </TabsContent>
 
         </Tabs>
