@@ -88,7 +88,7 @@ export function ProductCatalog() {
           <Input
             type="search"
             placeholder="Search products..."
-            className="pl-8"
+            className="pl-8 text-black"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -165,7 +165,7 @@ export function ProductCatalog() {
                 )}
               </div>
               <div className="font-medium text-sm truncate">{product.name}</div>
-              <div className="font-bold text-sm mt-1 text-pos-primary">{formatCurrency(product.price)}</div>
+              <div className="font-bold text-sm mt-1 text-green-700">{formatCurrency(product.price)}</div>
             </Card>
           ))}
         </div>

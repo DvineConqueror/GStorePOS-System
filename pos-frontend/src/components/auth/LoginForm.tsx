@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Eye, EyeOff, ShieldCheck, Users, Github, Chrome } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, Users, Facebook, Chrome } from 'lucide-react';
 import { PasswordHelpTooltip } from '@/components/ui/password-help-tooltip';
 import { ColorScheme } from '@/utils/colorSchemes';
 import { PasswordValidationResult, getPasswordStrengthColor } from '@/utils/passwordValidation';
@@ -69,21 +69,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 <Button
                   type="button"
                   variant="outline"
-                  className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-xs border-gray-300 hover:bg-gray-50 transition-all duration-300`}
-                  disabled
-                >
-                  <Github className="mr-1 h-3 w-3" />
-                  GitHub
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-xs border-gray-300 hover:bg-gray-50 transition-all duration-300`}
+                  className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-xs text-gray-600 border-green-300 hover:bg-green-60 transition-all duration-300`}
                   disabled
                 >
                   <Chrome className="mr-1 h-3 w-3" />
                   Google
                 </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-xs text-gray-600 border-green-300 hover:bg-green-60 transition-all duration-300`}
+                  disabled
+                >
+                  <Facebook className="mr-1 h-3 w-3" />
+                  Facebook
+                </Button>
+                
               </div>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -100,41 +102,41 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             {isSignUp && !isAdminMode && (
               <>
                 <div className="space-y-0.5">
-                  <Label htmlFor="username" className="text-xs font-medium">
+                  <Label htmlFor="username" className="text-xs font-medium text-black">
                     Username
                   </Label>
                   <Input
                     id="username"
                     value={formData.username}
                     onChange={(e) => onInputChange('username', e.target.value)}
-                    className={`h-8 px-3 text-sm ${colors.primaryBorder} transition-all duration-300`}
+                    className={`h-8 px-3 text-black text-sm ${colors.primaryBorder} transition-all duration-300`}
                     placeholder="johndoe"
                     required
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-0.5">
-                    <Label htmlFor="firstName" className="text-xs font-medium">
+                    <Label htmlFor="firstName" className="text-xs font-medium text-black">
                       First Name
                     </Label>
                     <Input
                       id="firstName"
                       value={formData.firstName}
                       onChange={(e) => onInputChange('firstName', e.target.value)}
-                      className={`h-8 px-3 text-sm ${colors.primaryBorder} transition-all duration-300`}
+                      className={`h-8 px-3 text-black text-sm ${colors.primaryBorder} transition-all duration-300`}
                       placeholder="John"
                       required
                     />
                   </div>
                   <div className="space-y-0.5">
-                    <Label htmlFor="lastName" className="text-xs font-medium">
+                    <Label htmlFor="lastName" className="text-xs font-medium text-black">
                       Last Name
                     </Label>
                     <Input
                       id="lastName"
                       value={formData.lastName}
                       onChange={(e) => onInputChange('lastName', e.target.value)}
-                      className={`h-8 px-3 text-sm ${colors.primaryBorder} transition-all duration-300`}
+                      className={`h-8 px-3 text-black text-sm ${colors.primaryBorder} transition-all duration-300`}
                       placeholder="Doe"
                       required
                     />
@@ -143,7 +145,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               </>
             )}
             <div className={`${isSignUp ? 'space-y-0.5' : 'space-y-1'}`}>
-              <Label htmlFor="email" className="text-xs font-medium">
+              <Label htmlFor="email" className="text-xs font-medium text-black">
                 {isSignUp && !isAdminMode ? 'Email' : 'Email or Username'}
               </Label>
               <Input
@@ -151,14 +153,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 type={isSignUp && !isAdminMode ? 'email' : 'text'}
                 value={formData.email}
                 onChange={(e) => onInputChange('email', e.target.value)}
-                className={`h-8 px-3 text-sm ${colors.primaryBorder} transition-all duration-300`}
+                className={`h-8 px-3 text-black text-sm ${colors.primaryBorder} transition-all duration-300`}
                 placeholder={isSignUp && !isAdminMode ? 'you@example.com' : 'email@example.com or username'}
                 required
               />
             </div>
             <div className={`${isSignUp ? 'space-y-0.5' : 'space-y-1'}`}>
               <div className="flex items-center gap-1">
-                <Label htmlFor="password" className="text-xs font-medium">
+                <Label htmlFor="password" className="text-xs font-medium text-black">
                   Password
                 </Label>
                 {isSignUp && !isAdminMode && <PasswordHelpTooltip />}
@@ -169,7 +171,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => onInputChange('password', e.target.value)}
-                  className={`h-8 px-3 pr-8 text-sm ${colors.primaryBorder} transition-all duration-300`}
+                  className={`h-8 px-3 pr-8 text-black text-sm ${colors.primaryBorder} transition-all duration-300`}
                   placeholder="••••••••"
                   required
                 />
@@ -211,7 +213,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => onToggleRememberMe(e.target.checked)}
-                  className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
                 <Label htmlFor="remember-me" className="text-xs font-medium text-gray-700">
                   Remember me for 30 days

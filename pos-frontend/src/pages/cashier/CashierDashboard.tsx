@@ -80,7 +80,7 @@ export function CashierDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -89,21 +89,21 @@ export function CashierDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Cashier Dashboard</h1>
+        <h1 className="text-3xl font-bold text-black">Cashier Dashboard</h1>
         <p className="text-gray-600 mt-2">Your daily performance and quick actions</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Today's Sales */}
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-white border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Today's Sales</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium text-gray-600">Today's Sales</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-900">${stats.todaySales.toFixed(2)}</div>
-            <p className="text-xs text-blue-600">
+            <div className="text-2xl font-bold text-black">${stats.todaySales.toFixed(2)}</div>
+            <p className="text-xs text-gray-600">
               {stats.todayTransactions} transactions today
             </p>
           </CardContent>
@@ -156,7 +156,7 @@ export function CashierDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-blue-800">
+            <CardTitle className="flex items-center text-green-800">
               <ShoppingCart className="mr-2 h-5 w-5" />
               Start New Transaction
             </CardTitle>
@@ -165,7 +165,7 @@ export function CashierDashboard() {
             <p className="text-sm text-gray-600 mb-4">
               Begin processing a new customer purchase
             </p>
-            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button className="w-full bg-green-600 hover:bg-green-700">
               Open POS System
             </Button>
           </CardContent>
@@ -199,9 +199,9 @@ export function CashierDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-800">${stats.todaySales.toFixed(2)}</div>
-              <div className="text-sm text-blue-600">Total Sales</div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-800">${stats.todaySales.toFixed(2)}</div>
+              <div className="text-sm text-green-600">Total Sales</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-800">{stats.todayTransactions}</div>

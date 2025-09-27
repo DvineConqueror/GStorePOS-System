@@ -100,37 +100,37 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
           {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4 mt-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black h-4 w-4" />
               <Input
                 placeholder="Search products..."
                 value={productSearchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-black"
               />
             </div>
             <Select value={productCategoryFilter} onValueChange={onCategoryFilterChange}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-40 bg-white border-gray-300 text-black">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+              <SelectContent className="bg-white">
+                <SelectItem value="all" className="text-black">All Categories</SelectItem>
                 {uniqueCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
+                  <SelectItem key={category} value={category} className="text-black">
                     {category}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={productStatusFilter} onValueChange={onStatusFilterChange}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-40 bg-white border-gray-300 text-black">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="in-stock">In Stock</SelectItem>
-                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+              <SelectContent className="bg-white">
+                <SelectItem value="all" className="text-black">All Status</SelectItem>
+                <SelectItem value="active" className="text-black">Active</SelectItem>
+                <SelectItem value="inactive" className="text-black">Inactive</SelectItem>
+                <SelectItem value="in-stock" className="text-black">In Stock</SelectItem>
+                <SelectItem value="out-of-stock" className="text-black">Out of Stock</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -169,15 +169,15 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                   <div>
                     <Label htmlFor="category">Category</Label>
                     <Select value={newProduct.category} onValueChange={(value) => onNewProductChange({...newProduct, category: value})} required>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white border-gray-300 text-black">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
+                      <SelectContent className="max-h-[300px] bg-white">
                         {Object.entries(categoryGroups).map(([groupName, categories]) => (
                           <SelectGroup key={groupName} className="relative">
-                            <SelectLabel className="px-2 py-1.5 text-sm font-semibold bg-muted/50">{groupName}</SelectLabel>
+                            <SelectLabel className="px-2 py-1.5 text-sm font-semibold bg-muted/50 text-black">{groupName}</SelectLabel>
                             {categories.map((cat) => (
-                              <SelectItem key={cat} value={cat} className="pl-4">
+                              <SelectItem key={cat} value={cat} className="pl-4 text-black">
                                 {cat}
                               </SelectItem>
                             ))}
@@ -241,7 +241,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <CardTitle className="text-lg">{product.name}</CardTitle>
+                                <CardTitle className="text-lg text-black">{product.name}</CardTitle>
                                 <p className="text-sm text-gray-600">{product.category}</p>
                               </div>
                               <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                             <div className="space-y-2">
                               <div className="flex justify-between">
                                 <span className="text-sm text-gray-600">Price:</span>
-                                <span className="font-medium">${product.price.toFixed(2)}</span>
+                                <span className="font-medium text-black">${product.price.toFixed(2)}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-sm text-gray-600">Stock:</span>
@@ -268,7 +268,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-sm text-gray-600">SKU:</span>
-                                <span className="text-sm font-mono">{product.sku}</span>
+                                <span className="text-sm font-mono text-black">{product.sku}</span>
                               </div>
                             </div>
                             <div className="mt-4 flex gap-2">

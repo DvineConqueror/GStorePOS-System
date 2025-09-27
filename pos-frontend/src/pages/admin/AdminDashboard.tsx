@@ -91,63 +91,63 @@ export function AdminDashboard() {
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-white">Manager Dashboard</h1>
-        <p className="text-slate-400 text-sm sm:text-base mt-2">Overview of your store operations and performance</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-black">Manager Dashboard</h1>
+        <p className="text-gray-600 text-sm sm:text-base mt-2">Overview of your store operations and performance</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Cashiers */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total Cashiers</CardTitle>
-            <Users className="h-4 w-4 text-slate-400" />
+            <CardTitle className="text-sm font-medium text-gray-600">Total Cashiers</CardTitle>
+            <Users className="h-6 w-6 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-white">{userStats.totalCashierUsers || 0}</div>
-            <p className="text-xs text-slate-400">
+            <div className="text-xl sm:text-2xl font-bold text-black">{userStats.totalCashierUsers || 0}</div>
+            <p className="text-sm text-gray-600 font-medium">
               {userStats.activeCashierUsers || 0} active, {userStats.inactiveUsers || 0} inactive
             </p>
           </CardContent>
         </Card>
 
         {/* Active Cashiers */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Active Cashiers</CardTitle>
-            <Shield className="h-4 w-4 text-blue-400" />
+            <CardTitle className="text-sm font-medium text-gray-600">Active Cashiers</CardTitle>
+            <Shield className="h-6 w-6 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-white">{userStats.activeCashierUsers || 0}</div>
-            <p className="text-xs text-slate-400">
+            <div className="text-xl sm:text-2xl font-bold text-black">{userStats.activeCashierUsers || 0}</div>
+            <p className="text-sm text-gray-600 font-medium">
               Currently working
             </p>
           </CardContent>
         </Card>
 
         {/* Total Sales */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total Sales</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-400" />
+            <CardTitle className="text-sm font-medium text-gray-600">Total Sales</CardTitle>
+            <DollarSign className="h-6 w-6 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-white">${salesStats.totalSales?.toFixed(2) || '0.00'}</div>
-            <p className="text-xs text-slate-400">
+            <div className="text-xl sm:text-2xl font-bold text-black">${salesStats.totalSales?.toFixed(2) || '0.00'}</div>
+            <p className="text-sm text-gray-600 font-medium">
               {salesStats.totalTransactions || 0} transactions
             </p>
           </CardContent>
         </Card>
 
         {/* Average Transaction */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Avg Transaction</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-400" />
+            <CardTitle className="text-sm font-medium text-gray-600">Avg Transaction</CardTitle>
+            <TrendingUp className="h-6 w-6 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-white">${salesStats.averageTransactionValue?.toFixed(2) || '0.00'}</div>
-            <p className="text-xs text-slate-400">
+            <div className="text-xl sm:text-2xl font-bold text-black">${salesStats.averageTransactionValue?.toFixed(2) || '0.00'}</div>
+            <p className="text-sm text-gray-600 font-medium">
               Per transaction
             </p>
           </CardContent>
@@ -156,20 +156,20 @@ export function AdminDashboard() {
 
       {/* Pending Approvals Alert */}
       {approvalStats.totalPending > 0 && (
-        <Card className="bg-yellow-900/20 border-yellow-600/50">
+        <Card className="bg-green-50 border-green-200">
           <CardContent className="p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center space-x-3">
-                <Clock className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+                <Clock className="h-5 w-5 text-green-600 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-yellow-400 text-sm sm:text-base">Pending Cashier Approvals</h3>
-                  <p className="text-xs sm:text-sm text-yellow-300">
+                  <h3 className="font-semibold text-black text-sm sm:text-base">Pending Cashier Approvals</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">
                     {approvalStats.totalPending} cashier account(s) waiting for your approval
                   </p>
                 </div>
               </div>
               <Button 
-                className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs sm:text-sm"
+                className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
                 onClick={() => window.location.href = '/admin/approvals'}
               >
                 <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -194,7 +194,7 @@ export function AdminDashboard() {
               Create new cashier accounts with automatic approval
             </p>
             <Button 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm"
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
               onClick={() => window.location.href = '/admin/cashiers/create'}
             >
               Create Cashier

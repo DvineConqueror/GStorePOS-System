@@ -189,19 +189,19 @@ export default function ManagerCreationForm({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-[#ececec]">
       <div className="space-y-8 p-6">
         {/* Authority Header */}
-        <div className="border-b border-slate-800 pb-6">
+        <div className="border-b border-gray-200 pb-6">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
               <UserPlus className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight">
+              <h1 className="text-3xl font-bold text-black tracking-tight">
                 Create Manager Account
               </h1>
-              <p className="text-slate-400 text-lg mt-1">
+              <p className="text-gray-600 text-lg mt-1">
                 Create a new manager account with full system access
               </p>
             </div>
@@ -209,9 +209,9 @@ export default function ManagerCreationForm({
         </div>
 
         {/* Authority Info Alert */}
-        <Alert className="bg-red-900/20 border-red-700">
-          <Shield className="h-10 w-10 text-red-400 flex-shrink-0 pl-2" />
-          <AlertDescription className="text-red-200 text-base">
+        <Alert className="bg-green-50 border-green-200">
+          <Shield className="h-10 w-10 text-green-600 flex-shrink-0 pl-2" />
+          <AlertDescription className="text-green-700 text-base">
             Manager accounts are automatically approved and have full access to
             the system. They can manage cashiers and access all administrative
             features.
@@ -219,10 +219,10 @@ export default function ManagerCreationForm({
         </Alert>
 
         {/* Manager Creation Form */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-white border-green-200">
           <CardHeader>
-            <CardTitle className="text-white flex items-center text-xl">
-              <User className="h-5 w-5 mr-3" />
+            <CardTitle className="text-black flex items-center text-xl">
+              <User className="h-5 w-5 mr-3 text-green-600" />
               Manager Information
             </CardTitle>
           </CardHeader>
@@ -233,7 +233,7 @@ export default function ManagerCreationForm({
                 <div className="space-y-3">
                   <Label
                     htmlFor="firstName"
-                    className="text-slate-300 text-base font-medium"
+                    className="text-black text-base font-medium"
                   >
                     First Name *
                   </Label>
@@ -244,11 +244,11 @@ export default function ManagerCreationForm({
                     onChange={(e) =>
                       handleInputChange("firstName", e.target.value)
                     }
-                    className="bg-slate-800/50 border-slate-700 text-white text-base focus:border-slate-600"
+                    className="bg-white border-gray-300 text-black text-base focus:border-green-500"
                     placeholder="Enter first name"
                   />
                   {errors.firstName && (
-                    <p className="text-sm text-red-400 flex items-center">
+                    <p className="text-sm text-red-600 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-2" />
                       {errors.firstName}
                     </p>
@@ -258,7 +258,7 @@ export default function ManagerCreationForm({
                 <div className="space-y-3">
                   <Label
                     htmlFor="lastName"
-                    className="text-slate-300 text-base font-medium"
+                    className="text-black text-base font-medium"
                   >
                     Last Name *
                   </Label>
@@ -269,11 +269,11 @@ export default function ManagerCreationForm({
                     onChange={(e) =>
                       handleInputChange("lastName", e.target.value)
                     }
-                    className="bg-slate-800/50 border-slate-700 text-white text-base focus:border-slate-600"
+                    className="bg-white border-gray-300 text-black text-base focus:border-green-500"
                     placeholder="Enter last name"
                   />
                   {errors.lastName && (
-                    <p className="text-sm text-red-400 flex items-center">
+                    <p className="text-sm text-red-600 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-2" />
                       {errors.lastName}
                     </p>
@@ -286,12 +286,12 @@ export default function ManagerCreationForm({
                 <div className="space-y-3">
                   <Label
                     htmlFor="username"
-                    className="text-slate-300 text-base font-medium"
+                    className="text-black text-base font-medium"
                   >
                     Username *
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-600" />
                     <Input
                       id="username"
                       type="text"
@@ -299,12 +299,12 @@ export default function ManagerCreationForm({
                       onChange={(e) =>
                         handleInputChange("username", e.target.value)
                       }
-                      className="bg-slate-800/50 border-slate-700 text-white pl-12 text-base focus:border-slate-600"
+                      className="bg-white border-gray-300 text-black pl-12 text-base focus:border-green-500"
                       placeholder="Enter username"
                     />
                   </div>
                   {errors.username && (
-                    <p className="text-sm text-red-400 flex items-center">
+                    <p className="text-sm text-red-600 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-2" />
                       {errors.username}
                     </p>
@@ -314,12 +314,12 @@ export default function ManagerCreationForm({
                 <div className="space-y-3">
                   <Label
                     htmlFor="email"
-                    className="text-slate-300 text-base font-medium"
+                    className="text-black text-base font-medium"
                   >
                     Email Address *
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-600" />
                     <Input
                       id="email"
                       type="email"
@@ -327,12 +327,12 @@ export default function ManagerCreationForm({
                       onChange={(e) =>
                         handleInputChange("email", e.target.value)
                       }
-                      className="bg-slate-800/50 border-slate-700 text-white pl-12 text-base focus:border-slate-600"
+                      className="bg-white border-gray-300 text-black pl-12 text-base focus:border-green-500"
                       placeholder="Enter email address"
                     />
                   </div>
                   {errors.email && (
-                    <p className="text-sm text-red-400 flex items-center">
+                    <p className="text-sm text-red-600 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-2" />
                       {errors.email}
                     </p>
@@ -345,14 +345,14 @@ export default function ManagerCreationForm({
                     <div className="flex items-center gap-2">
                       <Label
                         htmlFor="password"
-                        className="text-slate-300 text-base font-medium"
+                        className="text-black text-base font-medium"
                       >
                         Password *
                       </Label>
-                      <PasswordHelpTooltip className="text-slate-400" />
+                      <PasswordHelpTooltip className="text-gray-600" />
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-600" />
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
@@ -360,7 +360,7 @@ export default function ManagerCreationForm({
                         onChange={(e) =>
                           handleInputChange("password", e.target.value)
                         }
-                        className="bg-slate-800/50 border-slate-700 text-white pl-12 pr-12 text-base focus:border-slate-600"
+                        className="bg-white border-gray-300 text-black pl-12 pr-12 text-base focus:border-green-500"
                         placeholder="Enter password"
                       />
                       <Button
@@ -371,9 +371,9 @@ export default function ManagerCreationForm({
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-5 w-5 text-slate-400" />
+                          <EyeOff className="h-5 w-5 text-gray-600" />
                         ) : (
-                          <Eye className="h-5 w-5 text-slate-400" />
+                          <Eye className="h-5 w-5 text-gray-600" />
                         )}
                       </Button>
                     </div>
@@ -421,12 +421,12 @@ export default function ManagerCreationForm({
                   <div className="space-y-3">
                     <Label
                       htmlFor="confirmPassword"
-                      className="text-slate-300 text-base font-medium"
+                      className="text-black text-base font-medium"
                     >
                       Confirm Password *
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-600" />
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
@@ -434,7 +434,7 @@ export default function ManagerCreationForm({
                         onChange={(e) =>
                           handleInputChange("confirmPassword", e.target.value)
                         }
-                        className="bg-slate-800/50 border-slate-700 text-white pl-12 pr-12 text-base focus:border-slate-600"
+                        className="bg-white border-gray-300 text-black pl-12 pr-12 text-base focus:border-green-500"
                         placeholder="Confirm password"
                       />
                       <Button
@@ -447,9 +447,9 @@ export default function ManagerCreationForm({
                         }
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="h-5 w-5 text-slate-400" />
+                          <EyeOff className="h-5 w-5 text-gray-600" />
                         ) : (
-                          <Eye className="h-5 w-5 text-slate-400" />
+                          <Eye className="h-5 w-5 text-gray-600" />
                         )}
                       </Button>
                     </div>

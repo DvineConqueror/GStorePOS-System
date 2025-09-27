@@ -81,18 +81,19 @@ export default function SystemSettings() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#ececec] p-4 sm:p-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header - Responsive */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white">System Settings</h2>
-          <p className="text-slate-400 text-sm sm:text-base">Configure system-wide settings and preferences</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-black">System Settings</h2>
+          <p className="text-gray-600 text-sm sm:text-base">Configure system-wide settings and preferences</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={handleReset}
-            className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600 text-sm sm:text-base"
+            className="bg-white border-gray-300 text-black hover:bg-gray-50 text-sm sm:text-base"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Reset
@@ -100,7 +101,7 @@ export default function SystemSettings() {
           <Button
             onClick={handleSave}
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base"
+            className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base"
           >
             {loading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -114,10 +115,10 @@ export default function SystemSettings() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* System Settings */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-green-200">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white flex items-center text-base sm:text-lg">
-              <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+            <CardTitle className="text-black flex items-center text-base sm:text-lg">
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
               System Configuration
             </CardTitle>
           </CardHeader>
@@ -155,10 +156,10 @@ export default function SystemSettings() {
         </Card>
 
         {/* Security Settings */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-green-200">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white flex items-center text-base sm:text-lg">
-              <Shield className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+            <CardTitle className="text-black flex items-center text-base sm:text-lg">
+              <Shield className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
               Security Settings
             </CardTitle>
           </CardHeader>
@@ -208,10 +209,10 @@ export default function SystemSettings() {
         </Card>
 
         {/* Notification Settings */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-green-200">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white flex items-center text-base sm:text-lg">
-              <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+            <CardTitle className="text-black flex items-center text-base sm:text-lg">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
               Notification Settings
             </CardTitle>
           </CardHeader>
@@ -253,10 +254,10 @@ export default function SystemSettings() {
         </Card>
 
         {/* Database Settings */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-green-200">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white flex items-center text-base sm:text-lg">
-              <Database className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+            <CardTitle className="text-black flex items-center text-base sm:text-lg">
+              <Database className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
               Database Settings
             </CardTitle>
           </CardHeader>
@@ -299,10 +300,10 @@ export default function SystemSettings() {
         </Card>
 
         {/* Store Settings */}
-        <Card className="bg-slate-800/50 border-slate-700 lg:col-span-2">
+        <Card className="bg-white border-green-200 lg:col-span-2">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white flex items-center text-base sm:text-lg">
-              <Mail className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+            <CardTitle className="text-black flex items-center text-base sm:text-lg">
+              <Mail className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
               Store Information
             </CardTitle>
           </CardHeader>
@@ -384,6 +385,7 @@ export default function SystemSettings() {
           </div>
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }

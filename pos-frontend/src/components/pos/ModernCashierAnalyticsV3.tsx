@@ -57,7 +57,7 @@ interface CashierAnalyticsData {
   };
 }
 
-const CATEGORY_COLORS = ['#3b82f6', '#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
+const CATEGORY_COLORS = ['#107146', '#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'];
 
 export function ModernCashierAnalyticsV3() {
   const { user } = useAuth();
@@ -200,12 +200,12 @@ export function ModernCashierAnalyticsV3() {
       <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-48 bg-blue-100 animate-pulse rounded-2xl" />
+            <div key={i} className="h-48 bg-gray-100 animate-pulse rounded-2xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-80 bg-blue-100 animate-pulse rounded-2xl" />
-          <div className="h-80 bg-blue-100 animate-pulse rounded-2xl" />
+          <div className="lg:col-span-2 h-80 bg-gray-100 animate-pulse rounded-2xl" />
+          <div className="h-80 bg-gray-100 animate-pulse rounded-2xl" />
         </div>
       </div>
     );
@@ -214,9 +214,9 @@ export function ModernCashierAnalyticsV3() {
   if (!analytics) {
     return (
       <div className="text-center py-12">
-        <Activity className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">No Data Available</h3>
-        <p className="text-blue-600">No analytics data available at the moment.</p>
+        <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
+        <p className="text-gray-600">No analytics data available at the moment.</p>
       </div>
     );
   }
@@ -237,14 +237,14 @@ export function ModernCashierAnalyticsV3() {
     trend?: number;
   }) => {
     const TrendIcon = trend && trend > 0 ? ArrowUpRight : trend && trend < 0 ? ArrowDownRight : Minus;
-    const trendColor = trend && trend > 0 ? 'text-emerald-500' : trend && trend < 0 ? 'text-red-500' : 'text-blue-400';
+    const trendColor = trend && trend > 0 ? 'text-green-500' : trend && trend < 0 ? 'text-red-500' : 'text-gray-400';
     
     return (
       <Card className="relative overflow-hidden">
         <div className={`absolute top-0 right-0 w-32 h-32 ${color} opacity-10 rounded-full -translate-y-16 translate-x-16`} />
         <CardContent className="p-6 relative">
           <div className="flex items-center justify-between mb-4">
-            <Icon className="h-6 w-6 text-blue-500" />
+            <Icon className="h-6 w-6 text-green-600" />
             {trend !== undefined && (
               <div className={`flex items-center gap-1 ${trendColor}`}>
                 <TrendIcon className="h-4 w-4" />
@@ -253,9 +253,9 @@ export function ModernCashierAnalyticsV3() {
             )}
           </div>
           <div className="space-y-1">
-            <h3 className="text-sm font-medium text-blue-700">{title}</h3>
-            <div className="text-3xl font-bold text-blue-900">{value}</div>
-            <p className="text-sm text-blue-600">{subtitle}</p>
+            <h3 className="text-sm font-medium text-gray-700">{title}</h3>
+            <div className="text-3xl font-bold text-gray-900">{value}</div>
+            <p className="text-sm text-gray-600">{subtitle}</p>
           </div>
         </CardContent>
       </Card>
@@ -263,9 +263,9 @@ export function ModernCashierAnalyticsV3() {
   };
 
   const radialData = [
-    { name: 'Sales', value: 75, fill: '#3b82f6' },
-    { name: 'Transactions', value: 60, fill: '#06b6d4' },
-    { name: 'Efficiency', value: 85, fill: '#8b5cf6' }
+    { name: 'Sales', value: 75, fill: '#16a34a' },
+    { name: 'Transactions', value: 60, fill: '#22c55e' },
+    { name: 'Efficiency', value: 85, fill: '#4ade80' }
   ];
 
   return (
@@ -277,7 +277,7 @@ export function ModernCashierAnalyticsV3() {
           value={formatCurrency(analytics.totalSales)}
           subtitle={`${analytics.totalTransactions} transactions`}
           icon={DollarSign}
-          color="bg-blue-100"
+          color="bg-green-100"
           trend={12.5}
         />
         <StatCard
@@ -285,14 +285,14 @@ export function ModernCashierAnalyticsV3() {
           value={formatCurrency(analytics.todaySales)}
           subtitle={`${analytics.todayTransactions} transactions today`}
           icon={Calendar}
-          color="bg-blue-100"
+          color="bg-green-100"
         />
         <StatCard
           title="Avg Transaction"
           value={formatCurrency(analytics.avgTransaction)}
           subtitle="Per transaction"
           icon={Target}
-          color="bg-blue-100"
+          color="bg-green-100"
           trend={-2.3}
         />
       </div>
@@ -303,10 +303,10 @@ export function ModernCashierAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-blue-500" />
+              <Clock className="h-5 w-5 text-green-600" />
               <div>
-                <h3 className="text-lg font-semibold text-blue-900">Recent Transactions</h3>
-                <p className="text-sm text-blue-600">Latest activity</p>
+                <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+                <p className="text-sm text-gray-600">Latest activity</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -314,18 +314,20 @@ export function ModernCashierAnalyticsV3() {
             {analytics.recentTransactions.length > 0 ? (
               <div className="space-y-4">
                 {analytics.recentTransactions.map((transaction, index) => (
-                  <div key={transaction.id} className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl">
-                    <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-lg">
+                  <div key={transaction.id} className={`flex items-center gap-4 p-4 rounded-2xl ${
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  }`}>
+                    <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                      <span className="text-green-600 font-bold text-lg">
                         {index + 1}
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-blue-900 text-lg">{transaction.items} items</h4>
-                      <p className="text-sm text-blue-600">{transaction.time}</p>
+                      <h4 className="font-bold text-gray-900 text-lg">{transaction.items} items</h4>
+                      <p className="text-sm text-gray-600">{transaction.time}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-blue-900">
+                      <div className="text-xl font-bold text-gray-900">
                         {formatCurrency(transaction.total)}
                       </div>
                     </div>
@@ -334,8 +336,8 @@ export function ModernCashierAnalyticsV3() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Clock className="h-12 w-12 text-blue-400 mx-auto mb-3" />
-                <p className="text-blue-500">No recent transactions</p>
+                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No recent transactions</p>
               </div>
             )}
           </CardContent>
@@ -345,10 +347,10 @@ export function ModernCashierAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Target className="h-5 w-5 text-blue-500" />
+              <Target className="h-5 w-5 text-green-600" />
               <div>
-                <h3 className="text-lg font-semibold text-blue-900">Top Categories</h3>
-                <p className="text-sm text-blue-600">Sales breakdown</p>
+                <h3 className="text-lg font-semibold text-gray-900">Top Categories</h3>
+                <p className="text-sm text-gray-600">Sales breakdown</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -363,12 +365,12 @@ export function ModernCashierAnalyticsV3() {
                     />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-blue-700">{category.category}</span>
-                        <span className="text-sm font-semibold text-blue-900">
+                        <span className="text-sm font-medium text-gray-700">{category.category}</span>
+                        <span className="text-sm font-semibold text-gray-900">
                           {formatCurrency(category.sales)}
                         </span>
                       </div>
-                      <div className="w-full bg-blue-200 rounded-full h-2 mt-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                         <div 
                           className="h-2 rounded-full"
                           style={{ 
@@ -383,8 +385,8 @@ export function ModernCashierAnalyticsV3() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Target className="h-12 w-12 text-blue-400 mx-auto mb-3" />
-                <p className="text-blue-500">No category data available</p>
+                <Target className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No category data available</p>
               </div>
             )}
           </CardContent>
@@ -394,10 +396,10 @@ export function ModernCashierAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Zap className="h-5 w-5 text-blue-500" />
+              <Zap className="h-5 w-5 text-green-600" />
               <div>
-                <h3 className="text-lg font-semibold text-blue-900">Efficiency</h3>
-                <p className="text-sm text-blue-600">Performance metrics</p>
+                <h3 className="text-lg font-semibold text-gray-900">Efficiency</h3>
+                <p className="text-sm text-gray-600">Performance metrics</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -406,28 +408,28 @@ export function ModernCashierAnalyticsV3() {
               <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="80%" data={radialData}>
                   <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-                  <RadialBar dataKey="value" cornerRadius={8} fill="#3b82f6" />
+                  <RadialBar dataKey="value" cornerRadius={8} fill="#16a34a" />
                 </RadialBarChart>
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-3 gap-2 mt-4">
               <div className="text-center">
-                <div className="text-lg font-bold text-blue-900">
+                <div className="text-lg font-bold text-gray-900">
                   {formatCurrency(analytics.efficiency.salesPerHour)}
                 </div>
-                <div className="text-xs text-blue-600">Sales/hr</div>
+                <div className="text-xs text-gray-600">Sales/hr</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-blue-900">
+                <div className="text-lg font-bold text-gray-900">
                   {analytics.efficiency.transactionsPerHour.toFixed(1)}
                 </div>
-                <div className="text-xs text-blue-600">Txns/hr</div>
+                <div className="text-xs text-gray-600">Txns/hr</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-blue-900">
+                <div className="text-lg font-bold text-gray-900">
                   {analytics.efficiency.avgItemsPerTransaction.toFixed(1)}
                 </div>
-                <div className="text-xs text-blue-600">Items/txn</div>
+                <div className="text-xs text-gray-600">Items/txn</div>
               </div>
             </div>
           </CardContent>
@@ -438,10 +440,10 @@ export function ModernCashierAnalyticsV3() {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3">
-            <TrendingUpIcon className="h-5 w-5 text-blue-500" />
+            <TrendingUpIcon className="h-5 w-5 text-green-600" />
             <div>
-              <h3 className="text-lg font-semibold text-blue-900">Weekly Trend</h3>
-              <p className="text-sm text-blue-600">Sales performance over the last 7 days</p>
+              <h3 className="text-lg font-semibold text-gray-900">Weekly Trend</h3>
+              <p className="text-sm text-gray-600">Sales performance over the last 7 days</p>
             </div>
           </CardTitle>
         </CardHeader>
@@ -452,20 +454,20 @@ export function ModernCashierAnalyticsV3() {
                 <Line 
                   type="monotone" 
                   dataKey="sales" 
-                  stroke="#3b82f6" 
+                  stroke="#16a34a" 
                   strokeWidth={4}
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: '#3b82f6', strokeWidth: 2 }}
+                  dot={{ fill: '#16a34a', strokeWidth: 2, r: 6 }}
+                  activeDot={{ r: 8, stroke: '#16a34a', strokeWidth: 2 }}
                 />
                 <Tooltip 
                   contentStyle={{
                     backgroundColor: '#ffffff',
-                    border: '1px solid #3b82f6',
+                    border: '1px solid #16a34a',
                     borderRadius: '8px',
-                    color: '#1e40af'
+                    color: '#1f2937'
                   }}
                   formatter={(value: number) => [formatCurrency(value), 'Sales']}
-                  labelStyle={{ color: '#1e40af' }}
+                  labelStyle={{ color: '#1f2937' }}
                 />
               </LineChart>
             </ResponsiveContainer>

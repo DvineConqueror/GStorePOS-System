@@ -81,21 +81,21 @@ export function CashierProductCatalog() {
       {/* Search and Filter Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black h-4 w-4" />
           <Input
             placeholder="Search products by name, SKU, or barcode..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-black"
           />
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-48 bg-white border-gray-300 text-black">
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             {categories.map((category) => (
-              <SelectItem key={category} value={category}>
+              <SelectItem key={category} value={category} className="text-black">
                 {category}
               </SelectItem>
             ))}
@@ -123,8 +123,8 @@ export function CashierProductCatalog() {
 
               {/* Product Info */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
-                <div className="text-xs text-gray-500">
+                <h3 className="font-semibold text-sm line-clamp-2 text-black">{product.name}</h3>
+                <div className="text-xs text-gray-600">
                   <div>SKU: {product.sku}</div>
                   {product.barcode && <div>Barcode: {product.barcode}</div>}
                 </div>
@@ -132,7 +132,7 @@ export function CashierProductCatalog() {
                   <span className="text-lg font-bold text-green-600">
                     {formatCurrency(product.price)}
                   </span>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-600">
                     Stock: {product.stock} {product.unit}
                   </div>
                 </div>
@@ -161,15 +161,15 @@ export function CashierProductCatalog() {
       {/* No Products Message */}
       {currentProducts.length === 0 && (
         <div className="text-center py-8">
-          <div className="text-gray-500">
+          <div className="text-gray-600">
             {searchTerm || selectedCategory !== 'All' ? (
               <>
-                <p>No products found matching your criteria.</p>
+                <p className="text-black font-medium">No products found matching your criteria.</p>
                 <p className="text-sm">Try adjusting your search or filter.</p>
               </>
             ) : (
               <>
-                <p>No products available.</p>
+                <p className="text-black font-medium">No products available.</p>
                 <p className="text-sm">Please contact your administrator.</p>
               </>
             )}

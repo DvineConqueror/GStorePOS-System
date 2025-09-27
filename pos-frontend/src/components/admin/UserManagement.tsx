@@ -61,29 +61,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Cashiers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm text-gray-600 font-medium">Total Cashiers</CardTitle>
+            <Users className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.totalCashierUsers || userStats.cashierUsers || 0}</div>
+            <div className="text-2xl text-black font-bold">{userStats.totalCashierUsers || userStats.cashierUsers || 0}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Cashiers</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm text-gray-600 font-medium">Active Cashiers</CardTitle>
+            <UserCheck className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.activeCashierUsers || userStats.cashierUsers || 0}</div>
+            <div className="text-2xl text-black font-bold">{userStats.activeCashierUsers || userStats.cashierUsers || 0}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Managers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm text-gray-600 font-medium">Managers</CardTitle>
+            <Users className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.managerUsers || 0}</div>
+            <div className="text-2xl text-black font-bold">{userStats.managerUsers || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -107,17 +107,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 placeholder="Search cashiers..."
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-black"
               />
             </div>
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-40 bg-white border-gray-300 text-black">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectContent className="bg-white">
+                <SelectItem value="all" className="text-black">All Status</SelectItem>
+                <SelectItem value="active" className="text-black">Active</SelectItem>
+                <SelectItem value="inactive" className="text-black">Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -147,19 +147,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((userProfile) => (
-                    <TableRow key={userProfile._id}>
-                      <TableCell className="font-medium">
+                  filteredUsers.map((userProfile, index) => (
+                    <TableRow key={userProfile._id} className={index % 2 === 0 ? "bg-[#ececec]" : "bg-white"}>
+                      <TableCell className="font-medium text-black">
                         {userProfile.firstName} {userProfile.lastName}
                       </TableCell>
-                      <TableCell>{userProfile.username}</TableCell>
-                      <TableCell>{userProfile.email}</TableCell>
+                      <TableCell className="text-gray-700">{userProfile.username}</TableCell>
+                      <TableCell className="text-gray-700">{userProfile.email}</TableCell>
                       <TableCell>
-                        <Badge variant={userProfile.status === 'active' ? 'default' : userProfile.status === 'inactive' ? 'secondary' : 'destructive'}>
-                          {userProfile.status === 'active' ? 'Active' : userProfile.status === 'inactive' ? 'Inactive' : 'Deleted'}
-                        </Badge>
+                        {userProfile.status === 'active' ? (
+                          <Badge className="bg-green-600 text-white hover:bg-green-700">
+                            Active
+                          </Badge>
+                        ) : userProfile.status === 'inactive' ? (
+                          <span className="text-gray-600 px-2 py-1 text-sm">
+                            Inactive
+                          </span>
+                        ) : (
+                          <Badge className="bg-green-800 text-white hover:bg-green-900">
+                            Deleted
+                          </Badge>
+                        )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-gray-600">
                         {new Date(userProfile.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>

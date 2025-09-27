@@ -211,49 +211,49 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'manager':
-        return 'bg-red-600 hover:bg-red-700';
+        return 'bg-green-600 hover:bg-green-700';
       case 'cashier':
         return 'bg-green-600 hover:bg-green-700';
       default:
-        return 'bg-slate-600 hover:bg-slate-700';
+        return 'bg-gray-600 hover:bg-gray-700';
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-[#ececec]">
       <div className="space-y-8 p-6">
         {/* Authority Header */}
-        <div className="border-b border-slate-800 pb-6">
+        <div className="border-b border-gray-200 pb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-600 to-amber-700 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
                 <UserCheck className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">Pending User Approvals</h1>
-                <p className="text-slate-400 text-lg mt-1">Review and approve new user registrations</p>
+                <h1 className="text-3xl font-bold text-black tracking-tight">Pending User Approvals</h1>
+                <p className="text-gray-600 text-lg mt-1">Review and approve new user registrations</p>
               </div>
             </div>
-            <Badge variant="outline" className="text-amber-300 border-amber-600 text-sm px-4 py-2">
-              <Clock className="h-4 w-4 mr-2" />
+            <Badge variant="outline" className="text-green-700 border-green-600 text-sm px-4 py-2 bg-white">
+              <Clock className="h-4 w-4 mr-2 text-green-600" />
               {pendingUsers.length} Pending
             </Badge>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-white border-green-200">
           <CardHeader>
-            <CardTitle className="text-white flex items-center text-lg">
-              <Filter className="h-5 w-5 mr-2" />
+            <CardTitle className="text-black flex items-center text-lg">
+              <Filter className="h-5 w-5 mr-2 text-green-600" />
               Search & Filter Approvals
             </CardTitle>
           </CardHeader>
@@ -261,20 +261,20 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Search by name, email, or username..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-slate-600"
+                    className="pl-10 bg-white border-gray-300 text-black placeholder-gray-400 focus:border-green-500"
                   />
                 </div>
               </div>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-48 bg-slate-800/50 border-slate-700 text-white">
+                <SelectTrigger className="w-48 bg-white border-gray-300 text-black">
                   <SelectValue placeholder="Filter by role" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-white border-gray-300">
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="cashier">Cashier</SelectItem>
@@ -286,25 +286,25 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
 
         {/* Bulk Actions */}
         {selectedUsers.length > 0 && (
-          <Card className="bg-slate-900/50 border-slate-800">
+          <Card className="bg-white border-green-200">
             <CardHeader>
-              <CardTitle className="text-white flex items-center text-lg">
-                <Shield className="h-5 w-5 mr-2" />
+              <CardTitle className="text-black flex items-center text-lg">
+                <Shield className="h-5 w-5 mr-2 text-green-600" />
                 Bulk Actions
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <span className="text-white text-lg font-medium">
+                  <span className="text-black text-lg font-medium">
                     {selectedUsers.length} user(s) selected
                   </span>
                   <div className="flex gap-3">
                     <Select value={bulkAction} onValueChange={(value: 'approve' | 'delete' | '') => setBulkAction(value)}>
-                      <SelectTrigger className="w-32 bg-slate-800/50 border-slate-700 text-white">
+                      <SelectTrigger className="w-32 bg-white border-gray-300 text-black">
                         <SelectValue placeholder="Action" />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">
+                      <SelectContent className="bg-white border-gray-300">
                         <SelectItem value="approve">Approve</SelectItem>
                         <SelectItem value="delete">Delete</SelectItem>
                       </SelectContent>
@@ -312,7 +312,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                     <Button
                       onClick={handleBulkAction}
                       disabled={!bulkAction}
-                      className={`${bulkAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} font-semibold`}
+                      className={`${bulkAction === 'approve' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'} font-semibold`}
                     >
                       {bulkAction === 'approve' ? (
                         <>
@@ -331,7 +331,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                 <Button
                   variant="ghost"
                   onClick={() => setSelectedUsers([])}
-                  className="text-slate-400 hover:text-white"
+                  className="text-gray-600 hover:text-black hover:bg-gray-100"
                 >
                   Clear Selection
                 </Button>
@@ -343,18 +343,20 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         {/* Pending Users List */}
         <div className="space-y-4">
           {pendingUsers.length === 0 ? (
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-white border-green-200">
               <CardContent className="p-12 text-center">
-                <UserCheck className="h-16 w-16 text-slate-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">No Pending Approvals</h3>
-                <p className="text-slate-400 text-lg">
+                <UserCheck className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-black mb-2">No Pending Approvals</h3>
+                <p className="text-gray-600 text-lg">
                   All users have been reviewed and approved.
                 </p>
               </CardContent>
             </Card>
           ) : (
-            pendingUsers.map((user) => (
-              <Card key={user._id} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors">
+            pendingUsers.map((user, index) => (
+              <Card key={user._id} className={`border-green-200 hover:border-green-300 transition-colors ${
+                index % 2 === 0 ? "bg-white" : "bg-[#ececec]"
+              }`}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4 min-w-0 flex-1">
@@ -363,28 +365,28 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                         onCheckedChange={(checked) => handleSelectUser(user._id, checked as boolean)}
                         className="flex-shrink-0"
                       />
-                      <div className="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <User className="h-6 w-6 text-slate-300" />
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <User className="h-6 w-6 text-green-600" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-white font-semibold text-lg truncate">
+                        <div className="text-black font-semibold text-lg truncate">
                           {user.firstName} {user.lastName}
                         </div>
-                        <div className="text-slate-400 text-sm truncate">
+                        <div className="text-gray-600 text-sm truncate">
                           @{user.username}
                         </div>
-                        <div className="flex items-center space-x-4 mt-2 text-sm text-slate-400">
+                        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                           <div className="flex items-center">
-                            <Mail className="h-4 w-4 mr-2" />
+                            <Mail className="h-4 w-4 mr-2 text-green-600" />
                             <span className="truncate">{user.email}</span>
                           </div>
                           <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2" />
+                            <Calendar className="h-4 w-4 mr-2 text-green-600" />
                             {format(new Date(user.createdAt), 'MMM dd, yyyy')}
                           </div>
                         </div>
                         {user.createdBy && (
-                          <div className="text-xs text-slate-500 mt-2">
+                          <div className="text-xs text-gray-500 mt-2">
                             Created by: {user.createdBy.firstName} {user.createdBy.lastName}
                           </div>
                         )}
@@ -393,7 +395,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
 
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <Badge className={`${getRoleBadgeColor(user.role)} text-xs px-2 py-1 font-semibold`}>
+                        <Badge className={`${getRoleBadgeColor(user.role)} text-xs px-2 py-1 font-semibold text-white`}>
                           {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                         </Badge>
                       </div>
@@ -411,7 +413,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteUser(user._id)}
-                          className="bg-red-600 hover:bg-red-700 font-semibold"
+                          className="bg-red-600 hover:bg-red-700 font-semibold text-white"
                         >
                           <XCircle className="h-4 w-4 mr-2" />
                           Delete

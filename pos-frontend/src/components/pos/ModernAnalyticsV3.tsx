@@ -59,7 +59,7 @@ interface AnalyticsData {
   };
 }
 
-const CATEGORY_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#06b6d4'];
+const CATEGORY_COLORS = ['#107146', '#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'];
 
 export function ModernAnalyticsV3() {
   const { user } = useAuth();
@@ -209,9 +209,9 @@ export function ModernAnalyticsV3() {
   if (!analytics) {
     return (
       <div className="text-center py-12">
-        <Activity className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">No Data Available</h3>
-        <p className="text-slate-600">No analytics data available at the moment.</p>
+        <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
+        <p className="text-gray-600">No analytics data available at the moment.</p>
       </div>
     );
   }
@@ -239,7 +239,7 @@ export function ModernAnalyticsV3() {
         <div className={`absolute top-0 right-0 w-32 h-32 ${color} opacity-10 rounded-full -translate-y-16 translate-x-16`} />
         <CardContent className="p-6 relative">
           <div className="flex items-center justify-between mb-4">
-            <Icon className="h-6 w-6 text-blue-500" />
+            <Icon className="h-6 w-6 text-green-600" />
             {trend !== undefined && (
               <div className={`flex items-center gap-1 ${trendColor}`}>
                 <TrendIcon className="h-4 w-4" />
@@ -248,9 +248,9 @@ export function ModernAnalyticsV3() {
             )}
           </div>
           <div className="space-y-1">
-            <h3 className="text-sm font-medium text-slate-600">{title}</h3>
-            <div className="text-3xl font-bold text-slate-900">{value}</div>
-            <p className="text-sm text-slate-500">{subtitle}</p>
+            <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+            <div className="text-3xl font-bold text-gray-900">{value}</div>
+            <p className="text-sm text-gray-500">{subtitle}</p>
           </div>
         </CardContent>
       </Card>
@@ -258,9 +258,9 @@ export function ModernAnalyticsV3() {
   };
 
   const radialData = [
-    { name: 'Sales', value: 75, fill: '#3b82f6' },
-    { name: 'Transactions', value: 60, fill: '#10b981' },
-    { name: 'Efficiency', value: 85, fill: '#8b5cf6' }
+    { name: 'Sales', value: 75, fill: '#16a34a' },
+    { name: 'Transactions', value: 60, fill: '#22c55e' },
+    { name: 'Efficiency', value: 85, fill: '#4ade80' }
   ];
 
   return (
@@ -272,7 +272,7 @@ export function ModernAnalyticsV3() {
           value={formatCurrency(analytics.totalSales)}
           subtitle={`${analytics.totalTransactions} transactions`}
           icon={DollarSign}
-          color="bg-slate-700"
+          color="bg-green-700"
           trend={12.5}
         />
         <StatCard
@@ -280,14 +280,14 @@ export function ModernAnalyticsV3() {
           value={analytics.peakHour ? `${analytics.peakHour.hour}:00` : 'N/A'}
           subtitle={analytics.peakHour ? formatCurrency(analytics.peakHour.sales) : 'No data'}
           icon={Clock}
-          color="bg-slate-700"
+          color="bg-green-700"
         />
         <StatCard
           title="Avg Transaction"
           value={formatCurrency(analytics.avgTransaction)}
           subtitle="Per transaction"
           icon={Target}
-          color="bg-slate-700"
+          color="bg-green-700"
           trend={-2.3}
         />
       </div>
@@ -298,50 +298,50 @@ export function ModernAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Award className="h-5 w-5 text-blue-500" />
+              <Award className="h-5 w-5 text-green-600" />
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Top Performer</h3>
-                <p className="text-sm text-slate-600">Leading cashier</p>
+                <h3 className="text-lg font-semibold text-gray-900">Top Performer</h3>
+                <p className="text-sm text-gray-600">Leading cashier</p>
               </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {analytics.topPerformer ? (
               <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                  <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center">
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                  <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center">
                     <span className="text-white font-bold text-xl">
                       {analytics.topPerformer.name.charAt(0)}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-slate-900 text-lg">{analytics.topPerformer.name}</h4>
-                    <p className="text-sm text-slate-600">Cashier</p>
-                    <Badge className="bg-blue-600 text-white mt-1">
+                    <h4 className="font-bold text-gray-900 text-lg">{analytics.topPerformer.name}</h4>
+                    <p className="text-sm text-gray-600">Cashier</p>
+                    <Badge className="bg-green-600 text-white mt-1">
                       #1 Performer
                     </Badge>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center p-3 bg-slate-50 rounded-xl">
-                    <div className="text-xl font-bold text-slate-900">
+                  <div className="text-center p-3 bg-gray-50 rounded-xl">
+                    <div className="text-xl font-bold text-gray-900">
                       {formatCurrency(analytics.topPerformer.sales)}
                     </div>
-                    <div className="text-xs text-slate-600">Sales</div>
+                    <div className="text-xs text-gray-600">Sales</div>
                   </div>
-                  <div className="text-center p-3 bg-slate-50 rounded-xl">
-                    <div className="text-xl font-bold text-slate-900">
+                  <div className="text-center p-3 bg-gray-50 rounded-xl">
+                    <div className="text-xl font-bold text-gray-900">
                       {analytics.topPerformer.transactions}
                     </div>
-                    <div className="text-xs text-slate-600">Transactions</div>
+                    <div className="text-xs text-gray-600">Transactions</div>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="text-center py-8">
-                <Users className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                <p className="text-slate-500">No performance data</p>
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No performance data</p>
               </div>
             )}
           </CardContent>
@@ -351,10 +351,10 @@ export function ModernAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <PieChartIcon className="h-5 w-5 text-emerald-500" />
+              <PieChartIcon className="h-5 w-5 text-green-600" />
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Categories</h3>
-                <p className="text-sm text-slate-600">Sales breakdown</p>
+                <h3 className="text-lg font-semibold text-gray-900">Categories</h3>
+                <p className="text-sm text-gray-600">Sales breakdown</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -369,12 +369,12 @@ export function ModernAnalyticsV3() {
                     />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-600">{category.category}</span>
-                        <span className="text-sm font-semibold text-slate-900">
+                        <span className="text-sm font-medium text-gray-600">{category.category}</span>
+                        <span className="text-sm font-semibold text-gray-900">
                           {formatCurrency(category.sales)}
                         </span>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2 mt-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                         <div 
                           className="h-2 rounded-full"
                           style={{ 
@@ -389,8 +389,8 @@ export function ModernAnalyticsV3() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <PieChartIcon className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                <p className="text-slate-500">No category data available</p>
+                <PieChartIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No category data available</p>
               </div>
             )}
           </CardContent>
@@ -400,10 +400,10 @@ export function ModernAnalyticsV3() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Zap className="h-5 w-5 text-violet-500" />
+              <Zap className="h-5 w-5 text-green-600" />
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Efficiency</h3>
-                <p className="text-sm text-slate-600">Performance metrics</p>
+                <h3 className="text-lg font-semibold text-gray-900">Efficiency</h3>
+                <p className="text-sm text-gray-600">Performance metrics</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -412,28 +412,28 @@ export function ModernAnalyticsV3() {
               <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="80%" data={radialData}>
                   <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-                  <RadialBar dataKey="value" cornerRadius={8} fill="#3b82f6" />
+                  <RadialBar dataKey="value" cornerRadius={8} fill="#16a34a" />
                 </RadialBarChart>
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-3 gap-2 mt-4">
               <div className="text-center">
-                <div className="text-lg font-bold text-slate-900">
+                <div className="text-lg font-bold text-gray-900">
                   {formatCurrency(analytics.efficiency.salesPerHour)}
                 </div>
-                <div className="text-xs text-slate-600">Sales/hr</div>
+                <div className="text-xs text-gray-600">Sales/hr</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-slate-900">
+                <div className="text-lg font-bold text-gray-900">
                   {analytics.efficiency.transactionsPerHour.toFixed(1)}
                 </div>
-                <div className="text-xs text-slate-600">Txns/hr</div>
+                <div className="text-xs text-gray-600">Txns/hr</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-slate-900">
+                <div className="text-lg font-bold text-gray-900">
                   {analytics.efficiency.avgItemsPerTransaction.toFixed(1)}
                 </div>
-                <div className="text-xs text-slate-600">Items/txn</div>
+                <div className="text-xs text-gray-600">Items/txn</div>
               </div>
             </div>
           </CardContent>
@@ -444,10 +444,10 @@ export function ModernAnalyticsV3() {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3">
-            <TrendingUpIcon className="h-5 w-5 text-blue-500" />
+            <TrendingUpIcon className="h-5 w-5 text-green-600" />
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">Weekly Trend</h3>
-              <p className="text-sm text-slate-600">Sales performance over the last 7 days</p>
+              <h3 className="text-lg font-semibold text-gray-900">Weekly Trend</h3>
+              <p className="text-sm text-gray-600">Sales performance over the last 7 days</p>
             </div>
           </CardTitle>
         </CardHeader>
@@ -458,10 +458,10 @@ export function ModernAnalyticsV3() {
                 <Line 
                   type="monotone" 
                   dataKey="sales" 
-                  stroke="#3b82f6" 
+                  stroke="#16a34a" 
                   strokeWidth={4}
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: '#3b82f6', strokeWidth: 2 }}
+                  dot={{ fill: '#16a34a', strokeWidth: 2, r: 6 }}
+                  activeDot={{ r: 8, stroke: '#16a34a', strokeWidth: 2 }}
                 />
                 <Tooltip 
                   contentStyle={{

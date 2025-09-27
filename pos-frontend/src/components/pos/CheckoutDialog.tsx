@@ -112,7 +112,7 @@ export function CheckoutDialog() {
                 <TransactionReceipt transaction={currentTransaction} />
                 <div className="flex space-x-2 mt-4">
                   <Button 
-                    className="flex-1 bg-pos-primary hover:bg-pos-primary/90"
+                    className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={() => window.print()}
                   >
                     Print Receipt
@@ -193,7 +193,7 @@ export function CheckoutDialog() {
             <div className="pt-4">
               <p className="mb-2 text-sm text-muted-foreground">Select payment method:</p>
               <Button
-                className="w-full flex items-center justify-start mb-2 bg-pos-primary hover:bg-pos-primary/90"
+                className="w-full flex items-center justify-start mb-2 bg-green-600 hover:bg-green-700"
                 onClick={handlePaymentMethodSelect}
               >
                 <Banknote className="mr-2 h-4 w-4" />

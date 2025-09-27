@@ -17,7 +17,7 @@ export default function LoginPage() {
     rememberMe
   });
   
-  const colors = getColorScheme(isAdminMode);
+  const colors = getColorScheme();
 
   const handleToggleSignUp = () => {
     setIsSignUp(!isSignUp);

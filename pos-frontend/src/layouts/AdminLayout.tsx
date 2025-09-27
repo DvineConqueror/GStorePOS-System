@@ -37,25 +37,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#ececec]">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b border-green-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Shield className="h-8 w-8 text-blue-600" />
-                <h1 className="text-xl font-bold text-gray-900">Manager Dashboard</h1>
+                <Shield className="h-8 w-8 text-green-600" />
+                <h1 className="text-xl font-bold text-black">Manager Dashboard</h1>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-gray-700">
-                <Shield className="h-4 w-4" />
+                <Shield className="h-4 w-4 text-green-600" />
                 <span className="text-sm font-medium">Manager: {user?.firstName} {user?.lastName}</span>
               </div>
-              <Button onClick={handleLogout} variant="outline" size="sm">
-                <LogOut className="mr-2 h-4 w-4" />
+              <Button onClick={handleLogout} variant="outline" size="sm" className="border-green-300 text-gray-700 hover:bg-green-50">
+                <LogOut className="mr-2 h-4 w-4 text-green-600" />
                 Logout
               </Button>
             </div>
@@ -65,7 +65,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-sm min-h-screen">
+            <aside className="w-64 bg-white shadow-sm min-h-screen border-r border-green-200">
           <nav className="mt-8">
             <div className="px-4 space-y-2">
               {navigationItems.map((item) => {
@@ -74,9 +74,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <button
                     key={item.id}
                     onClick={() => navigate(item.path)}
-                    className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-green-50 hover:text-gray-900 transition-colors"
                   >
-                    <Icon className="mr-3 h-5 w-5" />
+                    <Icon className="mr-3 h-5 w-5 text-green-600" />
                     {item.label}
                   </button>
                 );
