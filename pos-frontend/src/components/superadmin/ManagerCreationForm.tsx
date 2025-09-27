@@ -10,7 +10,6 @@ import {
   EyeOff,
   CheckCircle,
   AlertCircle,
-  Shield,
   Mail,
   User,
   Lock,
@@ -190,7 +189,7 @@ export default function ManagerCreationForm({
 
   return (
     <div className="min-h-screen bg-[#ececec]">
-      <div className="space-y-8 p-6">
+      <div className="space-y-4 p-6">
         {/* Authority Header */}
         <div className="border-b border-gray-200 pb-6">
           <div className="flex items-center space-x-4">
@@ -209,8 +208,7 @@ export default function ManagerCreationForm({
         </div>
 
         {/* Authority Info Alert */}
-        <Alert className="bg-green-50 border-green-200">
-          <Shield className="h-10 w-10 text-green-600 flex-shrink-0 pl-2" />
+        <Alert className="bg-white border-green-200">
           <AlertDescription className="text-green-700 text-base">
             Manager accounts are automatically approved and have full access to
             the system. They can manage cashiers and access all administrative
@@ -488,7 +486,7 @@ export default function ManagerCreationForm({
           <Button
             type="submit"
             disabled={loading || !passwordValidation.isValid}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-8"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8"
           >
             {loading ? (
               <>

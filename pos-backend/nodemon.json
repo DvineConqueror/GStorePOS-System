@@ -1,9 +1,13 @@
 {
   "watch": ["src"],
   "ext": "ts,json",
-  "ignore": ["src/**/*.spec.ts"],
-  "exec": "ts-node src/server.ts",
+  "ignore": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "exec": "ts-node --transpile-only src/server.ts",
   "env": {
-    "NODE_ENV": "development"
-  }
+    "NODE_ENV": "development",
+    "NODE_OPTIONS": "--max-old-space-size=512"
+  },
+  "delay": 1000,
+  "restartable": "rs",
+  "verbose": false
 }

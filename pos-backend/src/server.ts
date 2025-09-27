@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { connectDB } from './config/database';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -18,6 +19,7 @@ import superadminRoutes from './routes/superadmin';
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
+import { requestMetrics } from './middleware/metrics';
 
 // Load environment variables
 dotenv.config();
@@ -39,21 +41,16 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration - More permissive for development
-app.use(cors({
-  origin: function (origin, callback) {
-    console.log('CORS request from origin:', origin);
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    
+// CORS configuration - Optimized for performance
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
-      console.log('Allowing request with no origin');
       return callback(null, true);
     }
     
     // In development, allow any localhost port
     if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
-      console.log('Allowing localhost origin in development:', origin);
       return callback(null, true);
     }
     
@@ -65,24 +62,27 @@ app.use(cors({
       process.env.FRONTEND_URL
     ].filter(Boolean);
     
-    console.log('Allowed origins:', allowedOrigins);
-    
     if (allowedOrigins.includes(origin)) {
-      console.log('Origin allowed:', origin);
       return callback(null, true);
     }
     
-    console.log('Origin not allowed:', origin);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+  optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  maxAge: 86400, // Cache preflight response for 24 hours
+};
+
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request metrics middleware
+app.use(requestMetrics);
 
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
@@ -91,13 +91,28 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Health check endpoint
+// Health check endpoint with enhanced monitoring
 app.get('/health', (req, res) => {
+  const memUsage = process.memoryUsage();
+  const { requestCount } = require('./middleware/metrics').getRequestMetrics();
+  
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
+    memory: {
+      used: Math.round(memUsage.heapUsed / 1024 / 1024) + ' MB',
+      total: Math.round(memUsage.heapTotal / 1024 / 1024) + ' MB',
+      external: Math.round(memUsage.external / 1024 / 1024) + ' MB',
+    },
+    database: {
+      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      host: mongoose.connection.host || 'unknown',
+    },
+    requests: {
+      currentMinute: requestCount
+    }
   });
 });
 
@@ -113,58 +128,82 @@ app.use('/api/v1/superadmin', superadminRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Database connection
-const connectDB = async () => {
-  try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/grocery-pos';
-    await mongoose.connect(mongoURI, {
-      // Connection options for better reliability
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      family: 4, // Use IPv4, skip trying IPv6
-    });
-    console.log('✅ MongoDB connected successfully');
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
-  }
-};
-
 // Start server
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+    
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+      console.log(`Memory Usage: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`);
     });
+
+    // Server timeout settings
+    server.keepAliveTimeout = 65000;
+    server.headersTimeout = 66000;
+    
+    // Periodic health monitoring (every 10 minutes)
+    const healthInterval = setInterval(() => {
+      const memUsage = process.memoryUsage();
+      const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+      
+      if (heapUsedMB > 500) { // Alert if memory usage exceeds 500MB
+        console.warn(`High memory usage: ${heapUsedMB} MB`);
+      }
+      
+      // Log periodic health status
+      console.log(`Health Check - Memory: ${heapUsedMB}MB, Uptime: ${Math.round(process.uptime())}s, DB: ${mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'}`);
+    }, 10 * 60 * 1000);
+    
+    // Clear interval on shutdown
+    const originalExit = process.exit;
+    process.exit = ((code?: number) => {
+      clearInterval(healthInterval);
+      originalExit(code);
+    }) as typeof process.exit;
+    
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 };
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err: Error) => {
-  console.error('❌ Unhandled Promise Rejection:', err.message);
+  console.error('Unhandled Promise Rejection:', err.message);
   process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err: Error) => {
-  console.error('❌ Uncaught Exception:', err.message);
+  console.error('Uncaught Exception:', err.message);
   process.exit(1);
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received. Shutting down gracefully...');
-  mongoose.connection.close().then(() => {
-    console.log('📦 MongoDB connection closed.');
+// Graceful shutdown handlers
+const gracefulShutdown = async (signal: string) => {
+  console.log(`${signal} received. Shutting down gracefully...`);
+  
+  try {
+    // Close database connection
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed.');
+    
+    // Clear any caches/intervals
+    console.log('Cleaning up resources...');
+    
+    console.log('Graceful shutdown completed');
     process.exit(0);
-  });
-});
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 startServer();
 
