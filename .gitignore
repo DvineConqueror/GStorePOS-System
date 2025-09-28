@@ -101,6 +101,7 @@ Thumbs.db
 *.sqlite3
 
 .cursor/
+.github/
 
 # Uploads
 uploads/

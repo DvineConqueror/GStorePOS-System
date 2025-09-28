@@ -73,19 +73,19 @@ function askPassword(question) {
 
 async function createAdmin() {
   try {
-    console.log('🔧 Grocery POS - Admin Account Creation Script');
+    console.log('Grocery POS - Admin Account Creation Script');
     console.log('==============================================\n');
 
     // Connect to MongoDB
-    console.log('📡 Connecting to MongoDB...');
+    console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/grocery_pos', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ Connected to MongoDB successfully!\n');
+    console.log('Connected to MongoDB successfully!\n');
 
     // Get admin details
-    console.log('👤 Please provide admin account details:');
+    console.log('Please provide admin account details:');
     console.log('----------------------------------------');
     
     const username = await askQuestion('Username: ');
@@ -130,7 +130,7 @@ async function createAdmin() {
       throw new Error('Passwords do not match');
     }
 
-    console.log('\n🔄 Creating admin account...');
+    console.log('\nCreating admin account...');
 
     // Hash password
     const saltRounds = 12;
@@ -152,29 +152,29 @@ async function createAdmin() {
 
     await adminUser.save();
 
-    console.log('✅ Admin account created successfully!');
-    console.log('📋 Account Details:');
+    console.log('Admin account created successfully!');
+    console.log('Account Details:');
     console.log(`   Username: ${username}`);
     console.log(`   Email: ${email}`);
     console.log(`   Name: ${firstName} ${lastName}`);
     console.log(`   Role: Admin`);
     console.log(`   Status: Active & Approved`);
-    console.log('\n🎉 The admin can now login using the Admin Mode on the login page.');
+    console.log('\nThe admin can now login using the Admin Mode on the login page.');
 
   } catch (error) {
-    console.error('❌ Error creating admin account:', error.message);
+    console.error('Error creating admin account:', error.message);
     process.exit(1);
   } finally {
     // Close database connection and readline interface
     await mongoose.connection.close();
     rl.close();
-    console.log('\n👋 Goodbye!');
+    console.log('\nGoodbye!');
   }
 }
 
 // Handle script termination
 process.on('SIGINT', async () => {
-  console.log('\n\n⚠️  Script interrupted by user');
+  console.log('\n\n Script interrupted by user');
   await mongoose.connection.close();
   rl.close();
   process.exit(0);

@@ -76,7 +76,7 @@ const createSuperadmin = async () => {
 
     await superadmin.save();
 
-    console.log('\n✅ Superadmin account created successfully!');
+    console.log('\nSuperadmin account created successfully!');
     console.log(`Username: ${username}`);
     console.log(`Email: ${email}`);
     console.log(`Name: ${firstName} ${lastName}`);
