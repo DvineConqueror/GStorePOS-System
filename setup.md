@@ -83,12 +83,12 @@ GroceryStorePOS/
 - `npm run lint` - Run ESLint
 
 ## Features Available
-- ✅ User Authentication (JWT)
-- ✅ Role-based Access Control (Admin/Cashier)
-- ✅ Product Management
-- ✅ Transaction Processing
-- ✅ User Management (Admin)
-- ✅ Analytics Dashboard
-- ✅ Responsive UI with Tailwind CSS
-- ✅ TypeScript Support
-- ✅ Modern React with Hooks
+-  User Authentication (JWT)
+-  Role-based Access Control (Admin/Cashier)
+-  Product Management
+-  Transaction Processing
+-  User Management (Admin)
+-  Analytics Dashboard
+-  Responsive UI with Tailwind CSS
+-  TypeScript Support
+-  Modern React with Hooks

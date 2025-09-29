@@ -15,6 +15,7 @@ import transactionRoutes from './routes/transactions';
 import userRoutes from './routes/users';
 import analyticsRoutes from './routes/analytics';
 import superadminRoutes from './routes/superadmin';
+import databaseRoutes from './routes/database';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -31,26 +32,34 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(compression());
 
-// Rate limiting
+// Rate limiting - More lenient for development
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000'), // 1 minute
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '1000'), // limit each IP to 1000 requests per minute
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting in development
+    return process.env.NODE_ENV === 'development';
+  }
 });
 app.use(limiter);
 
 // CORS configuration - Optimized for performance
 const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    console.log('CORS Origin:', origin);
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
+      console.log('CORS: Allowing request with no origin');
       return callback(null, true);
     }
     
     // In development, allow any localhost port
     if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
+      console.log('CORS: Allowing localhost in development');
       return callback(null, true);
     }
     
@@ -59,13 +68,21 @@ const corsOptions = {
       'http://localhost:5173',
       'http://localhost:8080', 
       'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:8080',
+      'http://127.0.0.1:3000',
       process.env.FRONTEND_URL
     ].filter(Boolean);
     
+    console.log('CORS: Allowed origins:', allowedOrigins);
+    console.log('CORS: Request origin:', origin);
+    
     if (allowedOrigins.includes(origin)) {
+      console.log('CORS: Origin allowed');
       return callback(null, true);
     }
     
+    console.log('CORS: Origin blocked');
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -92,9 +109,18 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Health check endpoint with enhanced monitoring
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
   const memUsage = process.memoryUsage();
   const { requestCount } = require('./middleware/metrics').getRequestMetrics();
+  
+  // Get cache health
+  let cacheHealth = { status: 'unknown', type: 'unknown' };
+  try {
+    const { getCacheHealth } = require('./config/cache');
+    cacheHealth = await getCacheHealth();
+  } catch (error) {
+    cacheHealth = { status: 'error', type: 'unknown' };
+  }
   
   res.status(200).json({
     status: 'OK',
@@ -109,7 +135,9 @@ app.get('/health', (req, res) => {
     database: {
       status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
       host: mongoose.connection.host || 'unknown',
+      name: mongoose.connection.name || 'unknown',
     },
+    cache: cacheHealth,
     requests: {
       currentMinute: requestCount
     }
@@ -123,6 +151,7 @@ app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/superadmin', superadminRoutes);
+app.use('/api/v1/database', databaseRoutes);
 
 // Error handling middleware
 app.use(notFound);

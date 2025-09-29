@@ -103,17 +103,104 @@ const transactionSchema = new Schema<ITransaction>({
   timestamps: true,
 });
 
-// Indexes for better query performance
+// Comprehensive indexing strategy for optimal query performance
+
+// Single field indexes for basic queries
 transactionSchema.index({ cashierId: 1 });
 transactionSchema.index({ customerId: 1 });
 transactionSchema.index({ status: 1 });
 transactionSchema.index({ paymentMethod: 1 });
 transactionSchema.index({ createdAt: -1 });
 transactionSchema.index({ total: 1 });
+// Note: transactionNumber index is automatically created due to unique: true in schema
 
-// Compound indexes
-transactionSchema.index({ cashierId: 1, createdAt: -1 });
-transactionSchema.index({ status: 1, createdAt: -1 });
+// Analytics and reporting compound indexes
+transactionSchema.index({ 
+  status: 1, 
+  createdAt: -1 
+}); // For completed transactions by date
+
+transactionSchema.index({ 
+  cashierId: 1, 
+  status: 1, 
+  createdAt: -1 
+}); // For cashier performance analytics
+
+transactionSchema.index({ 
+  status: 1, 
+  paymentMethod: 1, 
+  createdAt: -1 
+}); // For payment method analytics
+
+transactionSchema.index({ 
+  createdAt: -1, 
+  status: 1, 
+  total: -1 
+}); // For sales reports with total sorting
+
+// Customer analytics indexes
+transactionSchema.index({ 
+  customerId: 1, 
+  status: 1, 
+  createdAt: -1 
+}); // For customer transaction history
+
+transactionSchema.index({ 
+  customerId: 1, 
+  total: -1 
+}); // For customer value analysis
+
+// Time-based analytics indexes for different periods
+transactionSchema.index({ 
+  createdAt: -1, 
+  status: 1, 
+  cashierId: 1 
+}); // For daily/weekly/monthly cashier reports
+
+transactionSchema.index({ 
+  createdAt: -1, 
+  status: 1, 
+  paymentMethod: 1, 
+  total: -1 
+}); // For comprehensive sales analytics
+
+// Product sales analytics - index on embedded items array
+transactionSchema.index({ 
+  'items.productId': 1, 
+  status: 1, 
+  createdAt: -1 
+}); // For product sales performance
+
+transactionSchema.index({ 
+  status: 1, 
+  'items.productId': 1 
+}); // For product sales counting
+
+// Revenue and financial analytics
+transactionSchema.index({ 
+  status: 1, 
+  total: -1, 
+  createdAt: -1 
+}); // For high-value transaction analysis
+
+transactionSchema.index({ 
+  createdAt: -1, 
+  subtotal: -1, 
+  tax: -1 
+}); // For tax reporting and financial analysis
+
+// Performance optimization for transaction listing
+transactionSchema.index({ 
+  createdAt: -1, 
+  _id: -1 
+}); // For efficient pagination of recent transactions
+
+// Refund and void tracking
+transactionSchema.index({ 
+  status: 1, 
+  createdAt: -1, 
+  cashierId: 1 
+}); // For refund/void analysis by cashier
 
 // Virtual for item count
 transactionSchema.virtual('itemCount').get(function() {

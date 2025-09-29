@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
+import { User } from '../models/User';
 import { ApiResponse } from '../types';
 
 export class UserController {
@@ -159,12 +160,44 @@ export class UserController {
         return;
       }
 
-      const user = await UserService.toggleUserStatus(userId, currentStatus);
+      // Get the user first to check current status
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found.',
+        } as ApiResponse);
+        return;
+      }
+
+      // Determine the new status based on current status
+      const newStatus = user.status === 'active' ? 'inactive' : 'active';
+      
+      // Update both status and isApproved for consistency
+      user.status = newStatus;
+      if (newStatus === 'active') {
+        user.isApproved = true;
+        user.approvedBy = req.user!._id;
+        user.approvedAt = new Date();
+      }
+
+      await user.save();
 
       res.json({
         success: true,
-        message: 'User status updated successfully.',
-        data: user,
+        message: `User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully.`,
+        data: {
+          user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            isApproved: user.isApproved,
+            approvedBy: user.approvedBy,
+            approvedAt: user.approvedAt,
+          }
+        },
       } as ApiResponse);
     } catch (error) {
       console.error('Toggle user status error:', error);

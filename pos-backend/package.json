@@ -11,7 +11,9 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "create-admin": "node scripts/create-admin.js",
-    "create-superadmin": "node scripts/create-superadmin.js"
+    "create-superadmin": "node scripts/create-superadmin.js",
+    "init-indexes": "node scripts/init-indexes.js",
+    "reset-indexes": "node scripts/reset-indexes.js"
   },
   "keywords": ["pos", "grocery", "mern", "typescript"],
   "author": "Collective 3",

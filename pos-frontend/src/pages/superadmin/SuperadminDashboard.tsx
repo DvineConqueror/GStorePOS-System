@@ -128,7 +128,7 @@ export default function SuperadminDashboard() {
 
         {/* Authority Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="bg-[#ececec] border-gray-300 hover:border-gray-400 transition-all duration-300 group">
+          <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300 group">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -151,7 +151,7 @@ export default function SuperadminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#ececec] border-gray-300 hover:border-gray-400 transition-all duration-300 group">
+          <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300 group">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -166,15 +166,24 @@ export default function SuperadminDashboard() {
             <CardContent>
               <p className="text-gray-600 text-sm mb-4">Create new manager accounts with full permissions</p>
               <Button 
-                onClick={() => navigate('/superadmin/create-manager')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Create Manager button clicked');
+                  console.log('Current location:', window.location.pathname);
+                  console.log('Navigate function:', navigate);
+                  alert('Button clicked! Check console for details.');
+                  navigate('/superadmin/create-manager');
+                }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                style={{ zIndex: 9999, position: 'relative' }}
               >
                 Create Manager
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#ececec] border-gray-300 hover:border-gray-400 transition-all duration-300 group md:col-span-2 lg:col-span-1">
+          <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300 group md:col-span-2 lg:col-span-1">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -200,7 +209,7 @@ export default function SuperadminDashboard() {
 
         {/* System Statistics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-[#ececec] border-gray-300 hover:border-gray-400 transition-all duration-300">
+          <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700">
                 Total Users
@@ -219,7 +228,7 @@ export default function SuperadminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#ececec] border-gray-300 hover:border-gray-400 transition-all duration-300">
+          <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700">
                 Active Users
@@ -238,7 +247,7 @@ export default function SuperadminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#ececec] border-gray-300 hover:border-gray-400 transition-all duration-300">
+          <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700">
                 Pending Approvals
@@ -257,7 +266,7 @@ export default function SuperadminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#ececec] border-gray-300 hover:border-gray-400 transition-all duration-300">
+          <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700">
                 Managers
@@ -280,7 +289,7 @@ export default function SuperadminDashboard() {
         {/* System Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* User Roles Distribution */}
-          <Card className="bg-[#ececec] border-gray-300">
+          <Card className="bg-white border-gray-300">
             <CardHeader>
               <CardTitle className="text-gray-800 flex items-center text-xl">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
@@ -322,7 +331,7 @@ export default function SuperadminDashboard() {
           </Card>
 
           {/* Recent Users */}
-          <Card className="bg-[#ececec] border-gray-300">
+          <Card className="bg-white border-gray-300">
             <CardHeader>
               <CardTitle className="text-gray-800 flex items-center text-xl">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">

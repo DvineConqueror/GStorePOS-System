@@ -14,7 +14,7 @@ This document outlines the recommended architecture for the Grocery Store POS Sy
 
 ---
 
-## **🔧 Backend Architecture: MVC + Service Layer**
+## ** Backend Architecture: MVC + Service Layer**
 
 ### **📁 Directory Structure**
 ```
@@ -270,7 +270,7 @@ App
 
 ---
 
-## **📊 Analytics & Reporting**
+## ** Analytics & Reporting**
 
 ### **Real-time Analytics**
 - **WebSocket Integration**: Live sales updates
@@ -288,7 +288,7 @@ App
 
 ---
 
-## **🚀 Future Enhancements**
+## **Future Enhancements**
 
 ### **Phase 1: Core Features**
 - [ ] Service layer implementation
@@ -324,7 +324,7 @@ App
 
 ---
 
-## **📈 Performance Considerations**
+## ** Performance Considerations**
 
 ### **Backend Optimization**
 - **Database Indexing**: Optimized queries
@@ -338,7 +338,7 @@ App
 
 ---
 
-## **🔧 Development Guidelines**
+## ** Development Guidelines**
 
 ### **Code Organization**
 1. **Single Responsibility**: Each class/function has one purpose

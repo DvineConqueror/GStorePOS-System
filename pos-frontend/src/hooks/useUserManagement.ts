@@ -91,7 +91,7 @@ export const useUserManagement = () => {
         await usersAPI.reactivateUser(userId);
         toast({
           title: "Success",
-          description: "User reactivated successfully",
+          description: "User activated successfully",
         });
       }
       fetchUsers(); // Refresh the list

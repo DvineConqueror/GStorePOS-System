@@ -80,12 +80,51 @@ const userSchema = new Schema<IUser>({
   },
 });
 
-// Index for better query performance
+// Comprehensive indexing strategy for optimal query performance
+
+// Single field indexes for basic queries
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });
 userSchema.index({ isApproved: 1 });
 userSchema.index({ createdBy: 1 });
 userSchema.index({ approvedBy: 1 });
+userSchema.index({ lastLogin: -1 }); // For sorting by last login
+
+// Compound indexes for common query patterns
+userSchema.index({ 
+  role: 1, 
+  status: 1, 
+  isApproved: 1 
+}); // For admin user management queries
+
+userSchema.index({ 
+  status: 1, 
+  isApproved: 1, 
+  createdAt: -1 
+}); // For filtering active approved users with recent first
+
+userSchema.index({ 
+  email: 1, 
+  status: 1 
+}); // For credential lookup optimization
+
+userSchema.index({ 
+  username: 1, 
+  status: 1 
+}); // For credential lookup optimization
+
+// Index for user search and filtering
+userSchema.index({ 
+  role: 1, 
+  firstName: 1, 
+  lastName: 1 
+}); // For user search by role and name
+
+// Time-based indexes for analytics and reporting
+userSchema.index({ 
+  createdAt: -1, 
+  role: 1 
+}); // For user registration analytics by role
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {

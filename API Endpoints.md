@@ -784,6 +784,160 @@ Common HTTP status codes:
 
 ---
 
+## Database Management Endpoints
+
+### 1. Get Database Index Information
+**GET** `/database/indexes`
+- **Access**: Superadmin only
+- **Description**: Retrieve information about all database indexes
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "name": "username_1",
+        "key": { "username": 1 },
+        "unique": true
+      }
+    ],
+    "products": [...],
+    "transactions": [...]
+  }
+}
+```
+
+### 2. Get Database Statistics
+**GET** `/database/stats`
+- **Access**: Superadmin only
+- **Description**: Retrieve database statistics and index usage data
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "users": {
+      "collectionStats": {
+        "count": 150,
+        "size": 25600,
+        "avgObjSize": 170,
+        "storageSize": 32768,
+        "totalIndexSize": 8192
+      },
+      "indexStats": [...]
+    }
+  }
+}
+```
+
+### 3. Explain Query Performance
+**GET** `/database/explain`
+- **Access**: Superadmin only
+- **Description**: Get query execution plans for common queries
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "users": {
+      "findByCredentials": {
+        "executionStats": {
+          "executionTimeMillis": 2,
+          "totalKeysExamined": 1,
+          "totalDocsExamined": 1,
+          "executionStages": {...}
+        }
+      }
+    }
+  }
+}
+```
+
+### 4. Ensure Database Indexes
+**POST** `/database/ensure-indexes`
+- **Access**: Superadmin only
+- **Description**: Create all database indexes if they don't exist
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "All indexes ensured successfully"
+}
+```
+
+### 5. Optimize Database
+**POST** `/database/optimize`
+- **Access**: Superadmin only
+- **Description**: Reindex collections and optimize database performance
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Database optimization completed",
+  "data": {
+    "users": "reindexed",
+    "products": "reindexed",
+    "transactions": "reindexed",
+    "users_compact": "completed"
+  }
+}
+```
+
+### 6. Get Slow Query Analysis
+**GET** `/database/slow-queries`
+- **Access**: Superadmin only
+- **Description**: Analyze slow queries and performance bottlenecks
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "op": "query",
+      "ns": "grocery-pos.products",
+      "command": {...},
+      "ts": "2024-01-01T10:00:00.000Z",
+      "millis": 150
+    }
+  ]
+}
+```
+
+### 7. Database Health Check
+**GET** `/database/health`
+- **Access**: Manager and above
+- **Description**: Perform comprehensive database health check
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "collections": {
+      "users": {
+        "indexCount": 8,
+        "documentCount": 150,
+        "totalIndexSize": 8192,
+        "avgDocumentSize": 170
+      }
+    },
+    "recommendations": [
+      "Consider adding more indexes to products for better query performance"
+    ]
+  }
+}
+```
+
+---
+
 ## Getting Started
 
 1. **Start the server:**

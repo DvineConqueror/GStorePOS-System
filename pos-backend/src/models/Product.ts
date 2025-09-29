@@ -82,13 +82,97 @@ const productSchema = new Schema<IProduct>({
   timestamps: true,
 });
 
-// Indexes for better query performance
-productSchema.index({ name: 'text', description: 'text' }); // Text search
+// Comprehensive indexing strategy for optimal query performance
+
+// Text search index for product search functionality
+productSchema.index({ 
+  name: 'text', 
+  description: 'text', 
+  sku: 'text',
+  barcode: 'text' 
+}, {
+  weights: {
+    name: 10,      // Name is most important for search
+    sku: 5,        // SKU is quite important
+    barcode: 3,    // Barcode is important for POS
+    description: 1  // Description is least important
+  }
+});
+
+// Single field indexes for basic filtering
 productSchema.index({ category: 1 });
 productSchema.index({ brand: 1 });
 productSchema.index({ isActive: 1 });
 productSchema.index({ stock: 1 });
 productSchema.index({ price: 1 });
+// Note: sku and barcode indexes are automatically created due to unique: true in schema
+
+// Compound indexes for common product listing queries
+productSchema.index({ 
+  isActive: 1, 
+  category: 1, 
+  name: 1 
+}); // For filtered product listings
+
+productSchema.index({ 
+  isActive: 1, 
+  brand: 1, 
+  price: 1 
+}); // For brand-based price filtering
+
+productSchema.index({ 
+  category: 1, 
+  isActive: 1, 
+  stock: -1 
+}); // For category inventory management
+
+// Inventory management indexes
+productSchema.index({ 
+  stock: 1, 
+  minStock: 1, 
+  isActive: 1 
+}); // Optimized for low stock queries
+
+productSchema.index({ 
+  isActive: 1, 
+  stock: 1 
+}); // For general stock filtering (in-stock, out-of-stock)
+
+// Price range filtering indexes
+productSchema.index({ 
+  isActive: 1, 
+  price: 1, 
+  category: 1 
+}); // For price range filtering by category
+
+productSchema.index({ 
+  price: 1, 
+  cost: 1 
+}); // For profit margin analysis
+
+// Sorting and pagination optimization
+productSchema.index({ 
+  isActive: 1, 
+  name: 1 
+}); // For alphabetical sorting of active products
+
+productSchema.index({ 
+  isActive: 1, 
+  createdAt: -1 
+}); // For newest products first
+
+productSchema.index({ 
+  isActive: 1, 
+  updatedAt: -1 
+}); // For recently updated products
+
+// Advanced search combinations
+productSchema.index({ 
+  isActive: 1, 
+  category: 1, 
+  brand: 1, 
+  price: 1 
+}); // For complex filtered searches
 
 // Virtual for profit margin
 productSchema.virtual('profitMargin').get(function() {

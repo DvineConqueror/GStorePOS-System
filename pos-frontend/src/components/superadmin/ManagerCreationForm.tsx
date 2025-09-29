@@ -460,47 +460,48 @@ export default function ManagerCreationForm({
                   </div>
                 </div>
               </div>
+
+              {/* Submit Actions */}
+              <div className="flex justify-end space-x-4 pt-6 border-t border-slate-800">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setFormData({
+                      username: "",
+                      email: "",
+                      password: "",
+                      confirmPassword: "",
+                      firstName: "",
+                      lastName: "",
+                    });
+                    setErrors({});
+                  }}
+                  className="text-slate-400 hover:text-black"
+                >
+                  Clear Form
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading || !passwordValidation.isValid}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Create Manager
+                    </>
+                  )}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
-        {/* Submit Actions */}
-        <div className="flex justify-end space-x-4 pt-6 border-t border-slate-800">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              setFormData({
-                username: "",
-                email: "",
-                password: "",
-                confirmPassword: "",
-                firstName: "",
-                lastName: "",
-              });
-              setErrors({});
-            }}
-            className="text-slate-400 hover:text-white"
-          >
-            Clear Form
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading || !passwordValidation.isValid}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Creating...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Create Manager
-              </>
-            )}
-          </Button>
-        </div>
       </div>
     </div>
   );
