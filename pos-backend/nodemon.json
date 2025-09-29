@@ -7,7 +7,9 @@
     "NODE_ENV": "development",
     "NODE_OPTIONS": "--max-old-space-size=512"
   },
-  "delay": 1000,
+  "delay": 2000,
   "restartable": "rs",
-  "verbose": false
+  "verbose": false,
+  "signal": "SIGTERM",
+  "killTimeout": 5000
 }

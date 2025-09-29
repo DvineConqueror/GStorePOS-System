@@ -4,6 +4,120 @@ import bcrypt from 'bcryptjs';
 
 export class UserService {
   /**
+   * Get all users for superadmin (includes all roles except superadmin)
+   */
+  static async getAllUsersForSuperadmin(filters: {
+    page: number;
+    limit: number;
+    role?: string;
+    status?: string;
+    isApproved?: string;
+    search?: string;
+    sort: string;
+    order: 'asc' | 'desc';
+  }) {
+    const queryFilters: any = {
+      role: { $ne: 'superadmin' } // Exclude superadmin from all users list
+    };
+
+    if (filters.role && filters.role !== 'all') {
+      queryFilters.role = filters.role; // Override with specific role filter
+    }
+    if (filters.status && filters.status !== 'all') {
+      queryFilters.status = filters.status; // Filter by status (active, inactive, deleted)
+    }
+    if (filters.isApproved !== undefined) {
+      queryFilters.isApproved = filters.isApproved === 'true';
+    }
+    if (filters.search) {
+      queryFilters.$or = [
+        { username: { $regex: filters.search, $options: 'i' } },
+        { email: { $regex: filters.search, $options: 'i' } },
+        { firstName: { $regex: filters.search, $options: 'i' } },
+        { lastName: { $regex: filters.search, $options: 'i' } },
+      ];
+    }
+
+    const sortOrder = filters.order === 'desc' ? -1 : 1;
+    const sortObj: any = {};
+    sortObj[filters.sort] = sortOrder;
+
+    const skip = (filters.page - 1) * filters.limit;
+
+    const users = await User.find(queryFilters)
+      .populate('createdBy', 'username firstName lastName')
+      .populate('approvedBy', 'username firstName lastName')
+      .sort(sortObj)
+      .skip(skip)
+      .limit(filters.limit);
+
+    const total = await User.countDocuments(queryFilters);
+
+    return {
+      users,
+      pagination: {
+        page: filters.page,
+        limit: filters.limit,
+        total,
+        pages: Math.ceil(total / filters.limit),
+      },
+    };
+  }
+
+  /**
+   * Toggle user status with business logic
+   */
+  static async toggleUserStatus(userId: string, currentUserId?: string) {
+    // Prevent admin from deactivating themselves
+    if (userId === currentUserId) {
+      return {
+        success: false,
+        statusCode: 400,
+        message: 'You cannot deactivate your own account.',
+      };
+    }
+
+    // Get the user first to check current status
+    const user = await User.findById(userId);
+    if (!user) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: 'User not found.',
+      };
+    }
+
+    // Determine the new status based on current status
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    
+    // Update both status and isApproved for consistency
+    user.status = newStatus;
+    if (newStatus === 'active') {
+      user.isApproved = true;
+      user.approvedBy = currentUserId;
+      user.approvedAt = new Date();
+    }
+
+    await user.save();
+
+    return {
+      success: true,
+      message: `User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully.`,
+      data: {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          isApproved: user.isApproved,
+          approvedBy: user.approvedBy,
+          approvedAt: user.approvedAt,
+        }
+      },
+    };
+  }
+  /**
    * Create a new user
    */
   static async createUser(userData: {
@@ -190,22 +304,6 @@ export class UserService {
     return user;
   }
 
-  /**
-   * Toggle user active status
-   */
-  static async toggleUserStatus(userId: string, currentStatus: boolean): Promise<IUser> {
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { isActive: !currentStatus },
-      { new: true }
-    );
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    return user;
-  }
 
   /**
    * Reset user password

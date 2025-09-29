@@ -100,8 +100,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await authAPI.login(emailOrUsername, password);
       
       if (response.success) {
-        // Store the token in cookies
-        Cookies.set('auth_token', response.data.token, { expires: 7 }); // 7 days
+        // Store the access token in cookies
+        Cookies.set('auth_token', response.data.accessToken, { expires: 7 }); // 7 days
+        // Store refresh token separately
+        Cookies.set('refresh_token', response.data.refreshToken, { expires: 30 }); // 30 days
         setUser(response.data.user);
         return { success: true };
       }
@@ -128,8 +130,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await authAPI.setup(userData);
       
       if (response.success) {
-        // Store the token in cookies
-        Cookies.set('auth_token', response.data.token, { expires: 7 }); // 7 days
+        // Store the access token in cookies
+        Cookies.set('auth_token', response.data.accessToken, { expires: 7 }); // 7 days
+        // Store refresh token separately
+        Cookies.set('refresh_token', response.data.refreshToken, { expires: 30 }); // 30 days
         setUser(response.data.user);
         toast({
           title: "Success",

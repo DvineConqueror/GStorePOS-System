@@ -149,55 +149,22 @@ export class UserController {
   static async toggleUserStatus(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.params.id;
-      const currentStatus = req.body.currentStatus;
+      const currentUserId = req.user?._id;
 
-      // Prevent admin from deactivating themselves
-      if (userId === req.user?._id) {
-        res.status(400).json({
+      const result = await UserService.toggleUserStatus(userId, currentUserId);
+
+      if (!result.success) {
+        res.status(result.statusCode || 400).json({
           success: false,
-          message: 'You cannot deactivate your own account.',
+          message: result.message,
         } as ApiResponse);
         return;
       }
-
-      // Get the user first to check current status
-      const user = await User.findById(userId);
-      if (!user) {
-        res.status(404).json({
-          success: false,
-          message: 'User not found.',
-        } as ApiResponse);
-        return;
-      }
-
-      // Determine the new status based on current status
-      const newStatus = user.status === 'active' ? 'inactive' : 'active';
-      
-      // Update both status and isApproved for consistency
-      user.status = newStatus;
-      if (newStatus === 'active') {
-        user.isApproved = true;
-        user.approvedBy = req.user!._id;
-        user.approvedAt = new Date();
-      }
-
-      await user.save();
 
       res.json({
         success: true,
-        message: `User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully.`,
-        data: {
-          user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            status: user.status,
-            isApproved: user.isApproved,
-            approvedBy: user.approvedBy,
-            approvedAt: user.approvedAt,
-          }
-        },
+        message: result.message,
+        data: result.data,
       } as ApiResponse);
     } catch (error) {
       console.error('Toggle user status error:', error);

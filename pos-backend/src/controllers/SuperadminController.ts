@@ -21,51 +21,22 @@ export class SuperadminController {
         order = 'desc'
       } = req.query;
 
-      const filters: any = {
-        role: { $ne: 'superadmin' } // Exclude superadmin from all users list
-      };
-
-      if (role && role !== 'all') {
-        filters.role = role; // Override with specific role filter
-      }
-      if (status && status !== 'all') {
-        filters.status = status; // Filter by status (active, inactive, deleted)
-      }
-      if (isApproved !== undefined) filters.isApproved = isApproved === 'true';
-      if (search) {
-        filters.$or = [
-          { username: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-          { firstName: { $regex: search, $options: 'i' } },
-          { lastName: { $regex: search, $options: 'i' } },
-        ];
-      }
-
-      const sortOrder = order === 'desc' ? -1 : 1;
-      const sortObj: any = {};
-      sortObj[sort as string] = sortOrder;
-
-      const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
-
-      const users = await User.find(filters)
-        .populate('createdBy', 'username firstName lastName')
-        .populate('approvedBy', 'username firstName lastName')
-        .sort(sortObj)
-        .skip(skip)
-        .limit(parseInt(limit as string));
-
-      const total = await User.countDocuments(filters);
+      const result = await UserService.getAllUsersForSuperadmin({
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        role: role as string,
+        status: status as string,
+        isApproved: isApproved as string,
+        search: search as string,
+        sort: sort as string,
+        order: order as 'asc' | 'desc'
+      });
 
       res.json({
         success: true,
         message: 'All users retrieved successfully.',
-        data: users,
-        pagination: {
-          page: parseInt(page as string),
-          limit: parseInt(limit as string),
-          total,
-          pages: Math.ceil(total / parseInt(limit as string)),
-        },
+        data: result.users,
+        pagination: result.pagination,
       } as ApiResponse);
     } catch (error) {
       console.error('Get all users error:', error);

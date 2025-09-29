@@ -24,15 +24,10 @@ router.get('/:id', authenticate, requireManager, UserController.getUserById);
 // @access  Private (Manager/Superadmin only)
 router.put('/:id', authenticate, requireManager, UserController.updateUser);
 
-// @desc    Deactivate user
-// @route   DELETE /api/v1/users/:id
+// @desc    Toggle user status (activate/deactivate)
+// @route   PATCH /api/v1/users/:id/status
 // @access  Private (Manager/Superadmin only)
-router.delete('/:id', authenticate, requireManager, UserController.toggleUserStatus);
-
-// @desc    Reactivate user
-// @route   PATCH /api/v1/users/:id/reactivate
-// @access  Private (Manager/Superadmin only)
-router.patch('/:id/reactivate', authenticate, requireManager, UserController.toggleUserStatus);
+router.patch('/:id/status', authenticate, requireManager, UserController.toggleUserStatus);
 
 // @desc    Reset user password (Manager/Superadmin only)
 // @route   POST /api/v1/users/:id/reset-password

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
+import { AuthService } from '../services/AuthService';
 import { IUser, JWTPayload } from '../types';
 
 // Simple in-memory cache for user data (expires after 5 minutes)
@@ -43,7 +43,10 @@ declare global {
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const authHeader = req.header('Authorization');
+    console.log('Authorization header:', authHeader);
+    
+    const token = authHeader?.replace('Bearer ', '');
 
     if (!token) {
       res.status(401).json({
@@ -53,8 +56,20 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
+    console.log('Token received:', token.substring(0, 50) + '...');
+
+    // Verify token using AuthService
+    const decoded = AuthService.verifyAccessToken(token);
     
+    if (!decoded) {
+      console.log('Token verification failed for:', req.path);
+      res.status(401).json({
+        success: false,
+        message: 'Invalid or expired token.',
+      });
+      return;
+    }
+
     // Try to get user from cache first
     let user = getCachedUser(decoded.userId);
     
@@ -91,25 +106,13 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
+    // Update session activity
+    AuthService.updateSessionActivity(decoded.sessionId);
+
     req.user = user;
     next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid token.',
-      });
-      return;
-    }
-
-    if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).json({
-        success: false,
-        message: 'Token expired.',
-      });
-      return;
-    }
-
+    console.error('Authentication error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during authentication.',

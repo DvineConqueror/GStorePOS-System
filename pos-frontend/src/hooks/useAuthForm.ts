@@ -66,14 +66,16 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
         // Enforce role-based access
         if (!isAdminMode && userRole === 'cashier') {
           // Cashiers can only login in cashier mode
-          Cookies.set('auth_token', data.data.token, { expires: cookieExpiration });
+          Cookies.set('auth_token', data.data.accessToken, { expires: cookieExpiration });
+          Cookies.set('refresh_token', data.data.refreshToken, { expires: 30 }); // 30 days
           // Refresh AuthContext to update user state
           await refreshSession();
           window.location.href = '/pos';
           return { success: true };
         } else if (isAdminMode && (userRole === 'manager' || userRole === 'superadmin')) {
           // Managers and superadmins can login in admin mode
-          Cookies.set('auth_token', data.data.token, { expires: cookieExpiration });
+          Cookies.set('auth_token', data.data.accessToken, { expires: cookieExpiration });
+          Cookies.set('refresh_token', data.data.refreshToken, { expires: 30 }); // 30 days
           // Refresh AuthContext to update user state
           await refreshSession();
           // Redirect based on role

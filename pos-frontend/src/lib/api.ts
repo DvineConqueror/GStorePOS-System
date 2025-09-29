@@ -103,8 +103,23 @@ export const authAPI = {
     return response.data;
   },
 
-  logout: async () => {
-    const response = await api.post('/auth/logout');
+  logout: async (sessionId?: string) => {
+    const response = await api.post('/auth/logout', { sessionId });
+    return response.data;
+  },
+
+  refreshToken: async (refreshToken: string) => {
+    const response = await api.post('/auth/refresh', { refreshToken });
+    return response.data;
+  },
+
+  logoutAll: async () => {
+    const response = await api.post('/auth/logout-all');
+    return response.data;
+  },
+
+  getSessions: async () => {
+    const response = await api.get('/auth/sessions');
     return response.data;
   },
 };
@@ -290,6 +305,11 @@ export const usersAPI = {
 
   reactivateUser: async (id: string) => {
     const response = await api.patch(`/users/${id}/reactivate`);
+    return response.data;
+  },
+
+  toggleStatus: async (id: string) => {
+    const response = await api.patch(`/users/${id}/status`);
     return response.data;
   },
 

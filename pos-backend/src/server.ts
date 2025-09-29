@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { connectDB } from './config/database';
+import { SessionCleanupService } from './services/SessionCleanupService';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -158,15 +159,21 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Start server
+let server: any;
+let healthInterval: NodeJS.Timeout | null = null;
+
 const startServer = async () => {
   try {
     await connectDB();
     
-    const server = app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
       console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
       console.log(`Memory Usage: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`);
+      
+      // Start session cleanup service
+      SessionCleanupService.start();
     });
 
     // Server timeout settings
@@ -174,7 +181,7 @@ const startServer = async () => {
     server.headersTimeout = 66000;
     
     // Periodic health monitoring (every 10 minutes)
-    const healthInterval = setInterval(() => {
+    healthInterval = setInterval(() => {
       const memUsage = process.memoryUsage();
       const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
       
@@ -185,13 +192,6 @@ const startServer = async () => {
       // Log periodic health status
       console.log(`Health Check - Memory: ${heapUsedMB}MB, Uptime: ${Math.round(process.uptime())}s, DB: ${mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'}`);
     }, 10 * 60 * 1000);
-    
-    // Clear interval on shutdown
-    const originalExit = process.exit;
-    process.exit = ((code?: number) => {
-      clearInterval(healthInterval);
-      originalExit(code);
-    }) as typeof process.exit;
     
   } catch (error) {
     console.error('Failed to start server:', error);
@@ -215,7 +215,33 @@ process.on('uncaughtException', (err: Error) => {
 const gracefulShutdown = async (signal: string) => {
   console.log(`${signal} received. Shutting down gracefully...`);
   
+  // Set a timeout to force exit if graceful shutdown takes too long
+  const forceExit = setTimeout(() => {
+    console.log('Force exiting due to timeout...');
+    process.exit(1);
+  }, 10000); // 10 seconds timeout
+  
   try {
+    // Stop session cleanup service
+    SessionCleanupService.stop();
+    
+    // Clear health monitoring interval
+    if (healthInterval) {
+      clearInterval(healthInterval);
+      healthInterval = null;
+    }
+    
+    // Close HTTP server
+    if (server) {
+      server.close((err: any) => {
+        if (err) {
+          console.error('Error closing server:', err);
+        } else {
+          console.log('HTTP server closed.');
+        }
+      });
+    }
+    
     // Close database connection
     await mongoose.connection.close();
     console.log('MongoDB connection closed.');
@@ -223,10 +249,14 @@ const gracefulShutdown = async (signal: string) => {
     // Clear any caches/intervals
     console.log('Cleaning up resources...');
     
+    // Clear the force exit timeout
+    clearTimeout(forceExit);
+    
     console.log('Graceful shutdown completed');
     process.exit(0);
   } catch (error) {
     console.error('Error during shutdown:', error);
+    clearTimeout(forceExit);
     process.exit(1);
   }
 };

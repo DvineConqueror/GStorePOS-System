@@ -1,7 +1,9 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
+import { AuthService } from '../services/AuthService';
 import { authenticate } from '../middleware/auth';
+import { authRateLimit, refreshRateLimit } from '../middleware/rateLimiter';
 import { ApiResponse } from '../types';
 
 const router = express.Router();
@@ -255,7 +257,7 @@ router.post('/register', authenticate, async (req, res): Promise<void> => {
 // @desc    Login user
 // @route   POST /api/v1/auth/login
 // @access  Public
-router.post('/login', async (req, res): Promise<void> => {
+router.post('/login', authRateLimit, async (req, res): Promise<void> => {
   try {
     const { emailOrUsername, password } = req.body;
 
@@ -267,16 +269,17 @@ router.post('/login', async (req, res): Promise<void> => {
       return;
     }
 
-    // Find user by email or username
-    const user = await User.findOne({
-      $or: [
-        { email: emailOrUsername },
-        { username: emailOrUsername }
-      ],
-      status: 'active'
-    }).select('+password');
+    // Get device info for session tracking
+    const deviceInfo = {
+      userAgent: req.get('User-Agent') || 'Unknown',
+      ip: req.ip || req.connection.remoteAddress || 'Unknown',
+      platform: req.get('X-Platform') || 'Unknown'
+    };
 
-    if (!user) {
+    // Login using AuthService
+    const result = await AuthService.loginUser(emailOrUsername, password, deviceInfo);
+
+    if (!result) {
       res.status(401).json({
         success: false,
         message: 'Invalid credentials.',
@@ -284,47 +287,33 @@ router.post('/login', async (req, res): Promise<void> => {
       return;
     }
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid credentials.',
-      } as ApiResponse);
-      return;
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: user._id, 
-        username: user.username, 
-        role: user.role 
-      },
-      process.env.JWT_SECRET as string,
-      { expiresIn: process.env.JWT_EXPIRE || '7d' } as jwt.SignOptions
-    );
+    console.log('Login successful for user:', result.user.username);
+    console.log('Access token length:', result.tokens.accessToken.length);
+    console.log('Refresh token length:', result.tokens.refreshToken.length);
 
     res.json({
       success: true,
       message: 'Login successful.',
       data: {
         user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          status: user.status,
-          isApproved: user.isApproved,
-          lastLogin: user.lastLogin,
+          id: result.user._id,
+          username: result.user.username,
+          email: result.user.email,
+          role: result.user.role,
+          firstName: result.user.firstName,
+          lastName: result.user.lastName,
+          status: result.user.status,
+          isApproved: result.user.isApproved,
+          lastLogin: result.user.lastLogin,
         },
-        token,
+        accessToken: result.tokens.accessToken,
+        refreshToken: result.tokens.refreshToken,
+        expiresIn: result.tokens.expiresIn,
+        session: {
+          sessionId: result.session.sessionId,
+          deviceInfo: result.session.deviceInfo,
+          createdAt: result.session.createdAt
+        }
       },
     } as ApiResponse);
   } catch (error) {
@@ -488,13 +477,75 @@ router.put('/change-password', authenticate, async (req, res): Promise<void> => 
   }
 });
 
-// @desc    Logout user (client-side token removal)
+// @desc    Refresh access token
+// @route   POST /api/v1/auth/refresh
+// @access  Public
+router.post('/refresh', refreshRateLimit, async (req, res): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      res.status(400).json({
+        success: false,
+        message: 'Refresh token is required.',
+      } as ApiResponse);
+      return;
+    }
+
+    const result = await AuthService.refreshAccessToken(refreshToken);
+
+    if (!result) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token.',
+      } as ApiResponse);
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: 'Token refreshed successfully.',
+      data: {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        expiresIn: result.expiresIn
+      },
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during token refresh.',
+    } as ApiResponse);
+  }
+});
+
+// @desc    Logout user (proper session invalidation)
 // @route   POST /api/v1/auth/logout
 // @access  Private
 router.post('/logout', authenticate, async (req, res): Promise<void> => {
   try {
-    // In a stateless JWT system, logout is handled client-side
-    // You could implement token blacklisting here if needed
+    const accessToken = req.header('Authorization')?.replace('Bearer ', '');
+    const { sessionId } = req.body;
+
+    if (!sessionId) {
+      res.status(400).json({
+        success: false,
+        message: 'Session ID is required.',
+      } as ApiResponse);
+      return;
+    }
+
+    const success = await AuthService.logoutUser(sessionId, accessToken);
+
+    if (!success) {
+      res.status(400).json({
+        success: false,
+        message: 'Failed to logout. Session not found.',
+      } as ApiResponse);
+      return;
+    }
+
     res.json({
       success: true,
       message: 'Logged out successfully.',
@@ -504,6 +555,48 @@ router.post('/logout', authenticate, async (req, res): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Server error during logout.',
+    } as ApiResponse);
+  }
+});
+
+// @desc    Logout from all devices
+// @route   POST /api/v1/auth/logout-all
+// @access  Private
+router.post('/logout-all', authenticate, async (req, res): Promise<void> => {
+  try {
+    const count = await AuthService.logoutAllDevices(req.user!._id);
+
+    res.json({
+      success: true,
+      message: `Logged out from ${count} devices successfully.`,
+      data: { sessionsTerminated: count }
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Logout all error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during logout all.',
+    } as ApiResponse);
+  }
+});
+
+// @desc    Get active sessions
+// @route   GET /api/v1/auth/sessions
+// @access  Private
+router.get('/sessions', authenticate, async (req, res): Promise<void> => {
+  try {
+    const sessions = AuthService.getUserSessions(req.user!._id);
+
+    res.json({
+      success: true,
+      message: 'Active sessions retrieved successfully.',
+      data: { sessions }
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Get sessions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while retrieving sessions.',
     } as ApiResponse);
   }
 });

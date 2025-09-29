@@ -186,8 +186,41 @@ export interface JWTPayload {
   userId: string;
   username: string;
   role: string;
+  sessionId: string;
+  tokenType: 'access' | 'refresh';
   iat: number;
   exp: number;
+}
+
+// Refresh Token Payload
+export interface RefreshTokenPayload {
+  userId: string;
+  sessionId: string;
+  tokenType: 'refresh';
+  iat: number;
+  exp: number;
+}
+
+// Session Management
+export interface ISession {
+  sessionId: string;
+  userId: string;
+  deviceInfo?: {
+    userAgent: string;
+    ip: string;
+    platform?: string;
+  };
+  isActive: boolean;
+  lastActivity: Date;
+  createdAt: Date;
+  expiresAt: Date;
+}
+
+// Token Pair
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
 // Pagination Types
