@@ -233,12 +233,15 @@ const gracefulShutdown = async (signal: string) => {
     
     // Close HTTP server
     if (server) {
-      server.close((err: any) => {
-        if (err) {
-          console.error('Error closing server:', err);
-        } else {
-          console.log('HTTP server closed.');
-        }
+      await new Promise<void>((resolve) => {
+        server.close((err: any) => {
+          if (err) {
+            console.error('Error closing server:', err);
+          } else {
+            console.log('HTTP server closed.');
+          }
+          resolve();
+        });
       });
     }
     
