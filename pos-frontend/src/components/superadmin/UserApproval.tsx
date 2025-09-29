@@ -354,8 +354,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
             </Card>
           ) : (
             pendingUsers.map((user, index) => (
-              <Card key={user._id} className={`border-green-200 hover:border-green-300 transition-colors ${
-                index % 2 === 0 ? "bg-white" : "bg-[#ececec]"
+              <Card key={user._id} className={`border-green-200 hover:border-green-300 transition-colors  "bg-white"
               }`}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">

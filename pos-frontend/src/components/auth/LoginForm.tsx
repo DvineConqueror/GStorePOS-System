@@ -153,7 +153,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 type={isSignUp && !isAdminMode ? 'email' : 'text'}
                 value={formData.email}
                 onChange={(e) => onInputChange('email', e.target.value)}
-                className={`h-8 px-3 text-black text-sm ${colors.primaryBorder} transition-all duration-300`}
+                className="h-8 px-3 text-black text-sm border-gray-300 focus:outline-none focus:ring-0 focus:border-gray-300 transition-all duration-300"
                 placeholder={isSignUp && !isAdminMode ? 'you@example.com' : 'email@example.com or username'}
                 required
               />
@@ -171,7 +171,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => onInputChange('password', e.target.value)}
-                  className={`h-8 px-3 pr-8 text-black text-sm ${colors.primaryBorder} transition-all duration-300`}
+                  className="h-8 px-3 pr-8 text-black text-sm border-gray-300 focus:outline-none focus:ring-0 focus:border-gray-300 transition-all duration-300"
                   placeholder="••••••••"
                   required
                 />
@@ -213,7 +213,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => onToggleRememberMe(e.target.checked)}
-                  className="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  className="h-3 w-3 border-gray-300 rounded focus:outline-none focus:ring-0 focus:border-gray-300"
                 />
                 <Label htmlFor="remember-me" className="text-xs font-medium text-gray-700">
                   Remember me for 30 days

@@ -242,8 +242,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                 {filteredUsers.map((user, index) => (
                   <div
                     key={user._id}
-                    className={`flex items-center justify-between p-4 rounded-lg border border-green-200 hover:bg-green-50 transition-colors ${
-                      index % 2 === 0 ? "bg-white" : "bg-[#ececec]"
+                    className={`flex items-center justify-between p-4 rounded-lg border border-green-200 hover:bg-green-50 transition-colors "bg-white"
                     }`}
                   >
                     <div className="flex items-center space-x-4 min-w-0 flex-1">
