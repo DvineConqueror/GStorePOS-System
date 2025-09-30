@@ -252,6 +252,20 @@ export interface TransactionFilters {
   maxAmount?: number;
 }
 
+// Password Reset Token Types
+export interface IPasswordResetToken extends Document {
+  _id: string;
+  userId: string;
+  token: string;
+  expiresAt: Date;
+  used: boolean;
+  usedAt?: Date;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Store Configuration Types
 export interface IStoreConfig extends Document {
   _id: string;

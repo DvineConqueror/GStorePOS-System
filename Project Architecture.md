@@ -252,7 +252,7 @@ App
 
 ---
 
-## **🔐 Authentication & Authorization**
+## ** Authentication & Authorization**
 
 ### **JWT-based Authentication**
 - **Access Token**: Short-lived (7 days)

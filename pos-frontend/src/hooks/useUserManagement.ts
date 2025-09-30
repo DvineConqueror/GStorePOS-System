@@ -81,21 +81,22 @@ export const useUserManagement = () => {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      if (currentStatus) {
-        await usersAPI.deactivateUser(userId);
+      const response = await usersAPI.toggleStatus(userId);
+      
+      if (response.success) {
         toast({
           title: "Success",
-          description: "User deactivated successfully",
+          description: response.message || "User status updated successfully",
         });
+        fetchUsers(); // Refresh the list
+        fetchUserStats(); // Refresh stats
       } else {
-        await usersAPI.reactivateUser(userId);
         toast({
-          title: "Success",
-          description: "User activated successfully",
+          title: "Error",
+          description: response.message || "Failed to update user status",
+          variant: "destructive"
         });
       }
-      fetchUsers(); // Refresh the list
-      fetchUserStats(); // Refresh stats
     } catch (error: any) {
       toast({
         title: "Error",

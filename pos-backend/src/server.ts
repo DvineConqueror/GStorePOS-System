@@ -8,6 +8,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { connectDB } from './config/database';
 import { SessionCleanupService } from './services/SessionCleanupService';
+import { EmailService } from './services/EmailService';
+import { PasswordResetService } from './services/PasswordResetService';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -169,11 +171,24 @@ const startServer = async () => {
     server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
-      console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+      console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:8080'}`);
       console.log(`Memory Usage: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`);
       
       // Start session cleanup service
       SessionCleanupService.start();
+      console.log('Session cleanup service started');
+
+      // Initialize email service
+      EmailService.initializeTransporter();
+      
+      // Start password reset token cleanup (every hour)
+      setInterval(async () => {
+        try {
+          await PasswordResetService.cleanupExpiredTokens();
+        } catch (error) {
+          console.error('Error cleaning up expired password reset tokens:', error);
+        }
+      }, 60 * 60 * 1000); // 1 hour
     });
 
     // Server timeout settings

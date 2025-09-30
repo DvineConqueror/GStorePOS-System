@@ -122,6 +122,21 @@ export const authAPI = {
     const response = await api.get('/auth/sessions');
     return response.data;
   },
+
+  forgotPassword: async (email: string) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    const response = await api.post(`/auth/reset-password/${token}`, { newPassword });
+    return response.data;
+  },
+
+  verifyResetToken: async (token: string) => {
+    const response = await api.get(`/auth/verify-reset-token/${token}`);
+    return response.data;
+  },
 };
 
 // Products API
@@ -295,16 +310,6 @@ export const usersAPI = {
     isActive?: boolean;
   }) => {
     const response = await api.put(`/users/${id}`, userData);
-    return response.data;
-  },
-
-  deactivateUser: async (id: string) => {
-    const response = await api.delete(`/users/${id}`);
-    return response.data;
-  },
-
-  reactivateUser: async (id: string) => {
-    const response = await api.patch(`/users/${id}/reactivate`);
     return response.data;
   },
 

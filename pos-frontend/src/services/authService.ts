@@ -136,4 +136,28 @@ export class AuthService {
     const response = await authAPI.getSessions();
     return response;
   }
+
+  /**
+   * Request password reset
+   */
+  static async forgotPassword(email: string) {
+    const response = await authAPI.forgotPassword(email);
+    return response;
+  }
+
+  /**
+   * Reset password with token
+   */
+  static async resetPassword(token: string, newPassword: string) {
+    const response = await authAPI.resetPassword(token, newPassword);
+    return response;
+  }
+
+  /**
+   * Verify reset token
+   */
+  static async verifyResetToken(token: string) {
+    const response = await authAPI.verifyResetToken(token);
+    return response;
+  }
 }

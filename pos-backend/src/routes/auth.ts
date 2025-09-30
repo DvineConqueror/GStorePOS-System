@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { AuthService } from '../services/AuthService';
+import { PasswordResetService } from '../services/PasswordResetService';
 import { authenticate } from '../middleware/auth';
 import { authRateLimit, refreshRateLimit } from '../middleware/rateLimiter';
 import { ApiResponse } from '../types';
@@ -597,6 +598,160 @@ router.get('/sessions', authenticate, async (req, res): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Server error while retrieving sessions.',
+    } as ApiResponse);
+  }
+});
+
+// @desc    Request password reset
+// @route   POST /api/v1/auth/forgot-password
+// @access  Public
+router.post('/forgot-password', authRateLimit, async (req, res): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        message: 'Email address is required.',
+      } as ApiResponse);
+      return;
+    }
+
+    // Check for recent reset attempts (rate limiting)
+    const hasRecentAttempts = await PasswordResetService.hasRecentResetAttempts(email, 5);
+    if (hasRecentAttempts) {
+      res.status(429).json({
+        success: false,
+        message: 'Too many password reset attempts. Please wait 5 minutes before trying again.',
+      } as ApiResponse);
+      return;
+    }
+
+    // Get client info for security tracking
+    const ipAddress = req.ip || req.connection.remoteAddress || 'Unknown';
+    const userAgent = req.get('User-Agent') || 'Unknown';
+
+    // Create reset token and send email
+    const result = await PasswordResetService.createResetToken(email, ipAddress, userAgent);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: result.message,
+        data: result.token ? { token: result.token } : undefined, // Only in development
+      } as ApiResponse);
+    } else {
+      res.status(500).json({
+        success: false,
+        message: result.message,
+      } as ApiResponse);
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while processing password reset request.',
+    } as ApiResponse);
+  }
+});
+
+// @desc    Verify password reset token
+// @route   GET /api/v1/auth/verify-reset-token/:token
+// @access  Public
+router.get('/verify-reset-token/:token', async (req, res): Promise<void> => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      res.status(400).json({
+        success: false,
+        message: 'Reset token is required.',
+      } as ApiResponse);
+      return;
+    }
+
+    const result = await PasswordResetService.verifyResetToken(token);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: result.message,
+        data: {
+          user: {
+            id: result.user?._id,
+            email: result.user?.email,
+            firstName: result.user?.firstName,
+            lastName: result.user?.lastName,
+          },
+          expiresAt: result.resetToken?.expiresAt,
+        },
+      } as ApiResponse);
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message,
+      } as ApiResponse);
+    }
+  } catch (error) {
+    console.error('Verify reset token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while verifying reset token.',
+    } as ApiResponse);
+  }
+});
+
+// @desc    Reset password using token
+// @route   POST /api/v1/auth/reset-password/:token
+// @access  Public
+router.post('/reset-password/:token', authRateLimit, async (req, res): Promise<void> => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'Reset token and new password are required.',
+      } as ApiResponse);
+      return;
+    }
+
+    // Validate password strength
+    if (newPassword.length < 6) {
+      res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long.',
+      } as ApiResponse);
+      return;
+    }
+
+    const result = await PasswordResetService.resetPassword(token, newPassword);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: result.message,
+        data: {
+          user: {
+            id: result.user?._id,
+            email: result.user?.email,
+            firstName: result.user?.firstName,
+            lastName: result.user?.lastName,
+          },
+        },
+      } as ApiResponse);
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message,
+      } as ApiResponse);
+    }
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while resetting password.',
     } as ApiResponse);
   }
 });

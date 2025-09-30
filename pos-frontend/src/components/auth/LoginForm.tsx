@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -207,17 +208,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             
             {/* Remember Me checkbox - only show for login, not signup */}
             {!isSignUp && (
-              <div className="flex items-center space-x-2">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => onToggleRememberMe(e.target.checked)}
-                  className="h-3 w-3 border-gray-300 rounded focus:outline-none focus:ring-0 focus:border-gray-300"
-                />
-                <Label htmlFor="remember-me" className="text-xs font-medium text-gray-700">
-                  Remember me for 30 days
-                </Label>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="remember-me"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => onToggleRememberMe(e.target.checked)}
+                    className="h-3 w-3 border-gray-300 rounded focus:outline-none focus:ring-0 focus:border-gray-300"
+                  />
+                  <Label htmlFor="remember-me" className="text-xs font-medium text-gray-700">
+                    Remember me for 30 days
+                  </Label>
+                </div>
+                <Link
+                  to="/forgot-password"
+                  className={`text-xs font-semibold ${colors.primaryText} hover:underline`}
+                >
+                  Forgot password?
+                </Link>
               </div>
             )}
             
