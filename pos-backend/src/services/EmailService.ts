@@ -99,118 +99,254 @@ export class EmailService {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Password Reset - SmartGrocery</title>
         <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
+            color: #000000;
+            background-color: #ececec;
             padding: 20px;
-            background-color: #f8f9fa;
           }
-          .container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 40px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          .email-container {
+            max-width: 448px;
+            margin: 0 auto;
+            background-color: #fafaf9;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
           }
           .header {
             text-align: center;
-            margin-bottom: 30px;
+            padding: 32px 32px 24px;
           }
-          .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 10px;
+          .icon-container {
+            width: 64px;
+            height: 64px;
+            background-color: #dcfce7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+          }
+          .icon {
+            font-size: 32px;
+            color: #16a34a;
           }
           .title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 8px;
+          }
+          .subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.5;
           }
           .content {
-            margin-bottom: 30px;
+            padding: 0 32px 32px;
+          }
+          .form-section {
+            margin-bottom: 24px;
+          }
+          .label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #000000;
+            margin-bottom: 8px;
+            display: block;
+          }
+          .greeting {
+            font-size: 16px;
+            color: #000000;
+            margin-bottom: 16px;
+          }
+          .instruction {
+            color: #6b7280;
+            margin-bottom: 16px;
+            line-height: 1.5;
+          }
+          .button-container {
+            margin: 24px 0;
           }
           .reset-button {
             display: inline-block;
-            background-color: #2563eb;
-            color: #ffffff;
-            padding: 12px 24px;
-            text-decoration: none;
+            width: 100%;
+            background-color: #16a34a;
+            color: #ffffff !important;
+            padding: 12px 16px;
+            text-decoration: none !important;
             border-radius: 6px;
             font-weight: 500;
-            margin: 20px 0;
+            text-align: center;
             transition: background-color 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
           }
           .reset-button:hover {
-            background-color: #1d4ed8;
+            background-color: #15803d;
+          }
+          .link-section {
+            margin: 16px 0;
+          }
+          .link-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+          }
+          .token-info {
+            background-color: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            color: #374151;
           }
           .warning {
             background-color: #fef3c7;
             border: 1px solid #f59e0b;
             border-radius: 6px;
-            padding: 15px;
+            padding: 16px;
             margin: 20px 0;
             color: #92400e;
           }
+          .warning-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .warning-icon {
+            font-size: 16px;
+            color: #92400e;
+          }
+          .warning-list {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+          }
+          .warning-list li {
+            margin-bottom: 4px;
+          }
           .footer {
             text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
+            padding: 24px 32px;
             border-top: 1px solid #e5e7eb;
+            background-color: #fafaf9;
+          }
+          .footer-text {
             color: #6b7280;
             font-size: 14px;
+            margin-bottom: 8px;
           }
-          .token-info {
-            background-color: #f3f4f6;
-            border-radius: 4px;
-            padding: 10px;
-            margin: 15px 0;
-            font-family: monospace;
+          .footer-brand {
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 8px;
+          }
+          .footer-note {
             font-size: 12px;
-            word-break: break-all;
+            color: #9ca3af;
+            margin-top: 16px;
+          }
+          .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #16a34a !important;
+            text-decoration: none !important;
+            font-size: 14px;
+            margin-top: 16px;
+          }
+          .back-link:hover {
+            text-decoration: underline;
+          }
+          .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+          }
+          .brand-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: #16a34a;
+            text-align: center;
+          }
+          @media (max-width: 480px) {
+            .email-container {
+              margin: 0;
+              border-radius: 0;
+            }
+            .header, .content, .footer {
+              padding-left: 16px;
+              padding-right: 16px;
+            }
           }
         </style>
       </head>
       <body>
-        <div class="container">
+        <div class="email-container">
           <div class="header">
-            <div class="logo">🛒 SmartGrocery</div>
-            <h1 class="title">Password Reset Request</h1>
+            <div class="logo-section">
+              <div class="brand-text">SmartGrocery</div>
+            </div>
+            <h1 class="title">Reset Your Password</h1>
+            <p class="subtitle">Enter a new password for ${user.email}</p>
           </div>
           
           <div class="content">
-            <p>Hello ${user.firstName} ${user.lastName},</p>
+            <p class="greeting">Hello ${user.firstName} ${user.lastName},</p>
             
-            <p>We received a request to reset your password for your SmartGrocery account.</p>
+            <p class="instruction">We received a request to reset your password for your SmartGrocery account.</p>
             
-            <p>If you have forgotten your password, use the button below to reset it:</p>
+            <p class="instruction">If you have forgotten your password, use the button below to reset it:</p>
             
-            <div style="text-align: center;">
-              <a href="${resetUrl}" class="reset-button">Reset My Password</a>
+            <div class="button-container">
+              <a href="${resetUrl}" class="reset-button" style="color: #ffffff !important; text-decoration: none !important;">Reset My Password</a>
             </div>
             
-            <p>Or copy and paste this link into your browser:</p>
-            <div class="token-info">${resetUrl}</div>
+            <div class="link-section">
+              <p class="link-label">Or copy and paste this link into your browser:</p>
+              <div class="token-info">${resetUrl}</div>
+            </div>
             
             <div class="warning">
-              <strong>⚠️ Important:</strong>
-              <ul style="margin: 10px 0; padding-left: 20px;">
+              <div class="warning-title">
+                Important Security Information
+              </div>
+              <ul class="warning-list">
                 <li>This link will expire in 15 minutes</li>
                 <li>If you didn't request this password reset, please ignore this email</li>
                 <li>For security reasons, this link can only be used once</li>
+                <li>Never share this link with anyone</li>
               </ul>
             </div>
             
-            <p>If you're having trouble clicking the button, copy and paste the URL above into your web browser.</p>
+            <p class="instruction">If you're having trouble clicking the button, copy and paste the URL above into your web browser.</p>
+            
+            <div style="text-align: center;">
+              <a href="${clientUrl}/login" class="back-link" style="color: #16a34a !important; text-decoration: none !important;">
+                Back to Login
+              </a>
+            </div>
           </div>
           
           <div class="footer">
-            <p>This email was sent from SmartGrocery POS System</p>
-            <p>If you have any questions, please contact our support team.</p>
-            <p style="margin-top: 15px; font-size: 12px; color: #9ca3af;">
+            <p class="footer-brand">SmartGrocery POS System</p>
+            <p class="footer-text">This email was sent from our secure password reset service.</p>
+            <p class="footer-text">If you have any questions, please contact our support team.</p>
+            <p class="footer-note">
               This is an automated message. Please do not reply to this email.
             </p>
           </div>

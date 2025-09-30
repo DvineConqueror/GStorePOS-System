@@ -176,7 +176,6 @@ const startServer = async () => {
       
       // Start session cleanup service
       SessionCleanupService.start();
-      console.log('Session cleanup service started');
 
       // Initialize email service
       EmailService.initializeTransporter();
