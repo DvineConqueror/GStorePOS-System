@@ -29,7 +29,7 @@ import { requestMetrics } from './middleware/metrics';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 // Security middleware
 app.use(helmet());
@@ -37,8 +37,8 @@ app.use(compression());
 
 // Rate limiting - More lenient for development
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000'), // 1 minute
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '1000'), // limit each IP to 1000 requests per minute
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS!), // 1 minute
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS!), // limit each IP to 1000 requests per minute
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -171,7 +171,7 @@ const startServer = async () => {
     server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
-      console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:8080'}`);
+      console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
       console.log(`Memory Usage: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`);
       
       // Start session cleanup service

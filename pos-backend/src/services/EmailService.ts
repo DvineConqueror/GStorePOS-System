@@ -26,8 +26,8 @@ export class EmailService {
     }
 
     const emailConfig = {
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT || '587'),
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT!),
       secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
       auth: {
         user: process.env.EMAIL_USER,
@@ -68,7 +68,7 @@ export class EmailService {
 
     try {
       const mailOptions = {
-        from: `"${process.env.STORE_NAME || 'SmartGrocery'}" <${process.env.EMAIL_USER}>`,
+        from: `"${process.env.STORE_NAME}" <${process.env.EMAIL_USER}>`,
         to: options.to,
         subject: options.subject,
         html: options.html,

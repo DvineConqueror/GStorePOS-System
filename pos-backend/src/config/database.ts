@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 export const connectDB = async (): Promise<void> => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/grocery-pos';
+    const mongoURI = process.env.MONGODB_URI!;
     
     const options = {
       maxPoolSize: 10, // Maintain up to 10 socket connections

@@ -61,7 +61,7 @@ router.post('/setup', async (req, res): Promise<void> => {
         role: user.role 
       },
       process.env.JWT_SECRET as string,
-      { expiresIn: process.env.JWT_EXPIRE || '7d' } as jwt.SignOptions
+      { expiresIn: process.env.JWT_EXPIRE } as jwt.SignOptions
     );
 
     res.status(201).json({
@@ -227,7 +227,7 @@ router.post('/register', authenticate, async (req, res): Promise<void> => {
         role: user.role 
       },
       process.env.JWT_SECRET as string,
-      { expiresIn: process.env.JWT_EXPIRE || '7d' } as jwt.SignOptions
+      { expiresIn: process.env.JWT_EXPIRE } as jwt.SignOptions
     );
 
     res.status(201).json({
