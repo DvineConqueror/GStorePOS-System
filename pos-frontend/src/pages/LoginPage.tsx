@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuthForm } from '@/hooks/useAuthForm';
 import { useLoginAnimation } from '@/hooks/useLoginAnimation';
 import { getColorScheme } from '@/utils/colorSchemes';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { LoginLogo } from '@/components/auth/LoginLogo';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   
   const { isAdminMode, toggleRoleMode } = useLoginAnimation();
   const { formData, isLoading, passwordValidation, handleSubmit, updateFormData, resetForm } = useAuthForm({
@@ -18,6 +22,42 @@ export default function LoginPage() {
   });
   
   const colors = getColorScheme();
+
+  // Handle OAuth callback messages
+  useEffect(() => {
+    const message = searchParams.get('message');
+    const error = searchParams.get('error');
+    const approvalRequired = searchParams.get('approval_required');
+
+    if (error === 'oauth_failed') {
+      toast({
+        title: "OAuth Login Failed",
+        description: "There was an error with the OAuth login. Please try again.",
+        variant: "destructive"
+      });
+    } else if (message === 'oauth_account_created') {
+      toast({
+        title: "Account Created Successfully",
+        description: "Your account has been created via OAuth. Please wait for manager approval to access the system.",
+        variant: "default"
+      });
+    } else if (message === 'oauth_account_pending_approval') {
+      toast({
+        title: "Account Pending Approval",
+        description: "Your OAuth account is linked but still requires manager approval.",
+        variant: "default"
+      });
+    }
+
+    // Clean up URL parameters
+    if (message || error || approvalRequired) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('message');
+      newUrl.searchParams.delete('error');
+      newUrl.searchParams.delete('approval_required');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, [searchParams, toast]);
 
   const handleToggleSignUp = () => {
     setIsSignUp(!isSignUp);

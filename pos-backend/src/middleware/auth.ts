@@ -1,7 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { User } from '../models/User';
 import { AuthService } from '../services/AuthService';
 import { IUser, JWTPayload } from '../types';
+
+// Type assertion for req.user to IUser
+const getUser = (req: Request): IUser => {
+  if (!req.user) {
+    throw new Error('User not authenticated');
+  }
+  return req.user as IUser;
+};
 
 // Simple in-memory cache for user data (expires after 5 minutes)
 const userCache = new Map<string, { user: IUser; timestamp: number }>();
@@ -32,14 +39,6 @@ const setCachedUser = (userId: string, user: IUser): void => {
   }
 };
 
-// Extend Request interface to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: IUser;
-    }
-  }
-}
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -75,6 +74,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     
     if (!user) {
       // If not in cache, fetch from database
+      const User = (await import('../models/User')).User;
       user = await User.findById(decoded.userId).select('-password');
       
       if (!user) {
@@ -122,23 +122,25 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.user) {
+    try {
+      const user = getUser(req);
+      
+      if (!roles.includes(user.role)) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied. Insufficient permissions.',
+        });
+        return;
+      }
+
+      next();
+    } catch (error) {
       res.status(401).json({
         success: false,
         message: 'Access denied. User not authenticated.',
       });
       return;
     }
-
-    if (!roles.includes(req.user.role)) {
-      res.status(403).json({
-        success: false,
-        message: 'Access denied. Insufficient permissions.',
-      });
-      return;
-    }
-
-    next();
   };
 };
 

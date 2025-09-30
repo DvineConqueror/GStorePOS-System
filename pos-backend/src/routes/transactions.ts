@@ -1,15 +1,23 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { Transaction } from '../models/Transaction';
 import { Product } from '../models/Product';
 import { authenticate, requireCashier } from '../middleware/auth';
-import { ApiResponse, TransactionFilters } from '../types';
+import { ApiResponse, TransactionFilters, IUser } from '../types';
+
+// Type assertion for req.user to IUser
+const getUser = (req: Request): IUser => {
+  if (!req.user) {
+    throw new Error('User not authenticated');
+  }
+  return req.user as IUser;
+};
 
 const router = express.Router();
 
 // @desc    Get all transactions with filtering and pagination
 // @route   GET /api/v1/transactions
 // @access  Private (Cashier, Admin)
-router.get('/', authenticate, requireCashier, async (req, res): Promise<void> => {
+router.get('/', authenticate, requireCashier, async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       page = 1,
@@ -45,8 +53,9 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
     }
 
     // If user is cashier (not admin), only show their transactions
-    if (req.user?.role === 'cashier') {
-      filters.cashierId = req.user._id;
+    const currentUser = getUser(req);
+    if (currentUser.role === 'cashier') {
+      filters.cashierId = currentUser._id;
     }
 
     const sortOrder = order === 'desc' ? -1 : 1;
@@ -85,7 +94,7 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
 // @desc    Get single transaction by ID
 // @route   GET /api/v1/transactions/:id
 // @access  Private (Cashier, Admin)
-router.get('/:id', authenticate, requireCashier, async (req, res): Promise<void> => {
+router.get('/:id', authenticate, requireCashier, async (req: Request, res: Response): Promise<void> => {
   try {
     const transaction = await Transaction.findById(req.params.id);
 
@@ -98,7 +107,8 @@ router.get('/:id', authenticate, requireCashier, async (req, res): Promise<void>
     }
 
     // If user is cashier, only allow access to their own transactions
-    if (req.user?.role === 'cashier' && transaction.cashierId !== req.user._id) {
+    const currentUser = getUser(req);
+    if (currentUser.role === 'cashier' && transaction.cashierId !== currentUser._id) {
       res.status(403).json({
         success: false,
         message: 'Access denied. You can only view your own transactions.',
@@ -123,7 +133,7 @@ router.get('/:id', authenticate, requireCashier, async (req, res): Promise<void>
 // @desc    Create new transaction
 // @route   POST /api/v1/transactions
 // @access  Private (Cashier, Admin)
-router.post('/', authenticate, requireCashier, async (req, res): Promise<void> => {
+router.post('/', authenticate, requireCashier, async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       items,
@@ -211,6 +221,7 @@ router.post('/', authenticate, requireCashier, async (req, res): Promise<void> =
     const transactionNumber = `TXN${year}${month}${day}${sequence}`;
 
     // Create transaction
+    const currentUser = getUser(req);
     const transaction = new Transaction({
       transactionNumber,
       items: processedItems,
@@ -219,8 +230,8 @@ router.post('/', authenticate, requireCashier, async (req, res): Promise<void> =
       discount,
       total: subtotal + tax - discount,
       paymentMethod,
-      cashierId: req.user!._id,
-      cashierName: `${req.user!.firstName} ${req.user!.lastName}`,
+      cashierId: currentUser._id,
+      cashierName: `${currentUser.firstName} ${currentUser.lastName}`,
       customerId,
       customerName,
       notes,
@@ -245,10 +256,11 @@ router.post('/', authenticate, requireCashier, async (req, res): Promise<void> =
 // @desc    Refund transaction
 // @route   POST /api/v1/transactions/:id/refund
 // @access  Private (Admin only)
-router.post('/:id/refund', authenticate, async (req, res): Promise<void> => {
+router.post('/:id/refund', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     // Only manager or superadmin can process refunds
-    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
+    const currentUser = getUser(req);
+    if (currentUser.role !== 'manager' && currentUser.role !== 'superadmin') {
       res.status(403).json({
         success: false,
         message: 'Access denied. Manager or Superadmin role required for refunds.',
@@ -308,10 +320,11 @@ router.post('/:id/refund', authenticate, async (req, res): Promise<void> => {
 // @desc    Void transaction
 // @route   POST /api/v1/transactions/:id/void
 // @access  Private (Admin only)
-router.post('/:id/void', authenticate, async (req, res): Promise<void> => {
+router.post('/:id/void', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     // Only manager or superadmin can void transactions
-    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
+    const currentUser = getUser(req);
+    if (currentUser.role !== 'manager' && currentUser.role !== 'superadmin') {
       res.status(403).json({
         success: false,
         message: 'Access denied. Manager or Superadmin role required to void transactions.',
@@ -371,9 +384,10 @@ router.post('/:id/void', authenticate, async (req, res): Promise<void> => {
 // @desc    Get daily sales summary
 // @route   GET /api/v1/transactions/sales/daily
 // @access  Private (Manager/Superadmin only)
-router.get('/sales/daily', authenticate, async (req, res): Promise<void> => {
+router.get('/sales/daily', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
+    const currentUser = getUser(req);
+    if (currentUser.role !== 'manager' && currentUser.role !== 'superadmin') {
       res.status(403).json({
         success: false,
         message: 'Access denied. Manager or Superadmin role required.',
@@ -407,9 +421,10 @@ router.get('/sales/daily', authenticate, async (req, res): Promise<void> => {
 // @desc    Get sales by cashier
 // @route   GET /api/v1/transactions/sales/by-cashier
 // @access  Private (Manager/Superadmin only)
-router.get('/sales/by-cashier', authenticate, async (req, res): Promise<void> => {
+router.get('/sales/by-cashier', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
+    const currentUser = getUser(req);
+    if (currentUser.role !== 'manager' && currentUser.role !== 'superadmin') {
       res.status(403).json({
         success: false,
         message: 'Access denied. Manager or Superadmin role required.',
@@ -440,9 +455,10 @@ router.get('/sales/by-cashier', authenticate, async (req, res): Promise<void> =>
 // @desc    Get top products
 // @route   GET /api/v1/transactions/sales/top-products
 // @access  Private (Manager/Superadmin only)
-router.get('/sales/top-products', authenticate, async (req, res): Promise<void> => {
+router.get('/sales/top-products', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
+    const currentUser = getUser(req);
+    if (currentUser.role !== 'manager' && currentUser.role !== 'superadmin') {
       res.status(403).json({
         success: false,
         message: 'Access denied. Manager or Superadmin role required.',

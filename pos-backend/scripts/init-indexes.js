@@ -21,14 +21,14 @@ dotenv.config();
 
 async function initializeIndexes() {
   try {
-    console.log('Starting database index initialization...');
+    console.log('🚀 Starting database index initialization...');
     
     // Connect to MongoDB
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/grocery-pos';
-    console.log(`Connecting to MongoDB: ${mongoUri}`);
+    console.log(`📡 Connecting to MongoDB: ${mongoUri}`);
     
     await mongoose.connect(mongoUri);
-    console.log(' Connected to MongoDB');
+    console.log('✅ Connected to MongoDB');
 
     // Get all models
     const User = mongoose.model('User');
@@ -36,18 +36,18 @@ async function initializeIndexes() {
     const Transaction = mongoose.model('Transaction');
 
     // Ensure all indexes are created
-    console.log(' Creating database indexes...');
+    console.log('🔧 Creating database indexes...');
     await User.createIndexes();
     await Product.createIndexes();
     await Transaction.createIndexes();
-    console.log(' All indexes created successfully');
+    console.log('✅ All indexes created successfully');
 
     // Get index information manually
-    console.log(' Getting index information...');
+    console.log('📊 Getting index information...');
     const db = mongoose.connection.db;
     const collections = ['users', 'products', 'transactions'];
     
-    console.log('\n Index Summary:');
+    console.log('\n📈 Index Summary:');
     for (const collectionName of collections) {
       const collection = db.collection(collectionName);
       const indexes = await collection.listIndexes().toArray();
@@ -60,14 +60,14 @@ async function initializeIndexes() {
       });
     }
 
-    console.log('\n Database index initialization completed successfully!');
+    console.log('\n🎉 Database index initialization completed successfully!');
     
   } catch (error) {
-    console.error(' Error initializing database indexes:', error);
+    console.error('❌ Error initializing database indexes:', error);
     process.exit(1);
   } finally {
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
+    console.log('📡 Disconnected from MongoDB');
   }
 }
 

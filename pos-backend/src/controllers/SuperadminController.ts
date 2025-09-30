@@ -1,8 +1,16 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
 import { UserService } from '../services/UserService';
-import { ApiResponse } from '../types';
+import { ApiResponse, IUser } from '../types';
 import { hasPermission, shouldAutoApprove } from '../constants/permissions';
+
+// Type assertion for req.user to IUser
+const getUser = (req: Request): IUser => {
+  if (!req.user) {
+    throw new Error('User not authenticated');
+  }
+  return req.user as IUser;
+};
 
 export class SuperadminController {
   /**
@@ -111,6 +119,7 @@ export class SuperadminController {
    */
   static async approveUser(req: Request, res: Response): Promise<void> {
     try {
+      const currentUser = getUser(req);
       const { userId } = req.params;
       const { approved, reason } = req.body;
 
@@ -132,7 +141,7 @@ export class SuperadminController {
       }
 
       // Check if user has permission to approve this role
-      if (!hasPermission(req.user!.role as any, 'approve', user.role as any)) {
+      if (!hasPermission(currentUser.role as any, 'approve', user.role as any)) {
         res.status(403).json({
           success: false,
           message: 'You do not have permission to approve users with this role.',
@@ -143,7 +152,7 @@ export class SuperadminController {
       // Update user approval status
       user.isApproved = approved;
       if (approved) {
-        user.approvedBy = req.user!._id;
+        user.approvedBy = currentUser._id;
         user.approvedAt = new Date();
         user.status = 'active'; // Set to active when approved
       } else {
@@ -186,6 +195,7 @@ export class SuperadminController {
    */
   static async createManager(req: Request, res: Response): Promise<void> {
     try {
+      const currentUser = getUser(req);
       const { username, email, password, firstName, lastName } = req.body;
 
       // Validate required fields
@@ -220,9 +230,9 @@ export class SuperadminController {
         lastName,
         status: 'active', // Active and approved when created by superadmin
         isApproved: true, // Auto-approved when created by superadmin
-        approvedBy: req.user!._id,
+        approvedBy: currentUser._id,
         approvedAt: new Date(),
-        createdBy: req.user!._id,
+        createdBy: currentUser._id,
       });
 
       await manager.save();
@@ -338,6 +348,7 @@ export class SuperadminController {
    */
   static async bulkApproveUsers(req: Request, res: Response): Promise<void> {
     try {
+      const currentUser = getUser(req);
       const { userIds, approved, reason } = req.body;
 
       if (!Array.isArray(userIds) || userIds.length === 0) {
@@ -368,7 +379,7 @@ export class SuperadminController {
           }
 
           // Check permission
-          if (!hasPermission(req.user!.role as any, 'approve', user.role as any)) {
+          if (!hasPermission(currentUser.role as any, 'approve', user.role as any)) {
             errors.push({ userId, error: 'Insufficient permissions' });
             continue;
           }
@@ -376,7 +387,7 @@ export class SuperadminController {
           // Update user
           user.isApproved = approved;
           if (approved) {
-            user.approvedBy = req.user!._id;
+            user.approvedBy = currentUser._id;
             user.approvedAt = new Date();
           } else {
             user.approvedBy = undefined;

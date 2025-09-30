@@ -1,6 +1,15 @@
 import { Document, Model } from 'mongoose';
 
 // User Types
+export interface IOAuthProvider {
+  provider: 'google' | 'facebook';
+  providerId: string;
+  email: string;
+  name: string;
+  picture?: string;
+  linkedAt: Date;
+}
+
 export interface IUser extends Document {
   _id: string;
   username: string;
@@ -15,6 +24,7 @@ export interface IUser extends Document {
   approvedAt?: Date;
   createdBy?: string;
   lastLogin?: Date;
+  oauthProviders?: IOAuthProvider[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;

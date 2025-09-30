@@ -1,7 +1,15 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
 import { User } from '../models/User';
-import { ApiResponse } from '../types';
+import { ApiResponse, IUser } from '../types';
+
+// Type assertion for req.user to IUser
+const getUser = (req: Request): IUser => {
+  if (!req.user) {
+    throw new Error('User not authenticated');
+  }
+  return req.user as IUser;
+};
 
 export class UserController {
   /**
@@ -149,7 +157,8 @@ export class UserController {
   static async toggleUserStatus(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.params.id;
-      const currentUserId = req.user?._id;
+      const currentUser = getUser(req);
+      const currentUserId = currentUser._id;
 
       const result = await UserService.toggleUserStatus(userId, currentUserId);
 

@@ -25,12 +25,14 @@
     "paths": {
       "@/*": ["src/*"]
     },
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "src/types/express.d.ts"
   ],
   "exclude": [
     "node_modules",
