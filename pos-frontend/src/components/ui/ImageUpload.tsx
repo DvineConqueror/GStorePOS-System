@@ -106,21 +106,21 @@ export function ImageUpload({
       {preview ? (
         <Card className="relative group">
           <CardContent className="p-0">
-            <div className="relative">
+            <div className="relative max-h-40 overflow-auto">
               <img
                 src={preview}
                 alt="Product preview"
-                className="w-full h-48 object-cover rounded-lg"
+                className="w-full object-contain rounded-lg"
               />
               {!disabled && (
                 <Button
                   type="button"
                   variant="destructive"
                   size="sm"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 z-10 bg-red-500/90"
                   onClick={handleRemoveImage}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3" />
                 </Button>
               )}
             </div>
@@ -133,23 +133,23 @@ export function ImageUpload({
           }`}
           onClick={handleClick}
         >
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-center space-y-4">
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-2">
               {isUploading ? (
                 <>
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-sm text-gray-600">Uploading image...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-xs text-gray-600">Uploading...</p>
                 </>
               ) : (
                 <>
-                  <div className="mx-auto h-12 w-12 text-gray-400">
+                  <div className="mx-auto h-8 w-8 text-gray-400 mb-2">
                     <ImageIcon className="h-full w-full" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-xs font-medium text-gray-900">
                       Click to upload product image
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 mt-1">
                       PNG, JPG, GIF up to 5MB
                     </p>
                   </div>

@@ -140,91 +140,139 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          {showAddProductForm ? (
-            <Dialog open={showAddProductForm} onOpenChange={onShowAddForm}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Product</DialogTitle>
-                  <DialogDescription>
-                    Create a new product with basic information. Image upload will be implemented later.
-                  </DialogDescription>
+          <Dialog open={showAddProductForm} onOpenChange={onShowAddForm}>
+              <DialogContent className="max-w-md p-0">
+                <DialogHeader className="px-4 pt-4 pb-2 border-b flex-shrink-0">
+                  <DialogTitle className="text-lg text-black font-semibold">Add New Product</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={onAddProduct} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Product Name</Label>
-                    <Input
-                      id="name"
-                      value={newProduct.name}
-                      onChange={(e) => onNewProductChange({...newProduct, name: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="price">Price</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={newProduct.price}
-                      onChange={(e) => onNewProductChange({...newProduct, price: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Select value={newProduct.category} onValueChange={(value) => onNewProductChange({...newProduct, category: value})} required>
-                      <SelectTrigger className="bg-white border-gray-300 text-black">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px] bg-white">
-                        {Object.entries(categoryGroups).map(([groupName, categories]) => (
-                          <SelectGroup key={groupName} className="relative">
-                            <SelectLabel className="px-2 py-1.5 text-sm font-semibold bg-muted/50 text-black">{groupName}</SelectLabel>
-                            {categories.map((cat) => (
-                              <SelectItem key={cat} value={cat} className="pl-4 text-black">
-                                {cat}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="stock">Stock</Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      value={newProduct.stock}
-                      onChange={(e) => onNewProductChange({...newProduct, stock: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="image">Product Image</Label>
-                    {newProduct.imagePreview && (
-                      <div className="mb-2 h-32 w-32 overflow-hidden rounded flex items-center justify-center bg-gray-100">
-                        <img
-                          src={newProduct.imagePreview}
-                          alt="Product preview"
-                          className="w-full h-full object-cover"
-                        />
+                <form onSubmit={onAddProduct} className="flex flex-col flex-1">
+                  <div className="flex-1">
+                    <div className="px-4 py-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="name" className="text-sm font-medium text-black">Product Name</Label>
+                          <Input
+                            id="name"
+                            value={newProduct.name}
+                            onChange={(e) => onNewProductChange({...newProduct, name: e.target.value})}
+                            required
+                            className="mt-1 text-black placeholder:text-gray-400"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="price" className="text-sm font-medium text-black">Price</Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            step="0.01"
+                            value={newProduct.price}
+                            onChange={(e) => onNewProductChange({...newProduct, price: e.target.value})}
+                            required
+                            className="mt-1 text-black placeholder:text-gray-400"
+                          />
+                        </div>
                       </div>
-                    )}
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={onImageChange}
-                    />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="category" className="text-sm font-medium text-black">Category</Label>
+                          <Select value={newProduct.category} onValueChange={(value) => onNewProductChange({...newProduct, category: value})} required>
+                            <SelectTrigger className="mt-1 text-black">
+                              <SelectValue placeholder="Select category" className="text-gray-400" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {Object.entries(categoryGroups).map(([groupName, categories]) => (
+                                <SelectGroup key={groupName} className="relative">
+                                  <SelectLabel className="px-2 py-1.5 text-sm font-semibold bg-muted/50 text-black">{groupName}</SelectLabel>
+                                  {categories.map((cat) => (
+                                    <SelectItem key={cat} value={cat} className="pl-4 text-black">
+                                      {cat}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="stock" className="text-sm font-medium text-black">Stock</Label>
+                          <Input
+                            id="stock"
+                            type="number"
+                            value={newProduct.stock}
+                            onChange={(e) => onNewProductChange({...newProduct, stock: e.target.value})}
+                            required
+                            className="mt-1 text-black placeholder:text-gray-400"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-black">Product Image</Label>
+                        <div className="mt-1">
+                          {newProduct.imagePreview ? (
+                            <div className="relative max-h-40 overflow-auto">
+                              <div className="relative group">
+                                <img
+                                  src={newProduct.imagePreview}
+                                  alt="Product preview"
+                                  className="w-full object-contain rounded-lg"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 z-10 bg-red-500/90"
+                                  onClick={() => onNewProductChange({...newProduct, image: null, imagePreview: ''})}
+                                >
+                                  ×
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div 
+                              className="border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors cursor-pointer rounded-lg"
+                              onClick={() => document.getElementById('image')?.click()}
+                            >
+                              <div className="flex flex-col items-center justify-center py-6">
+                                <div className="text-center space-y-2">
+                                  <div className="mx-auto h-8 w-8 text-gray-400 mb-2">
+                                    <svg className="h-full w-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-medium text-gray-900">
+                                      Click to upload product image
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      PNG, JPG, GIF up to 5MB
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              <input
+                                id="image"
+                                type="file"
+                                accept="image/*"
+                                onChange={onImageChange}
+                                className="hidden"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <Button type="submit" className="w-full">
-                    Add Product
-                  </Button>
+                  <div className="px-4 pb-4 border-t bg-background flex-shrink-0">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-green-600 hover:bg-green-700 text-white mt-3"
+                    >
+                      Add Product
+                    </Button>
+                  </div>
                 </form>
               </DialogContent>
             </Dialog>
-          ) : (
             <div className="space-y-4">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
@@ -327,7 +375,6 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                 </>
               )}
             </div>
-          )}
         </CardContent>
       </Card>
     </div>

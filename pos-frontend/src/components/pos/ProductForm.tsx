@@ -128,84 +128,104 @@ export function ProductForm({ open, onClose, onSuccess, product }: ProductFormPr
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{product ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+      <DialogContent className="max-w-md p-0">
+        <DialogHeader className="px-4 pt-4 pb-2 border-b flex-shrink-0">
+          <DialogTitle className="text-lg text-black font-semibold">{product ? 'Edit Product' : 'Add New Product'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Product Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+          <div className="flex-1">
+            <div className="px-4 py-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="name" className="text-sm font-medium text-black">Product Name</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="mt-1 text-black placeholder:text-gray-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="price" className="text-sm font-medium text-black">Price</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    required
+                    className="mt-1 text-black placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="category" className="text-sm font-medium text-black">Category</Label>
+                  <Select value={category} onValueChange={setCategory} required>
+                    <SelectTrigger className="mt-1 text-black">
+                      <SelectValue placeholder="Select category" className="text-gray-400" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {Object.entries(categoryGroups).map(([groupName, categories]) => (
+                        <SelectGroup key={groupName} className="relative">
+                          <SelectLabel className="px-2 py-1.5 text-sm font-semibold bg-muted/50 text-black">{groupName}</SelectLabel>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat} value={cat} className="pl-4 text-black">
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="stock" className="text-sm font-medium text-black">Stock</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    value={stock}
+                    onChange={(e) => setStock(e.target.value)}
+                    required
+                    className="mt-1 text-black placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="barcode" className="text-sm font-medium text-black">Barcode</Label>
+                <Input
+                  id="barcode"
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  placeholder="Enter product barcode (optional)"
+                  disabled={loading}
+                  className="mt-1 text-black placeholder:text-gray-400"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-black">Product Image</Label>
+                <div className="mt-1">
+                  <ImageUpload
+                    onImageUploaded={handleImageUploaded}
+                    onImageRemoved={handleImageRemoved}
+                    currentImageId={imageId}
+                    currentImageUrl={imageUrl}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="price">Price</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {Object.entries(categoryGroups).map(([groupName, categories]) => (
-                  <SelectGroup key={groupName} className="relative">
-                    <SelectLabel className="px-2 py-1.5 text-sm font-semibold bg-muted/50">{groupName}</SelectLabel>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat} className="pl-4">
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="stock">Stock</Label>
-            <Input
-              id="stock"
-              type="number"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="barcode">Barcode</Label>
-            <Input
-              id="barcode"
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-              placeholder="Enter product barcode (optional)"
+          <div className="px-4 pb-4 border-t bg-background flex-shrink-0">
+            <Button 
+              type="submit" 
+              className="w-full bg-green-600 hover:bg-green-700 text-white mt-3" 
               disabled={loading}
-            />
+            >
+              {loading ? 'Saving...' : product ? 'Update Product' : 'Add Product'}
+            </Button>
           </div>
-          <div>
-            <Label>Product Image</Label>
-            <ImageUpload
-              onImageUploaded={handleImageUploaded}
-              onImageRemoved={handleImageRemoved}
-              currentImageId={imageId}
-              currentImageUrl={imageUrl}
-              disabled={loading}
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Saving...' : product ? 'Update Product' : 'Add Product'}
-          </Button>
         </form>
       </DialogContent>
     </Dialog>
