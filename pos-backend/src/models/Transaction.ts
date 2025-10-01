@@ -91,7 +91,7 @@ const transactionSchema = new Schema<ITransaction>({
   },
   status: {
     type: String,
-    enum: ['completed', 'refunded', 'voided'],
+    enum: ['completed', 'refunded'],
     default: 'completed',
   },
   notes: {

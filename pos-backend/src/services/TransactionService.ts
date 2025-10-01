@@ -1,6 +1,7 @@
 import { Transaction } from '../models/Transaction';
 import { Product } from '../models/Product';
 import { ITransaction } from '../types';
+import { RealtimeAnalyticsService } from './RealtimeAnalyticsService';
 
 export class TransactionService {
   /**
@@ -205,6 +206,14 @@ export class TransactionService {
     });
 
     await transaction.save();
+
+    // Trigger real-time analytics update
+    await RealtimeAnalyticsService.recalculateAndBroadcastAnalytics(
+      transaction._id.toString(),
+      cashierId,
+      'create'
+    );
+
     return transaction;
   }
 
@@ -237,40 +246,16 @@ export class TransactionService {
     }
     await transaction.save();
 
-    return transaction;
-  }
-
-  /**
-   * Void transaction
-   */
-  static async voidTransaction(transactionId: string, reason?: string): Promise<ITransaction> {
-    const transaction = await Transaction.findById(transactionId);
-    if (!transaction) {
-      throw new Error('Transaction not found');
-    }
-
-    if (transaction.status !== 'completed') {
-      throw new Error('Only completed transactions can be voided');
-    }
-
-    // Restore product stock
-    for (const item of transaction.items) {
-      const product = await Product.findById(item.productId);
-      if (product) {
-        product.stock += item.quantity;
-        await product.save();
-      }
-    }
-
-    // Update transaction status
-    transaction.status = 'voided';
-    if (reason) {
-      transaction.notes = (transaction.notes || '') + `\nVoid reason: ${reason}`;
-    }
-    await transaction.save();
+    // Trigger real-time analytics update
+    await RealtimeAnalyticsService.recalculateAndBroadcastAnalytics(
+      transaction._id.toString(),
+      transaction.cashierId,
+      'refund'
+    );
 
     return transaction;
   }
+
 
   /**
    * Get daily sales summary

@@ -39,7 +39,7 @@ export interface Transaction {
   cashierName: string;
   customerId?: string;
   customerName?: string;
-  status: 'completed' | 'refunded' | 'voided';
+  status: 'completed' | 'refunded';
   notes?: string;
   createdAt: string;
   updatedAt: string;

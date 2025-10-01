@@ -24,11 +24,13 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle auth errors
+// Response interceptor to handle auth errors and token refresh
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
       // Check if it's a server connection error vs actual auth failure
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
         // Server is down, don't logout - just show error
@@ -36,14 +38,42 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       
-      // Only logout on actual authentication failures
-      const isAuthEndpoint = error.config?.url?.includes('/auth/');
-      if (isAuthEndpoint && error.response?.data?.message?.includes('Token')) {
-        // Token expired or invalid, clear auth data
+      // Check if it's a token expiration error
+      const isTokenExpired = error.response?.data?.message?.includes('expired') || 
+                            error.response?.data?.message?.includes('Token');
+      
+      if (isTokenExpired) {
+        originalRequest._retry = true;
+        
+        try {
+          // Attempt to refresh the token
+          const refreshToken = Cookies.get('refresh_token');
+          if (refreshToken) {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
+              refreshToken
+            });
+            
+            if (response.data.success) {
+              // Update tokens
+              Cookies.set('auth_token', response.data.data.accessToken, { expires: 7 });
+              Cookies.set('refresh_token', response.data.data.refreshToken, { expires: 7 });
+              
+              // Retry the original request with new token
+              originalRequest.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
+              return api(originalRequest);
+            }
+          }
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+        }
+        
+        // If refresh fails, logout user
         Cookies.remove('auth_token');
+        Cookies.remove('refresh_token');
         window.location.href = '/login';
       }
     }
+    
     return Promise.reject(error);
   }
 );
@@ -278,10 +308,6 @@ export const transactionsAPI = {
     return response.data;
   },
 
-  voidTransaction: async (id: string, reason?: string) => {
-    const response = await api.post(`/transactions/${id}/void`, { reason });
-    return response.data;
-  },
 
   getDailySales: async (date?: string) => {
     const response = await api.get('/transactions/sales/daily', {

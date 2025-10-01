@@ -230,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthLoading(true);
       await authAPI.logout();
       Cookies.remove('auth_token');
+      Cookies.remove('refresh_token');
       setUser(null);
       
       // Show logout success toast
@@ -240,6 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       // Even if logout fails on server, clear local data
       Cookies.remove('auth_token');
+      Cookies.remove('refresh_token');
       setUser(null);
       console.error('Logout error:', error);
       

@@ -77,7 +77,7 @@ export interface ITransaction extends Document {
   cashierName: string;
   customerId?: string;
   customerName?: string;
-  status: 'completed' | 'refunded' | 'voided';
+  status: 'completed' | 'refunded';
   notes?: string;
   createdAt: Date;
   updatedAt: Date;

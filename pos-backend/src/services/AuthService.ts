@@ -8,7 +8,7 @@ const sessionStore = new Map<string, ISession>();
 const blacklistedTokens = new Set<string>();
 
 // Token expiration times
-const ACCESS_TOKEN_EXPIRE = '15m'; // 15 minutes
+const ACCESS_TOKEN_EXPIRE = '2h'; // 2 hours (extended for development)
 const REFRESH_TOKEN_EXPIRE = '7d'; // 7 days
 const SESSION_EXPIRE = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 

@@ -18,7 +18,7 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
       endDate,
       cashierId,
       paymentMethod,
-      status = 'completed',
+      status,
       minAmount,
       maxAmount,
       sort = 'createdAt',
@@ -305,68 +305,6 @@ router.post('/:id/refund', authenticate, async (req, res): Promise<void> => {
   }
 });
 
-// @desc    Void transaction
-// @route   POST /api/v1/transactions/:id/void
-// @access  Private (Admin only)
-router.post('/:id/void', authenticate, async (req, res): Promise<void> => {
-  try {
-    // Only manager or superadmin can void transactions
-    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
-      res.status(403).json({
-        success: false,
-        message: 'Access denied. Manager or Superadmin role required to void transactions.',
-      } as ApiResponse);
-      return;
-    }
-
-    const { reason } = req.body;
-    const transaction = await Transaction.findById(req.params.id);
-
-    if (!transaction) {
-      res.status(404).json({
-        success: false,
-        message: 'Transaction not found.',
-      } as ApiResponse);
-      return;
-    }
-
-    if (transaction.status !== 'completed') {
-      res.status(400).json({
-        success: false,
-        message: 'Only completed transactions can be voided.',
-      } as ApiResponse);
-      return;
-    }
-
-    // Restore product stock
-    for (const item of transaction.items) {
-      const product = await Product.findById(item.productId);
-      if (product) {
-        product.stock += item.quantity;
-        await product.save();
-      }
-    }
-
-    // Update transaction status
-    transaction.status = 'voided';
-    if (reason) {
-      transaction.notes = (transaction.notes || '') + `\nVoid reason: ${reason}`;
-    }
-    await transaction.save();
-
-    res.json({
-      success: true,
-      message: 'Transaction voided successfully.',
-      data: transaction,
-    } as ApiResponse);
-  } catch (error) {
-    console.error('Void transaction error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while voiding transaction.',
-    } as ApiResponse);
-  }
-});
 
 // @desc    Get daily sales summary
 // @route   GET /api/v1/transactions/sales/daily

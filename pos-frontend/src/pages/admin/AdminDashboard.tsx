@@ -301,7 +301,10 @@ export function AdminDashboard() {
             </p>
             <Button 
               className="w-full bg-slate-600 hover:bg-slate-700 text-white text-xs sm:text-sm"
-              onClick={() => window.location.href = '/admin/analytics'}
+              onClick={() => {
+                // Navigate to analytics and ensure data is loaded
+                window.location.href = '/admin/analytics';
+              }}
             >
               View Analytics
             </Button>

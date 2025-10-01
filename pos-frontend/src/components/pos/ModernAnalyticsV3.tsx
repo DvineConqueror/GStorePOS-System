@@ -1,9 +1,35 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useRealtimeAnalytics } from '@/hooks/useRealtimeAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { transactionsAPI, productsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
+
+// Category inference function (matching backend logic)
+const inferCategoryFromProductName = (productName: string): string => {
+  const name = productName.toLowerCase();
+  
+  if (name.includes('cracker') || name.includes('chips') || name.includes('snack')) {
+    return 'Snacks';
+  } else if (name.includes('milk') || name.includes('cheese') || name.includes('yogurt')) {
+    return 'Dairy';
+  } else if (name.includes('bread') || name.includes('cake') || name.includes('cookie')) {
+    return 'Bakery';
+  } else if (name.includes('apple') || name.includes('banana') || name.includes('fruit')) {
+    return 'Fruits';
+  } else if (name.includes('vegetable') || name.includes('carrot') || name.includes('lettuce')) {
+    return 'Vegetables';
+  } else if (name.includes('meat') || name.includes('chicken') || name.includes('beef')) {
+    return 'Meat';
+  } else if (name.includes('drink') || name.includes('juice') || name.includes('soda')) {
+    return 'Beverages';
+  } else if (name.includes('cereal') || name.includes('rice') || name.includes('pasta')) {
+    return 'Grains';
+  } else {
+    return 'General';
+  }
+};
 import { 
   LineChart, 
   Line, 
@@ -63,10 +89,26 @@ const CATEGORY_COLORS = ['#107146', '#16a34a', '#22c55e', '#4ade80', '#86efac', 
 
 export function ModernAnalyticsV3() {
   const { user } = useAuth();
+  const { analytics: realtimeAnalytics, loading: realtimeLoading, error: realtimeError, isConnected } = useRealtimeAnalytics();
   const [analyticsData, setAnalyticsData] = useState<RawAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const analytics = useMemo(() => {
+    // Prioritize real-time data if available
+    if (realtimeAnalytics) {
+      return {
+        totalSales: realtimeAnalytics.metrics.totalSales,
+        totalTransactions: realtimeAnalytics.metrics.totalTransactions,
+        avgTransaction: realtimeAnalytics.metrics.averageTransactionValue,
+        formattedMetrics: realtimeAnalytics.formattedMetrics,
+        salesByCategory: realtimeAnalytics.salesByCategory || [],
+        hourlySales: realtimeAnalytics.hourlySales || [],
+        topPerformer: realtimeAnalytics.topPerformer,
+        weeklyTrend: realtimeAnalytics.weeklyTrend || []
+      };
+    }
+
+    // Fallback to legacy data
     if (!analyticsData) return null;
 
     const { transactions, products } = analyticsData;
@@ -103,13 +145,13 @@ export function ModernAnalyticsV3() {
     const topPerformer = Array.from(cashierPerformance.entries())
       .sort(([,a], [,b]) => b.sales - a.sales)[0];
 
-    // Category analysis
+    // Category analysis using backend inference
     const categorySales = new Map();
     userTransactions.forEach((t: any) => {
       t.items.forEach((item: any) => {
-        const category = item.category || 'Others';
+        const category = inferCategoryFromProductName(item.productName);
         const current = categorySales.get(category) || 0;
-        categorySales.set(category, current + (item.price * item.quantity));
+        categorySales.set(category, current + item.totalPrice);
       });
     });
     const topCategory = Array.from(categorySales.entries())
@@ -142,6 +184,18 @@ export function ModernAnalyticsV3() {
       avgItemsPerTransaction: totalTransactions > 0 ? totalItems / totalTransactions : 0
     };
 
+    // Recent transactions
+    const recentTransactions = userTransactions
+      .sort((a: any, b: any) => new Date(b.createdAt || b.timestamp).getTime() - new Date(a.createdAt || a.timestamp).getTime())
+      .slice(0, 5)
+      .map((t: any) => ({
+        id: t._id,
+        items: t.items.length,
+        total: t.total,
+        time: new Date(t.createdAt || t.timestamp).toLocaleTimeString(),
+        cashierName: t.cashierName
+      }));
+
     return {
       totalSales,
       totalTransactions,
@@ -161,15 +215,26 @@ export function ModernAnalyticsV3() {
         .sort((a, b) => b.sales - a.sales)
         .slice(0, 6),
       weeklyTrend: weeklyData,
+      recentTransactions,
       efficiency
     };
-  }, [analyticsData, user]);
+  }, [analyticsData, user, realtimeAnalytics]);
 
   const fetchAnalytics = async () => {
+    // Always fetch data asynchronously, even if real-time data is available
+    // This ensures we have the latest data and provides fallback
     try {
       setLoading(true);
-      const transactionsResponse = await transactionsAPI.getTransactions();
-      const productsResponse = await productsAPI.getProducts();
+      
+      // Fetch data in parallel for better performance
+      const [transactionsResponse, productsResponse] = await Promise.all([
+        transactionsAPI.getTransactions({
+          limit: 1000, // Get more transactions for better analytics
+          sort: 'createdAt',
+          order: 'desc'
+        }),
+        productsAPI.getProducts()
+      ]);
       
       if (transactionsResponse.success && productsResponse.success) {
         setAnalyticsData({
@@ -188,20 +253,27 @@ export function ModernAnalyticsV3() {
     if (user?.id) {
       fetchAnalytics();
     }
-  }, [user?.id]);
+  }, [user?.id, realtimeAnalytics]);
 
-  if (loading) {
+  if (loading || realtimeLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* Main Stats Row Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-48 bg-slate-100 animate-pulse rounded-2xl" />
           ))}
         </div>
+        
+        {/* Performance Overview Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-80 bg-slate-100 animate-pulse rounded-2xl" />
-          <div className="h-80 bg-slate-100 animate-pulse rounded-2xl" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-80 bg-slate-100 animate-pulse rounded-2xl" />
+          ))}
         </div>
+        
+        {/* Weekly Trend Chart Skeleton */}
+        <div className="h-80 bg-slate-100 animate-pulse rounded-2xl" />
       </div>
     );
   }
@@ -269,11 +341,11 @@ export function ModernAnalyticsV3() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Total Sales"
-          value={formatCurrency(analytics.totalSales)}
+          value={realtimeAnalytics?.formattedMetrics?.totalSales?.formatted || formatCurrency(analytics.totalSales)}
           subtitle={`${analytics.totalTransactions} transactions`}
           icon={DollarSign}
           color="bg-green-700"
-          trend={12.5}
+          trend={realtimeAnalytics?.formattedMetrics?.totalSales?.trend}
         />
         <StatCard
           title="Peak Hour"
@@ -284,11 +356,11 @@ export function ModernAnalyticsV3() {
         />
         <StatCard
           title="Avg Transaction"
-          value={formatCurrency(analytics.avgTransaction)}
+          value={realtimeAnalytics?.formattedMetrics?.averageTransactionValue?.formatted || formatCurrency(analytics.avgTransaction)}
           subtitle="Per transaction"
           icon={Target}
           color="bg-green-700"
-          trend={-2.3}
+          trend={realtimeAnalytics?.formattedMetrics?.averageTransactionValue?.trend}
         />
       </div>
 
@@ -306,16 +378,16 @@ export function ModernAnalyticsV3() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {analytics.topPerformer ? (
+            {(realtimeAnalytics?.topPerformer || analytics.topPerformer) ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
                   <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center">
                     <span className="text-white font-bold text-xl">
-                      {analytics.topPerformer.name.charAt(0)}
+                      {(realtimeAnalytics?.topPerformer?.name || analytics.topPerformer?.name)?.charAt(0)}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-gray-900 text-lg">{analytics.topPerformer.name}</h4>
+                    <h4 className="font-bold text-gray-900 text-lg">{realtimeAnalytics?.topPerformer?.name || analytics.topPerformer?.name}</h4>
                     <p className="text-sm text-gray-600">Cashier</p>
                     <Badge className="bg-green-600 text-white mt-1">
                       #1 Performer
@@ -326,13 +398,13 @@ export function ModernAnalyticsV3() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center p-3 bg-gray-50 rounded-xl">
                     <div className="text-xl font-bold text-gray-900">
-                      {formatCurrency(analytics.topPerformer.sales)}
+                      {formatCurrency(realtimeAnalytics?.topPerformer?.amount || analytics.topPerformer?.sales || 0)}
                     </div>
                     <div className="text-xs text-gray-600">Sales</div>
                   </div>
                   <div className="text-center p-3 bg-gray-50 rounded-xl">
                     <div className="text-xl font-bold text-gray-900">
-                      {analytics.topPerformer.transactions}
+                      {realtimeAnalytics?.topPerformer?.count || analytics.topPerformer?.transactions || 0}
                     </div>
                     <div className="text-xs text-gray-600">Transactions</div>
                   </div>
@@ -359,9 +431,9 @@ export function ModernAnalyticsV3() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {analytics.categoryData.length > 0 ? (
+            {((realtimeAnalytics?.salesByCategory && realtimeAnalytics.salesByCategory.length > 0) || analytics.categoryData.length > 0) ? (
               <div className="space-y-3">
-                {analytics.categoryData.slice(0, 4).map((category, index) => (
+                {(realtimeAnalytics?.salesByCategory || analytics.categoryData).slice(0, 4).map((category: any, index: number) => (
                   <div key={category.category} className="flex items-center gap-3">
                     <div 
                       className="w-4 h-4 rounded-full"
@@ -371,7 +443,7 @@ export function ModernAnalyticsV3() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">{category.category}</span>
                         <span className="text-sm font-semibold text-gray-900">
-                          {formatCurrency(category.sales)}
+                          {formatCurrency(category.amount || category.sales)}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
@@ -396,46 +468,47 @@ export function ModernAnalyticsV3() {
           </CardContent>
         </Card>
 
-        {/* Performance Metrics */}
+        {/* Recent Transactions */}
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3">
-              <Zap className="h-5 w-5 text-green-600" />
+              <Clock className="h-5 w-5 text-green-600" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Efficiency</h3>
-                <p className="text-sm text-gray-600">Performance metrics</p>
+                <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+                <p className="text-sm text-gray-600">Latest activity</p>
               </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="80%" data={radialData}>
-                  <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-                  <RadialBar dataKey="value" cornerRadius={8} fill="#16a34a" />
-                </RadialBarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">
-                  {formatCurrency(analytics.efficiency.salesPerHour)}
-                </div>
-                <div className="text-xs text-gray-600">Sales/hr</div>
+            {analytics.recentTransactions.length > 0 ? (
+              <div className="space-y-4">
+                {analytics.recentTransactions.map((transaction, index) => (
+                  <div key={transaction.id} className={`flex items-center gap-4 p-4 rounded-2xl ${
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  }`}>
+                    <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                      <span className="text-green-600 font-bold text-lg">
+                        {index + 1}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 text-lg">{transaction.items} items</h4>
+                      <p className="text-sm text-gray-600">{transaction.cashierName} • {transaction.time}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-gray-900">
+                        {formatCurrency(transaction.total)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">
-                  {analytics.efficiency.transactionsPerHour.toFixed(1)}
-                </div>
-                <div className="text-xs text-gray-600">Txns/hr</div>
+            ) : (
+              <div className="text-center py-8">
+                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No recent transactions</p>
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">
-                  {analytics.efficiency.avgItemsPerTransaction.toFixed(1)}
-                </div>
-                <div className="text-xs text-gray-600">Items/txn</div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -454,7 +527,7 @@ export function ModernAnalyticsV3() {
         <CardContent>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics.weeklyTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <LineChart data={realtimeAnalytics?.weeklyTrend || analytics.weeklyTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <Line 
                   type="monotone" 
                   dataKey="sales" 
@@ -478,6 +551,14 @@ export function ModernAnalyticsV3() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Real-time Connection Status */}
+      {isConnected && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+          <span className="text-sm font-medium">Live Analytics</span>
+        </div>
+      )}
     </div>
   );
 }

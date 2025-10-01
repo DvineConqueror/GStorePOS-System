@@ -28,6 +28,8 @@ import SuperadminDashboard from '@/pages/superadmin/SuperadminDashboard';
 import UserApproval from '@/components/superadmin/UserApproval';
 import ManagerCreationForm from '@/components/superadmin/ManagerCreationForm';
 import AllUsers from '@/components/superadmin/AllUsers';
+import RecentTransactionsPage from '@/pages/RecentTransactionsPage';
+import VoidRefundPage from '@/pages/VoidRefundPage';
 import SystemSettings from '@/components/superadmin/SystemSettings';
 import ApprovalStatusNotification from '@/components/notifications/ApprovalStatusNotification';
 
@@ -99,6 +101,18 @@ const App = () => {
                   <Route path="settings" element={<SystemSettings />} />
                 </Route>
                 
+                {/* Transaction Management Routes */}
+                <Route path="/transactions" element={
+                  <ProtectedRoute>
+                    <RecentTransactionsPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/transactions/:transactionId/refund" element={
+                  <AdminRoute>
+                    <VoidRefundPage />
+                  </AdminRoute>
+                } />
+
                 {/* Legacy Routes (for backward compatibility) */}
                 <Route path="/pos" element={
                   <ProtectedRoute>

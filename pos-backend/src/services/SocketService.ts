@@ -78,4 +78,103 @@ export class SocketService {
 
     this.emitToRole(role, 'pending_approvals_update', notification);
   }
+
+  /**
+   * Emit analytics update to managers and superadmins
+   */
+  static emitAnalyticsUpdate(analyticsData: any) {
+    if (!this.io) {
+      console.error('Socket.IO not initialized');
+      return;
+    }
+
+    // Emit to managers and superadmins
+    this.emitToRole('manager', 'analytics:update', analyticsData);
+    this.emitToRole('superadmin', 'analytics:update', analyticsData);
+    
+    console.log('Emitted analytics:update to managers and superadmins');
+  }
+
+  /**
+   * Emit cashier-specific analytics update
+   */
+  static emitCashierAnalyticsUpdate(cashierId: string, analyticsData: any) {
+    if (!this.io) {
+      console.error('Socket.IO not initialized');
+      return;
+    }
+
+    // Emit to specific cashier
+    this.io.to(`user-${cashierId}`).emit('analytics:update', analyticsData);
+    
+    // Also emit to managers and superadmins for oversight
+    this.emitToRole('manager', 'cashier:analytics:update', {
+      cashierId,
+      ...analyticsData
+    });
+    this.emitToRole('superadmin', 'cashier:analytics:update', {
+      cashierId,
+      ...analyticsData
+    });
+    
+    console.log(`Emitted cashier analytics update for cashier ${cashierId}`);
+  }
+
+  /**
+   * Emit manager analytics update
+   */
+  static emitManagerAnalyticsUpdate(analyticsData: any) {
+    if (!this.io) {
+      console.error('Socket.IO not initialized');
+      return;
+    }
+
+    // Emit to managers and superadmins
+    this.emitToRole('manager', 'manager:analytics:update', analyticsData);
+    this.emitToRole('superadmin', 'manager:analytics:update', analyticsData);
+    
+    console.log('Emitted manager analytics update');
+  }
+
+  /**
+   * Emit transaction refund notification
+   */
+  static emitTransactionRefund(transactionData: any, refundedBy: string) {
+    if (!this.io) {
+      console.error('Socket.IO not initialized');
+      return;
+    }
+
+    const notification = {
+      type: 'transaction_refund',
+      message: `Transaction ${transactionData.transactionNumber} has been refunded`,
+      transaction: transactionData,
+      refundedBy,
+      timestamp: new Date().toISOString()
+    };
+
+    // Notify managers and superadmins
+    this.emitToRole('manager', 'notification', notification);
+    this.emitToRole('superadmin', 'notification', notification);
+    
+    // Notify the cashier who made the original transaction
+    if (transactionData.cashierId) {
+      this.io.to(`user-${transactionData.cashierId}`).emit('notification', notification);
+    }
+    
+    console.log(`Emitted transaction refund notification for ${transactionData.transactionNumber}`);
+  }
+
+  /**
+   * Emit to specific user
+   */
+  static emitToUser(userId: string, event: string, data: any) {
+    if (!this.io) {
+      console.error('Socket.IO not initialized');
+      return;
+    }
+
+    this.io.to(`user-${userId}`).emit(event, data);
+    console.log(`Emitted ${event} to user-${userId}:`, data);
+  }
 }

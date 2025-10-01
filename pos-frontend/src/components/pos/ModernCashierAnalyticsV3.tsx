@@ -4,6 +4,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { transactionsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
+
+// Category inference function (matching backend logic)
+const inferCategoryFromProductName = (productName: string): string => {
+  const name = productName.toLowerCase();
+  
+  if (name.includes('cracker') || name.includes('chips') || name.includes('snack')) {
+    return 'Snacks';
+  } else if (name.includes('milk') || name.includes('cheese') || name.includes('yogurt')) {
+    return 'Dairy';
+  } else if (name.includes('bread') || name.includes('cake') || name.includes('cookie')) {
+    return 'Bakery';
+  } else if (name.includes('apple') || name.includes('banana') || name.includes('fruit')) {
+    return 'Fruits';
+  } else if (name.includes('vegetable') || name.includes('carrot') || name.includes('lettuce')) {
+    return 'Vegetables';
+  } else if (name.includes('meat') || name.includes('chicken') || name.includes('beef')) {
+    return 'Meat';
+  } else if (name.includes('drink') || name.includes('juice') || name.includes('soda')) {
+    return 'Beverages';
+  } else if (name.includes('cereal') || name.includes('rice') || name.includes('pasta')) {
+    return 'Grains';
+  } else {
+    return 'General';
+  }
+};
 import { 
   LineChart, 
   Line, 
@@ -131,13 +156,13 @@ export function ModernCashierAnalyticsV3() {
       .map(([hour, sales]) => ({ hour: `${hour}:00`, sales }))
       .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
-    // Top categories
+    // Top categories using backend inference
     const categorySales = new Map();
     userTransactions.forEach((t: any) => {
       t.items.forEach((item: any) => {
-        const category = item.category || 'Others';
+        const category = inferCategoryFromProductName(item.productName);
         const current = categorySales.get(category) || 0;
-        categorySales.set(category, current + (item.price * item.quantity));
+        categorySales.set(category, current + item.totalPrice);
       });
     });
     const topCategories = Array.from(categorySales.entries())
@@ -175,7 +200,13 @@ export function ModernCashierAnalyticsV3() {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await transactionsAPI.getTransactions();
+      
+      // Fetch transactions asynchronously with optimized parameters
+      const response = await transactionsAPI.getTransactions({
+        limit: 1000, // Get more transactions for better analytics
+        sort: 'createdAt',
+        order: 'desc'
+      });
       
       if (response.success) {
         setAnalyticsData({
@@ -198,15 +229,22 @@ export function ModernCashierAnalyticsV3() {
   if (loading) {
     return (
       <div className="space-y-8">
+        {/* Main Stats Row Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-48 bg-gray-100 animate-pulse rounded-2xl" />
+            <div key={i} className="h-48 bg-slate-100 animate-pulse rounded-2xl" />
           ))}
         </div>
+        
+        {/* Performance Overview Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-80 bg-gray-100 animate-pulse rounded-2xl" />
-          <div className="h-80 bg-gray-100 animate-pulse rounded-2xl" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-80 bg-slate-100 animate-pulse rounded-2xl" />
+          ))}
         </div>
+        
+        {/* Weekly Trend Chart Skeleton */}
+        <div className="h-80 bg-slate-100 animate-pulse rounded-2xl" />
       </div>
     );
   }

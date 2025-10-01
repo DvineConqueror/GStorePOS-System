@@ -67,6 +67,27 @@ export function SocketProvider({ children }: SocketProviderProps) {
       window.dispatchEvent(new CustomEvent('pendingApprovalsUpdate', { detail: data }));
     });
 
+    // Listen for analytics updates
+    newSocket.on('analytics:update', (analyticsData) => {
+      console.log('Received analytics update:', analyticsData);
+      // Dispatch custom event for components to listen to
+      window.dispatchEvent(new CustomEvent('analyticsUpdate', { detail: analyticsData }));
+    });
+
+    // Listen for manager analytics updates
+    newSocket.on('manager:analytics:update', (analyticsData) => {
+      console.log('Received manager analytics update:', analyticsData);
+      // Dispatch custom event for components to listen to
+      window.dispatchEvent(new CustomEvent('manager:analytics:update', { detail: analyticsData }));
+    });
+
+    // Listen for cashier analytics updates
+    newSocket.on('cashier:analytics:update', (analyticsData) => {
+      console.log('Received cashier analytics update:', analyticsData);
+      // Dispatch custom event for components to listen to
+      window.dispatchEvent(new CustomEvent('cashier:analytics:update', { detail: analyticsData }));
+    });
+
     setSocket(newSocket);
 
     return () => {
