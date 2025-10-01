@@ -94,7 +94,7 @@ export function CashierProductCatalog() {
             placeholder="Search products by name, SKU, or barcode..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 text-black"
+            className="pl-10 text-black bg-white border-gray-300"
           />
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
