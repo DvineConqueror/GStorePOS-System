@@ -10,6 +10,7 @@ interface UserProfile {
   lastName: string;
   role: 'manager' | 'cashier';
   status: 'active' | 'inactive' | 'deleted';
+  isApproved?: boolean;
   createdAt: string;
 }
 

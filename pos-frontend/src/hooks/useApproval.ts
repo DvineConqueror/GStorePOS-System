@@ -27,6 +27,7 @@ interface UseApprovalProps {
 export const useApproval = ({ userRole }: UseApprovalProps) => {
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [approvingUsers, setApprovingUsers] = useState<Set<string>>(new Set());
   const [stats, setStats] = useState({
     totalPending: 0,
     pendingManagers: 0,
@@ -50,8 +51,6 @@ export const useApproval = ({ userRole }: UseApprovalProps) => {
         response = await usersAPI.getUsers({
           ...filters,
           role: 'cashier',
-          status: 'active',
-          isApproved: false,
         });
       }
       
@@ -75,14 +74,21 @@ export const useApproval = ({ userRole }: UseApprovalProps) => {
   };
 
   const approveUser = async (userId: string, reason?: string) => {
+    // Prevent multiple approval attempts for the same user
+    if (approvingUsers.has(userId)) {
+      return false;
+    }
+
     try {
+      setApprovingUsers(prev => new Set(prev).add(userId));
+      
       let response;
       
       if (userRole === 'superadmin') {
         response = await superadminAPI.approveUser(userId, true, reason);
       } else {
-        // Managers can only approve cashiers
-        response = await usersAPI.updateUser(userId, { isApproved: true });
+        // Managers can only approve cashiers - use superadmin API for approval
+        response = await superadminAPI.approveUser(userId, true, reason);
       }
       
       if (response.success) {
@@ -105,21 +111,31 @@ export const useApproval = ({ userRole }: UseApprovalProps) => {
         variant: "destructive",
       });
       return false;
+    } finally {
+      setApprovingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
     }
   };
 
   const rejectUser = async (userId: string, reason?: string) => {
+    // Prevent multiple rejection attempts for the same user
+    if (approvingUsers.has(userId)) {
+      return false;
+    }
+
     try {
+      setApprovingUsers(prev => new Set(prev).add(userId));
+      
       let response;
       
       if (userRole === 'superadmin') {
         response = await superadminAPI.approveUser(userId, false, reason);
       } else {
-        // Managers can only reject cashiers
-        response = await usersAPI.updateUser(userId, { 
-          isApproved: false, 
-          status: 'inactive' 
-        });
+        // Managers can only reject cashiers - use superadmin API for rejection
+        response = await superadminAPI.approveUser(userId, false, reason);
       }
       
       if (response.success) {
@@ -142,6 +158,12 @@ export const useApproval = ({ userRole }: UseApprovalProps) => {
         variant: "destructive",
       });
       return false;
+    } finally {
+      setApprovingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
     }
   };
 
@@ -229,6 +251,7 @@ export const useApproval = ({ userRole }: UseApprovalProps) => {
   return {
     pendingUsers,
     loading,
+    approvingUsers,
     stats,
     fetchPendingUsers,
     approveUser,

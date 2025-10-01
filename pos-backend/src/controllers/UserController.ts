@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
 import { User } from '../models/User';
 import { ApiResponse } from '../types';
+import { NotificationService } from '../services/NotificationService';
 
 export class UserController {
   /**
@@ -159,6 +160,25 @@ export class UserController {
           message: result.message,
         } as ApiResponse);
         return;
+      }
+
+      // Send email notification if user is activated (approved)
+      if (result.data?.user?.status === 'active' && result.data?.user?.isApproved) {
+        try {
+          const user = await User.findById(userId);
+          const approver = await User.findById(currentUserId);
+          
+          if (user && approver) {
+            await NotificationService.sendApprovalNotification({
+              user,
+              approvedBy: approver,
+              clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+            });
+          }
+        } catch (emailError) {
+          console.error('Failed to send approval notification email:', emailError);
+          // Don't fail the approval if email fails
+        }
       }
 
       res.json({

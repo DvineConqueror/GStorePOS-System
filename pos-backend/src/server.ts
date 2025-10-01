@@ -6,10 +6,13 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { createServer } from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import { connectDB } from './config/database';
 import { SessionCleanupService } from './services/SessionCleanupService';
 import { EmailService } from './services/EmailService';
 import { PasswordResetService } from './services/PasswordResetService';
+import { SocketService } from './services/SocketService';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -19,6 +22,7 @@ import userRoutes from './routes/users';
 import analyticsRoutes from './routes/analytics';
 import superadminRoutes from './routes/superadmin';
 import databaseRoutes from './routes/database';
+import notificationRoutes from './routes/notifications';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -29,6 +33,14 @@ import { requestMetrics } from './middleware/metrics';
 dotenv.config();
 
 const app = express();
+const server = createServer(app);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
+});
+
 const PORT = process.env.PORT;
 
 // Security middleware
@@ -155,20 +167,41 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/superadmin', superadminRoutes);
 app.use('/api/v1/database', databaseRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
 
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+  
+  // Join user to their role-based room for targeted notifications
+  socket.on('join-role-room', (role: string) => {
+    socket.join(`role-${role}`);
+    console.log(`User joined role room: role-${role}`);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+// Initialize SocketService
+SocketService.initialize(io);
+
+// Make io available globally for other modules
+(global as any).io = io;
+
 // Start server
-let server: any;
 let healthInterval: NodeJS.Timeout | null = null;
 
 const startServer = async () => {
   try {
     await connectDB();
     
-    server = app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
       console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
@@ -243,6 +276,12 @@ const gracefulShutdown = async (signal: string) => {
     if (healthInterval) {
       clearInterval(healthInterval);
       healthInterval = null;
+    }
+    
+    // Close Socket.IO server
+    if (io) {
+      io.close();
+      console.log('Socket.IO server closed.');
     }
     
     // Close HTTP server

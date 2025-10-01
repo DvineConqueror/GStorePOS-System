@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Shield, LogOut } from 'lucide-react';
+import NotificationButton from '@/components/notifications/NotificationButton';
+import NotificationAlert from '@/components/notifications/NotificationAlert';
 
 interface AdminHeaderProps {
   userName: string;
@@ -19,6 +21,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ userName, onLogout }) 
           <Shield className="h-4 w-4 text-green-600" />
           <span className="text-sm font-medium">Manager: {userName}</span>
         </div>
+        <NotificationButton />
         <Button onClick={onLogout} variant="outline" className="bg-white hover:bg-green-50 border-green-200">
           <LogOut className="mr-2 h-4 w-4 text-green-600" />
           Logout

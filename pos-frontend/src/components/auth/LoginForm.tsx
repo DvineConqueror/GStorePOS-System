@@ -63,42 +63,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* OAuth Buttons for Cashiers */}
-          {!isAdminMode && (
-            <div className={`${isSignUp ? 'space-y-2 mb-3' : 'space-y-3 mb-4'}`}>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-xs text-gray-600 border-green-300 hover:bg-green-60 transition-all duration-300`}
-                  disabled
-                >
-                  <Chrome className="mr-1 h-3 w-3" />
-                  Google
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-xs text-gray-600 border-green-300 hover:bg-green-60 transition-all duration-300`}
-                  disabled
-                >
-                  <Facebook className="mr-1 h-3 w-3" />
-                  Facebook
-                </Button>
-                
-              </div>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Or continue with email</span>
-                </div>
-              </div>
-            </div>
-          )}
-
           <form onSubmit={onFormSubmit} className={`${isSignUp ? 'space-y-2' : 'space-y-4'}`}>
             {isSignUp && !isAdminMode && (
               <>

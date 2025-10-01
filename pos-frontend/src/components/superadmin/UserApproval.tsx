@@ -48,6 +48,7 @@ interface UserApprovalProps {
 export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [approvingUsers, setApprovingUsers] = useState<Set<string>>(new Set());
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -100,7 +101,13 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   };
 
   const handleApproveUser = async (userId: string) => {
+    // Prevent multiple approval attempts for the same user
+    if (approvingUsers.has(userId)) {
+      return;
+    }
+
     try {
+      setApprovingUsers(prev => new Set(prev).add(userId));
       const response = await superadminAPI.approveUser(userId, true);
 
       if (response.success) {
@@ -120,6 +127,12 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         title: "Error",
         description: "Failed to approve user",
         variant: "destructive",
+      });
+    } finally {
+      setApprovingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
       });
     }
   };
@@ -403,10 +416,11 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                         <Button
                           size="sm"
                           onClick={() => handleApproveUser(user._id)}
-                          className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+                          disabled={approvingUsers.has(user._id)}
+                          className="bg-green-600 hover:bg-green-700 text-white font-semibold disabled:opacity-50"
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Approve
+                          {approvingUsers.has(user._id) ? 'Approving...' : 'Approve'}
                         </Button>
                         <Button
                           size="sm"

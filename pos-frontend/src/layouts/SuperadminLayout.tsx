@@ -19,6 +19,8 @@ import {
 import { cn } from '@/lib/utils';
 import { superadminAPI } from '@/lib/api';
 import { useRefresh } from '@/context/RefreshContext';
+import NotificationButton from '@/components/notifications/NotificationButton';
+import NotificationAlert from '@/components/notifications/NotificationAlert';
 
 interface SuperadminLayoutProps {
   children?: React.ReactNode;
@@ -132,6 +134,7 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
                   {user?.firstName} {user?.lastName}
                 </span>
               </div>
+              <NotificationButton />
               <Button
                 variant="ghost"
                 size="sm"
@@ -245,12 +248,6 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <div className="space-y-4 sm:space-y-6">
-              {/* Breadcrumb */}
-              <nav className="flex items-center space-x-2 text-xs sm:text-sm text-green-600">
-                <span>Superadmin</span>
-                <span>/</span>
-                <span className="text-green-800">Dashboard</span>
-              </nav>
 
               {/* Page Content */}
               <div className="min-h-[400px] sm:min-h-[600px]">
@@ -260,6 +257,9 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
           </div>
         </div>
       </div>
+      
+      {/* Notification Alert */}
+      <NotificationAlert />
     </div>
   );
 }

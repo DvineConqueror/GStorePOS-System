@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from '@/context/AuthContext';
 import { RefreshProvider } from '@/context/RefreshContext';
+import { SocketProvider } from '@/context/SocketContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminRoute from '@/components/auth/AdminRoute';
 import SuperadminRoute from '@/components/auth/SuperadminRoute';
@@ -37,12 +38,13 @@ const App = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <ApprovalStatusNotification />
-              <Routes>
+          <SocketProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <ApprovalStatusNotification />
+                <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -112,8 +114,9 @@ const App = () => {
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
+              </BrowserRouter>
+            </TooltipProvider>
+          </SocketProvider>
         </AuthProvider>
       </QueryClientProvider>
     </React.StrictMode>

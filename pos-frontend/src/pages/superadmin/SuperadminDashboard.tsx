@@ -18,6 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { superadminAPI } from '@/lib/api';
+import { useSocket } from '@/context/SocketContext';
 
 interface SystemStats {
   totalUsers: number;
@@ -47,11 +48,42 @@ export default function SuperadminDashboard() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { notifications } = useSocket();
 
   useEffect(() => {
     fetchSystemStats();
     fetchRecentUsers();
   }, []);
+
+  // Listen for real-time notifications and refresh data
+  useEffect(() => {
+    const handleNotification = (event: CustomEvent) => {
+      const notification = event.detail;
+      if (notification.type === 'new_user_registration' || notification.type === 'user_approval') {
+        // Refresh dashboard data when new user registers or is approved
+        fetchSystemStats();
+        fetchRecentUsers();
+        
+        // Only show toast for user approval, not new registration (NotificationAlert handles that)
+        if (notification.type === 'user_approval') {
+          toast({
+            title: 'User Status Updated',
+            description: notification.message,
+          });
+          // Reload the page to update notification icon and other UI elements
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000); // Small delay to show the toast first
+        }
+      }
+    };
+
+    window.addEventListener('notification' as any, handleNotification);
+    
+    return () => {
+      window.removeEventListener('notification' as any, handleNotification);
+    };
+  }, [toast]);
 
   const fetchSystemStats = async () => {
     try {
@@ -112,7 +144,7 @@ export default function SuperadminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#ececec]">
-      <div className="space-y-8 p-6">
+      <div className="space-y-8 p-6 py-0">
         {/* Authority Header */}
         <div className="border-b border-gray-300 pb-6">
           <div className="flex items-center space-x-4">

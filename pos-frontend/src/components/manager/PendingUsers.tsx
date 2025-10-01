@@ -29,6 +29,7 @@ export default function PendingUsers({ onApprovalChange }: PendingUsersProps) {
   const {
     pendingUsers,
     loading,
+    approvingUsers,
     stats,
     fetchPendingUsers,
     approveUser,
@@ -263,19 +264,21 @@ export default function PendingUsers({ onApprovalChange }: PendingUsersProps) {
                         <Button
                           size="sm"
                           onClick={() => handleApproveUser(user._id)}
-                          className="bg-green-600 hover:bg-green-700 text-white"
+                          disabled={approvingUsers.has(user._id)}
+                          className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
-                          Approve
+                          {approvingUsers.has(user._id) ? 'Approving...' : 'Approve'}
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleRejectUser(user._id)}
-                          className="bg-red-600 hover:bg-red-700"
+                          disabled={approvingUsers.has(user._id)}
+                          className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
                         >
                           <XCircle className="h-4 w-4 mr-1" />
-                          Reject
+                          {approvingUsers.has(user._id) ? 'Rejecting...' : 'Reject'}
                         </Button>
                       </div>
                     </div>

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, UserCheck, UserX, Search, Plus } from 'lucide-react';
+import { Users, UserCheck, UserX, Search, Plus, X } from 'lucide-react';
 
 interface UserProfile {
   _id: string;
@@ -15,6 +15,7 @@ interface UserProfile {
   lastName: string;
   role: 'manager' | 'cashier';
   status: 'active' | 'inactive' | 'deleted';
+  isApproved?: boolean;
   createdAt: string;
 }
 
@@ -40,6 +41,9 @@ interface UserManagementProps {
   onStatusFilterChange: (value: string) => void;
   onToggleUserStatus: (userId: string, currentStatus: boolean) => void;
   onAddUser: () => void;
+  shouldHighlightPending?: boolean;
+  highlightUserId?: string | null;
+  onClearHighlight?: () => void;
 }
 
 export const UserManagement: React.FC<UserManagementProps> = ({
@@ -53,7 +57,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   onSearchChange,
   onStatusFilterChange,
   onToggleUserStatus,
-  onAddUser
+  onAddUser,
+  shouldHighlightPending = false,
+  highlightUserId = null,
+  onClearHighlight
 }) => {
   return (
     <div className="space-y-6">
@@ -92,7 +99,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>Cashier Management</CardTitle>
+            <div className="flex items-center gap-4">
+              <CardTitle>Cashier Management</CardTitle>
+            </div>
             <Button onClick={onAddUser} className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Add Cashier
@@ -147,15 +156,31 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((userProfile, index) => (
-                    <TableRow key={userProfile._id} className={index % 2 === 0 ? "bg-[#ececec]" : "bg-white"}>
+                  filteredUsers.map((userProfile, index) => {
+                    const isPending = userProfile.isApproved === false;
+                    const shouldHighlight = shouldHighlightPending && (
+                      isPending || (highlightUserId && userProfile._id === highlightUserId)
+                    );
+                    return (
+                    <TableRow 
+                      key={userProfile._id} 
+                      className={`${index % 2 === 0 ? "bg-[#ececec]" : "bg-white"} ${
+                        shouldHighlight ? "ring-2 ring-yellow-400 ring-opacity-50 bg-yellow-50 animate-pulse" : ""
+                      }`}
+                    >
                       <TableCell className="font-medium text-black">
                         {userProfile.firstName} {userProfile.lastName}
                       </TableCell>
                       <TableCell className="text-gray-700">{userProfile.username}</TableCell>
                       <TableCell className="text-gray-700">{userProfile.email}</TableCell>
                       <TableCell>
-                        {userProfile.status === 'active' ? (
+                        {isPending ? (
+                          <Badge className={`bg-yellow-500 text-white hover:bg-yellow-600 ${
+                            shouldHighlight ? "animate-pulse" : ""
+                          }`}>
+                            Pending Approval
+                          </Badge>
+                        ) : userProfile.status === 'active' ? (
                           <Badge className="bg-green-600 text-white hover:bg-green-700">
                             Active
                           </Badge>
@@ -174,28 +199,41 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onToggleUserStatus(userProfile._id, userProfile.status === 'active')}
-                            disabled={userProfile._id === currentUserId} // Prevent admin from deactivating themselves
-                          >
-                            {userProfile.status === 'active' ? (
-                              <>
-                                <UserX className="mr-2 h-4 w-4" />
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck className="mr-2 h-4 w-4" />
-                                Activate
-                              </>
-                            )}
-                          </Button>
+                          {isPending ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onToggleUserStatus(userProfile._id, false)}
+                              className="bg-yellow-100 border-yellow-300 text-black hover:bg-yellow-200 hover:text-black"
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Approve
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onToggleUserStatus(userProfile._id, userProfile.status === 'active')}
+                              disabled={userProfile._id === currentUserId} // Prevent admin from deactivating themselves
+                            >
+                              {userProfile.status === 'active' ? (
+                                <>
+                                  <UserX className="mr-2 h-4 w-4" />
+                                  Deactivate
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="mr-2 h-4 w-4" />
+                                  Activate
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

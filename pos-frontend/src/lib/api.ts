@@ -207,6 +207,19 @@ export const productsAPI = {
   },
 };
 
+// Notifications API
+export const notificationsAPI = {
+  getPendingCount: async () => {
+    const response = await api.get('/notifications/pending-count');
+    return response.data;
+  },
+
+  getPendingUsers: async (limit: number = 5) => {
+    const response = await api.get(`/notifications/pending-users?limit=${limit}`);
+    return response.data;
+  },
+};
+
 // Transactions API
 export const transactionsAPI = {
   getTransactions: async (params?: {

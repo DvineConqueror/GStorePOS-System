@@ -3,6 +3,7 @@ import { User } from '../models/User';
 import { UserService } from '../services/UserService';
 import { ApiResponse } from '../types';
 import { hasPermission, shouldAutoApprove } from '../constants/permissions';
+import { NotificationService } from '../services/NotificationService';
 
 export class SuperadminController {
   /**
@@ -153,6 +154,50 @@ export class SuperadminController {
       }
 
       await user.save();
+
+      // Send email notification if user is approved
+      if (approved) {
+        try {
+          const approver = await User.findById(req.user!._id);
+          if (approver) {
+            await NotificationService.sendApprovalNotification({
+              user,
+              approvedBy: approver,
+              clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+            });
+          }
+        } catch (emailError) {
+          console.error('Failed to send approval notification email:', emailError);
+          // Don't fail the approval if email fails
+        }
+      }
+
+      // Emit real-time notification for user approval
+      try {
+        const { SocketService } = await import('../services/SocketService');
+        const approver = await User.findById(req.user!._id);
+        if (approver) {
+          SocketService.emitUserApproval({
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isApproved: user.isApproved,
+            status: user.status
+          }, {
+            id: approver._id,
+            username: approver.username,
+            firstName: approver.firstName,
+            lastName: approver.lastName,
+            role: approver.role
+          });
+        }
+      } catch (socketError) {
+        console.error('Failed to emit user approval notification:', socketError);
+        // Don't fail the approval if socket notification fails
+      }
 
       const action = approved ? 'approved' : 'rejected';
       res.json({

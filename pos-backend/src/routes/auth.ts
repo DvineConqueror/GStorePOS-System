@@ -132,6 +132,24 @@ router.post('/register-cashier', async (req, res): Promise<void> => {
 
     await user.save();
 
+    // Emit real-time notification for new user registration
+    try {
+      const { SocketService } = await import('../services/SocketService');
+      SocketService.emitNewUserRegistration({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        status: user.status,
+        createdAt: user.createdAt
+      });
+    } catch (socketError) {
+      console.error('Failed to emit new user registration notification:', socketError);
+      // Don't fail the registration if socket notification fails
+    }
+
     res.status(201).json({
       success: true,
       message: 'Cashier account created successfully. Please wait for admin approval.',

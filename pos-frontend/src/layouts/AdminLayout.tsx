@@ -14,6 +14,8 @@ import {
   Zap,
   Settings
 } from 'lucide-react';
+import NotificationButton from '@/components/notifications/NotificationButton';
+import NotificationAlert from '@/components/notifications/NotificationAlert';
 
 interface AdminLayoutProps {
   children?: React.ReactNode;
@@ -54,6 +56,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <Shield className="h-4 w-4 text-green-600" />
                 <span className="text-sm font-medium">Manager: {user?.firstName} {user?.lastName}</span>
               </div>
+              <NotificationButton />
               <Button onClick={handleLogout} variant="outline" size="sm" className="border-green-300 text-gray-700 hover:bg-green-50">
                 <LogOut className="mr-2 h-4 w-4 text-green-600" />
                 Logout
@@ -92,6 +95,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </main>
       </div>
+      
+      {/* Notification Alert */}
+      <NotificationAlert />
     </div>
   );
 }

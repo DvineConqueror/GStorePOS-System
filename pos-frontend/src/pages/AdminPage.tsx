@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { useProductManagement } from '@/hooks/useProductManagement';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { ProductManagement } from '@/components/admin/ProductManagement';
+import NotificationAlert from '@/components/notifications/NotificationAlert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UnifiedAnalytics } from '@/components/pos/UnifiedAnalytics';
@@ -18,11 +20,51 @@ import { Users, Package, BarChart3, ShoppingCart } from 'lucide-react';
 
 const AdminPageContent = () => {
   const { user, signOut } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   // Custom hooks for different concerns
   const userManagement = useUserManagement();
   const productManagement = useProductManagement();
   const adminStats = useAdminStats();
+  
+  // Get highlight parameters from URL
+  const shouldHighlightPending = searchParams.get('highlight') === 'pending';
+  const highlightUserId = searchParams.get('userId');
+  
+  // State to control which tab is active
+  const [activeTab, setActiveTab] = useState('users');
+  
+  // Switch to users tab when highlighting is active (one-time effect)
+  useEffect(() => {
+    if (shouldHighlightPending) {
+      setActiveTab('users');
+    }
+  }, [shouldHighlightPending]);
+  
+  // Clear highlight parameters when navigating away from users tab
+  useEffect(() => {
+    if (shouldHighlightPending) {
+      // Set a timeout to clear highlight after 10 seconds
+      const timer = setTimeout(() => {
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete('highlight');
+        newSearchParams.delete('userId');
+        setSearchParams(newSearchParams, { replace: true });
+      }, 10000); // 10 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldHighlightPending, searchParams, setSearchParams]);
+
+  // Function to clear highlight manually
+  const handleClearHighlight = () => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('highlight');
+    newSearchParams.delete('userId');
+    setSearchParams(newSearchParams, { replace: true });
+  };
 
   useEffect(() => {
     if (user?.role === 'manager' || user?.role === 'superadmin') {
@@ -63,7 +105,11 @@ const AdminPageContent = () => {
         />
 
         {/* Tabs for different admin sections */}
-        <Tabs defaultValue="users" className="space-y-6">
+        <Tabs 
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white">
             <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
@@ -101,6 +147,9 @@ const AdminPageContent = () => {
               onStatusFilterChange={userManagement.setStatusFilter}
               onToggleUserStatus={userManagement.toggleUserStatus}
               onAddUser={userManagement.addUser}
+              shouldHighlightPending={shouldHighlightPending}
+              highlightUserId={highlightUserId}
+              onClearHighlight={handleClearHighlight}
             />
           </TabsContent>
 
@@ -147,6 +196,9 @@ const AdminPageContent = () => {
 
         </Tabs>
       </div>
+      
+      {/* Notification Alert */}
+      <NotificationAlert />
     </div>
   );
 };
