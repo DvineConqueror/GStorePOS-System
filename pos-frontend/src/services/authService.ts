@@ -160,15 +160,4 @@ export class AuthService {
     const response = await authAPI.verifyResetToken(token);
     return response;
   }
-
-  // OAuth methods
-  static async getOAuthProviders() {
-    const response = await authAPI.getOAuthProviders();
-    return response;
-  }
-
-  static async unlinkOAuthProvider(provider: string) {
-    const response = await authAPI.unlinkOAuthProvider(provider);
-    return response;
-  }
 }

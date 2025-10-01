@@ -137,15 +137,6 @@ export const authAPI = {
     const response = await api.get(`/auth/verify-reset-token/${token}`);
     return response.data;
   },
-  // OAuth
-  getOAuthProviders: async () => {
-    const response = await api.get('/oauth/providers');
-    return response.data;
-  },
-  unlinkOAuthProvider: async (provider: string) => {
-    const response = await api.delete(`/oauth/providers/${provider}`);
-    return response.data;
-  },
 };
 
 // Products API

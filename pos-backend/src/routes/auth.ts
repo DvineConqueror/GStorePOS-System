@@ -1,36 +1,21 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import jwt from 'jsonwebtoken';
-import { User as UserModel } from '../models/User';
+import { User } from '../models/User';
 import { AuthService } from '../services/AuthService';
 import { PasswordResetService } from '../services/PasswordResetService';
 import { authenticate } from '../middleware/auth';
 import { authRateLimit, refreshRateLimit } from '../middleware/rateLimiter';
-import { ApiResponse, IUser } from '../types';
-
-// Type assertion helper for authenticated requests
-const assertAuthenticated = (req: Request): asserts req is Request & { user: IUser } => {
-  if (!req.user) {
-    throw new Error('User not authenticated');
-  }
-};
-
-// Type assertion for req.user to IUser
-const getUser = (req: Request): IUser => {
-  if (!req.user) {
-    throw new Error('User not authenticated');
-  }
-  return req.user as IUser;
-};
+import { ApiResponse } from '../types';
 
 const router = express.Router();
 
 // @desc    Setup initial admin user (Public - only works if no users exist)
 // @route   POST /api/v1/auth/setup
 // @access  Public
-router.post('/setup', async (req: Request, res: Response): Promise<void> => {
+router.post('/setup', async (req, res): Promise<void> => {
   try {
     // Check if any users exist
-    const userCount = await UserModel.countDocuments();
+    const userCount = await User.countDocuments();
     
     if (userCount > 0) {
       res.status(403).json({
@@ -52,7 +37,7 @@ router.post('/setup', async (req: Request, res: Response): Promise<void> => {
     }
 
     // Create initial manager user
-    const user = new UserModel({
+    const user = new User({
       username,
       email,
       password,
@@ -107,7 +92,7 @@ router.post('/setup', async (req: Request, res: Response): Promise<void> => {
 // @desc    Register a new cashier (Public - but requires admin approval)
 // @route   POST /api/v1/auth/register-cashier
 // @access  Public
-router.post('/register-cashier', async (req: Request, res: Response): Promise<void> => {
+router.post('/register-cashier', async (req, res): Promise<void> => {
   try {
     const { username, email, password, firstName, lastName } = req.body;
 
@@ -121,7 +106,7 @@ router.post('/register-cashier', async (req: Request, res: Response): Promise<vo
     }
 
     // Check if user already exists
-    const existingUser = await UserModel.findOne({
+    const existingUser = await User.findOne({
       $or: [{ email }, { username }]
     });
 
@@ -134,7 +119,7 @@ router.post('/register-cashier', async (req: Request, res: Response): Promise<vo
     }
 
     // Create new cashier user (inactive by default, requires admin approval)
-    const user = new UserModel({
+    const user = new User({
       username,
       email,
       password,
@@ -174,12 +159,10 @@ router.post('/register-cashier', async (req: Request, res: Response): Promise<vo
 // @desc    Register a new user (Admin only) 
 // @route   POST /api/v1/auth/register
 // @access  Private (Admin)
-router.post('/register', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.post('/register', authenticate, async (req, res): Promise<void> => {
   try {
-    const user = getUser(req);
-    
     // Check if user is manager or superadmin
-    if (user.role !== 'manager' && user.role !== 'superadmin') {
+    if (req.user?.role !== 'manager' && req.user?.role !== 'superadmin') {
       res.status(403).json({
         success: false,
         message: 'Access denied. Manager or Superadmin role required.',
@@ -191,7 +174,7 @@ router.post('/register', authenticate, async (req: Request, res: Response): Prom
 
     // Check if trying to create superadmin and superadmin already exists
     if (role === 'superadmin') {
-      const existingSuperadmin = await UserModel.findOne({ role: 'superadmin' });
+      const existingSuperadmin = await User.findOne({ role: 'superadmin' });
       if (existingSuperadmin) {
         res.status(400).json({
           success: false,
@@ -202,7 +185,7 @@ router.post('/register', authenticate, async (req: Request, res: Response): Prom
     }
 
     // Check if user already exists
-    const existingUser = await UserModel.findOne({
+    const existingUser = await User.findOne({
       $or: [{ email }, { username }]
     });
 
@@ -216,11 +199,11 @@ router.post('/register', authenticate, async (req: Request, res: Response): Prom
 
     // Create new user with approval logic
     const userRole = role || 'cashier';
-    const isAutoApproved = (user.role === 'superadmin' && userRole === 'manager') || 
-                          (user.role === 'manager' && userRole === 'cashier') ||
-                          (user.role === 'superadmin' && userRole === 'cashier');
+    const isAutoApproved = (req.user?.role === 'superadmin' && userRole === 'manager') || 
+                          (req.user?.role === 'manager' && userRole === 'cashier') ||
+                          (req.user?.role === 'superadmin' && userRole === 'cashier');
 
-    const newUser = new UserModel({
+    const user = new User({
       username,
       email,
       password,
@@ -229,19 +212,19 @@ router.post('/register', authenticate, async (req: Request, res: Response): Prom
       lastName,
       status: 'active', // New users are active
       isApproved: isAutoApproved,
-      approvedBy: isAutoApproved ? user._id : undefined,
+      approvedBy: isAutoApproved ? req.user?._id : undefined,
       approvedAt: isAutoApproved ? new Date() : undefined,
-      createdBy: user._id,
+      createdBy: req.user?._id,
     });
 
-    await newUser.save();
+    await user.save();
 
     // Generate JWT token
     const token = jwt.sign(
       { 
-        userId: newUser._id, 
-        username: newUser.username, 
-        role: newUser.role 
+        userId: user._id, 
+        username: user.username, 
+        role: user.role 
       },
       process.env.JWT_SECRET as string,
       { expiresIn: process.env.JWT_EXPIRE } as jwt.SignOptions
@@ -252,13 +235,13 @@ router.post('/register', authenticate, async (req: Request, res: Response): Prom
       message: 'User registered successfully.',
       data: {
         user: {
-          id: newUser._id,
-          username: newUser.username,
-          email: newUser.email,
-          role: newUser.role,
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
-          status: newUser.status,
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          status: user.status,
         },
         token,
       },
@@ -275,7 +258,7 @@ router.post('/register', authenticate, async (req: Request, res: Response): Prom
 // @desc    Login user
 // @route   POST /api/v1/auth/login
 // @access  Public
-router.post('/login', authRateLimit, async (req: Request, res: Response): Promise<void> => {
+router.post('/login', authRateLimit, async (req, res): Promise<void> => {
   try {
     const { emailOrUsername, password } = req.body;
 
@@ -346,10 +329,9 @@ router.post('/login', authRateLimit, async (req: Request, res: Response): Promis
 // @desc    Get current user profile
 // @route   GET /api/v1/auth/me
 // @access  Private
-router.get('/me', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.get('/me', authenticate, async (req, res): Promise<void> => {
   try {
-    const currentUser = getUser(req);
-    const user = await UserModel.findById(currentUser._id);
+    const user = await User.findById(req.user?._id);
     
     if (!user) {
       res.status(404).json({
@@ -389,15 +371,14 @@ router.get('/me', authenticate, async (req: Request, res: Response): Promise<voi
 // @desc    Update user profile
 // @route   PUT /api/v1/auth/profile
 // @access  Private
-router.put('/profile', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.put('/profile', authenticate, async (req, res): Promise<void> => {
   try {
-    const currentUser = getUser(req);
     const { firstName, lastName, email } = req.body;
-    const userId = currentUser._id;
+    const userId = req.user?._id;
 
     // Check if email is being changed and if it's already taken
-    if (email && email !== currentUser.email) {
-      const existingUser = await UserModel.findOne({ email, _id: { $ne: userId } });
+    if (email && email !== req.user?.email) {
+      const existingUser = await User.findOne({ email, _id: { $ne: userId } });
       if (existingUser) {
         res.status(400).json({
           success: false,
@@ -407,7 +388,7 @@ router.put('/profile', authenticate, async (req: Request, res: Response): Promis
       }
     }
 
-    const user = await UserModel.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       userId,
       { firstName, lastName, email },
       { new: true, runValidators: true }
@@ -448,11 +429,10 @@ router.put('/profile', authenticate, async (req: Request, res: Response): Promis
 // @desc    Change password
 // @route   PUT /api/v1/auth/change-password
 // @access  Private
-router.put('/change-password', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.put('/change-password', authenticate, async (req, res): Promise<void> => {
   try {
-    const currentUser = getUser(req);
     const { currentPassword, newPassword } = req.body;
-    const userId = currentUser._id;
+    const userId = req.user?._id;
 
     if (!currentPassword || !newPassword) {
       res.status(400).json({
@@ -462,7 +442,7 @@ router.put('/change-password', authenticate, async (req: Request, res: Response)
       return;
     }
 
-    const user = await UserModel.findById(userId).select('+password');
+    const user = await User.findById(userId).select('+password');
     if (!user) {
       res.status(404).json({
         success: false,
@@ -501,7 +481,7 @@ router.put('/change-password', authenticate, async (req: Request, res: Response)
 // @desc    Refresh access token
 // @route   POST /api/v1/auth/refresh
 // @access  Public
-router.post('/refresh', refreshRateLimit, async (req: Request, res: Response): Promise<void> => {
+router.post('/refresh', refreshRateLimit, async (req, res): Promise<void> => {
   try {
     const { refreshToken } = req.body;
 
@@ -544,7 +524,7 @@ router.post('/refresh', refreshRateLimit, async (req: Request, res: Response): P
 // @desc    Logout user (proper session invalidation)
 // @route   POST /api/v1/auth/logout
 // @access  Private
-router.post('/logout', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.post('/logout', authenticate, async (req, res): Promise<void> => {
   try {
     const accessToken = req.header('Authorization')?.replace('Bearer ', '');
     const { sessionId } = req.body;
@@ -583,10 +563,9 @@ router.post('/logout', authenticate, async (req: Request, res: Response): Promis
 // @desc    Logout from all devices
 // @route   POST /api/v1/auth/logout-all
 // @access  Private
-router.post('/logout-all', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.post('/logout-all', authenticate, async (req, res): Promise<void> => {
   try {
-    const currentUser = getUser(req);
-    const count = await AuthService.logoutAllDevices(currentUser._id);
+    const count = await AuthService.logoutAllDevices(req.user!._id);
 
     res.json({
       success: true,
@@ -605,10 +584,9 @@ router.post('/logout-all', authenticate, async (req: Request, res: Response): Pr
 // @desc    Get active sessions
 // @route   GET /api/v1/auth/sessions
 // @access  Private
-router.get('/sessions', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.get('/sessions', authenticate, async (req, res): Promise<void> => {
   try {
-    const currentUser = getUser(req);
-    const sessions = AuthService.getUserSessions(currentUser._id);
+    const sessions = AuthService.getUserSessions(req.user!._id);
 
     res.json({
       success: true,
@@ -627,7 +605,7 @@ router.get('/sessions', authenticate, async (req: Request, res: Response): Promi
 // @desc    Request password reset
 // @route   POST /api/v1/auth/forgot-password
 // @access  Public
-router.post('/forgot-password', authRateLimit, async (req: Request, res: Response): Promise<void> => {
+router.post('/forgot-password', authRateLimit, async (req, res): Promise<void> => {
   try {
     const { email } = req.body;
 
@@ -680,7 +658,7 @@ router.post('/forgot-password', authRateLimit, async (req: Request, res: Respons
 // @desc    Verify password reset token
 // @route   GET /api/v1/auth/verify-reset-token/:token
 // @access  Public
-router.get('/verify-reset-token/:token', async (req: Request, res: Response): Promise<void> => {
+router.get('/verify-reset-token/:token', async (req, res): Promise<void> => {
   try {
     const { token } = req.params;
 
@@ -726,7 +704,7 @@ router.get('/verify-reset-token/:token', async (req: Request, res: Response): Pr
 // @desc    Reset password using token
 // @route   POST /api/v1/auth/reset-password/:token
 // @access  Public
-router.post('/reset-password/:token', authRateLimit, async (req: Request, res: Response): Promise<void> => {
+router.post('/reset-password/:token', authRateLimit, async (req, res): Promise<void> => {
   try {
     const { token } = req.params;
     const { newPassword } = req.body;

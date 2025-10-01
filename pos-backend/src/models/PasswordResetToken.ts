@@ -40,7 +40,9 @@ const passwordResetTokenSchema = new Schema<IPasswordResetToken>({
 });
 
 // Indexes for performance
+passwordResetTokenSchema.index({ token: 1 });
 passwordResetTokenSchema.index({ userId: 1 });
+passwordResetTokenSchema.index({ expiresAt: 1 });
 passwordResetTokenSchema.index({ used: 1 });
 
 // Static method to find valid token

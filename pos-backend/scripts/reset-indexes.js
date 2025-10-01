@@ -13,14 +13,14 @@ dotenv.config();
 
 async function resetIndexes() {
   try {
-    console.log('🚀 Starting database index reset...');
+    console.log('Starting database index reset...');
     
     // Connect to MongoDB
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/grocery-pos';
-    console.log(`📡 Connecting to MongoDB: ${mongoUri}`);
+    console.log(`Connecting to MongoDB: ${mongoUri}`);
     
     await mongoose.connect(mongoUri);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const collections = ['users', 'products', 'transactions'];
@@ -59,18 +59,18 @@ async function resetIndexes() {
     const Transaction = mongoose.model('Transaction');
 
     // Create new indexes
-    console.log('🔧 Creating new indexes...');
+    console.log(' Creating new indexes...');
     await User.createIndexes();
-    console.log('  ✅ User indexes created');
+    console.log('   User indexes created');
     
     await Product.createIndexes();
-    console.log('  ✅ Product indexes created');
+    console.log('   Product indexes created');
     
     await Transaction.createIndexes();
-    console.log('  ✅ Transaction indexes created');
+    console.log('   Transaction indexes created');
 
     // Get final index information
-    console.log('📊 Final index summary:');
+    console.log(' Final index summary:');
     for (const collectionName of collections) {
       try {
         const collection = db.collection(collectionName);
@@ -87,14 +87,14 @@ async function resetIndexes() {
       }
     }
 
-    console.log('\n🎉 Database index reset completed successfully!');
+    console.log('\n Database index reset completed successfully!');
     
   } catch (error) {
-    console.error('❌ Error resetting database indexes:', error);
+    console.error(' Error resetting database indexes:', error);
     process.exit(1);
   } finally {
     await mongoose.disconnect();
-    console.log('📡 Disconnected from MongoDB');
+    console.log('Disconnected from MongoDB');
   }
 }
 
