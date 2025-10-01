@@ -165,7 +165,7 @@ router.post('/', authenticate, requireCashier, async (req, res): Promise<void> =
         return;
       }
 
-      if (!product.isActive) {
+      if (product.status !== 'active') {
         res.status(400).json({
           success: false,
           message: `Product ${product.name} is not active.`,

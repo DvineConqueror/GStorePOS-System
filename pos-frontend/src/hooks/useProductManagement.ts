@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { productsAPI } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
+import { useRefresh } from '@/context/RefreshContext';
 
 interface Product {
   _id: string;
@@ -17,7 +18,7 @@ interface Product {
   maxStock?: number;
   unit: string;
   image?: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   supplier?: string;
   createdAt: string;
   updatedAt: string;
@@ -47,20 +48,19 @@ export const useProductManagement = () => {
   const [productSearchTerm, setProductSearchTerm] = useState('');
   const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
   const [productStatusFilter, setProductStatusFilter] = useState<string>('all');
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
   
   const { toast } = useToast();
+  const { refreshTrigger } = useRefresh();
 
   const fetchProducts = async () => {
     try {
-      console.log('Fetching products...');
       // Fetch ALL products (both active and inactive) for admin dashboard
       const response = await productsAPI.getProducts({});
-      console.log('Full API response:', response);
       
       if (response.success) {
         setProducts(response.data);
-        console.log('Products loaded:', response.data.length, 'products');
-        console.log('Products data:', response.data);
       } else {
         console.error('API returned success: false', response);
         throw new Error(response.message || 'Failed to fetch products');
@@ -74,6 +74,11 @@ export const useProductManagement = () => {
       });
     }
   };
+
+  // Refresh products when refresh trigger changes
+  useEffect(() => {
+    fetchProducts();
+  }, [refreshTrigger]); // Remove fetchProducts from dependencies to prevent infinite loop
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -93,12 +98,12 @@ export const useProductManagement = () => {
         stock: parseInt(newProduct.stock),
         sku: `SKU-${Date.now()}`,
         unit: 'pcs',
-        isActive: true,
+        status: 'active',
         minStock: 0
       };
 
-      // Only add image if it exists
-      if (newProduct.imagePreview) {
+      // Only add image if it exists and is a valid GridFS ID (not a blob URL)
+      if (newProduct.imagePreview && !newProduct.imagePreview.startsWith('blob:')) {
         productData.image = newProduct.imagePreview;
       }
 
@@ -132,16 +137,14 @@ export const useProductManagement = () => {
     }
   };
 
-  const handleToggleProductStatus = async (productId: string, currentStatus: boolean) => {
+  const handleToggleProductStatus = async (productId: string, currentStatus: 'active' | 'inactive') => {
     try {
-      const response = await productsAPI.updateProduct(productId, {
-        isActive: !currentStatus
-      });
+      const response = await productsAPI.toggleProductStatus(productId);
       
       if (response.success) {
         toast({
           title: "Success",
-          description: `Product ${!currentStatus ? 'activated' : 'temporarily removed'} successfully`,
+          description: `Product ${currentStatus === 'active' ? 'deactivated' : 'activated'} successfully`,
         });
         fetchProducts(); // Refresh the list
       } else {
@@ -155,6 +158,39 @@ export const useProductManagement = () => {
       });
       console.error('Error updating product status:', error);
     }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      const response = await productsAPI.deleteProduct(productId);
+      
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "Product deleted successfully",
+        });
+        fetchProducts(); // Refresh the list
+      } else {
+        throw new Error(response.message || 'Failed to delete product');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive"
+      });
+      console.error('Error deleting product:', error);
+    }
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditProduct(product);
+    setShowEditForm(true);
+  };
+
+  const handleCloseEditForm = () => {
+    setEditProduct(null);
+    setShowEditForm(false);
   };
 
   // Get unique categories from products for filter
@@ -175,20 +211,13 @@ export const useProductManagement = () => {
     let matchesStatus = true;
     if (productStatusFilter === 'in-stock') matchesStatus = product.stock > 0;
     else if (productStatusFilter === 'out-of-stock') matchesStatus = product.stock === 0;
-    else if (productStatusFilter === 'active') matchesStatus = product.isActive;
-    else if (productStatusFilter === 'inactive') matchesStatus = !product.isActive;
+    else if (productStatusFilter === 'active') matchesStatus = product.status === 'active';
+    else if (productStatusFilter === 'inactive') matchesStatus = product.status === 'inactive';
     // If productStatusFilter is 'all', matchesStatus remains true
     
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  // Debug logging (only when there are products)
-  if (products.length > 0) {
-    console.log('Product filtering debug:');
-    console.log('- Total products:', products.length);
-    console.log('- Filtered products:', filteredProducts.length);
-    console.log('- Product status filter:', productStatusFilter);
-  }
 
   return {
     // State
@@ -200,12 +229,17 @@ export const useProductManagement = () => {
     productCategoryFilter,
     productStatusFilter,
     filteredProducts,
+    editProduct,
+    showEditForm,
     
     // Actions
     fetchProducts,
     handleImageChange,
     handleAddProduct,
     handleToggleProductStatus,
+    handleDeleteProduct,
+    handleEditProduct,
+    handleCloseEditForm,
     getUniqueCategories,
     
     // Setters

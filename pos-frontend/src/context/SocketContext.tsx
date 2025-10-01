@@ -34,7 +34,6 @@ export function SocketProvider({ children }: SocketProviderProps) {
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket connected:', newSocket.id);
       setIsConnected(true);
       
       // Join role-based room for targeted notifications
@@ -42,7 +41,6 @@ export function SocketProvider({ children }: SocketProviderProps) {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
       setIsConnected(false);
     });
 
@@ -53,7 +51,6 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     // Listen for notifications
     newSocket.on('notification', (notification) => {
-      console.log('Received notification:', notification);
       setNotifications(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10 notifications
       
       // Dispatch custom event for components to listen to
@@ -62,28 +59,24 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     // Listen for pending approvals updates
     newSocket.on('pending_approvals_update', (data) => {
-      console.log('Pending approvals updated:', data);
       // This will trigger a re-fetch in NotificationButton
       window.dispatchEvent(new CustomEvent('pendingApprovalsUpdate', { detail: data }));
     });
 
     // Listen for analytics updates
     newSocket.on('analytics:update', (analyticsData) => {
-      console.log('Received analytics update:', analyticsData);
       // Dispatch custom event for components to listen to
       window.dispatchEvent(new CustomEvent('analyticsUpdate', { detail: analyticsData }));
     });
 
     // Listen for manager analytics updates
     newSocket.on('manager:analytics:update', (analyticsData) => {
-      console.log('Received manager analytics update:', analyticsData);
       // Dispatch custom event for components to listen to
       window.dispatchEvent(new CustomEvent('manager:analytics:update', { detail: analyticsData }));
     });
 
     // Listen for cashier analytics updates
     newSocket.on('cashier:analytics:update', (analyticsData) => {
-      console.log('Received cashier analytics update:', analyticsData);
       // Dispatch custom event for components to listen to
       window.dispatchEvent(new CustomEvent('cashier:analytics:update', { detail: analyticsData }));
     });

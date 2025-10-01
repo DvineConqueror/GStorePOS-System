@@ -61,9 +61,6 @@ export class PasswordResetService {
 
       // Send password reset email
       const clientUrl = process.env.CLIENT_URL!;
-      console.log('Password reset - CLIENT_URL:', process.env.CLIENT_URL);
-      console.log('Password reset - FRONTEND_URL:', process.env.FRONTEND_URL);
-      console.log('Password reset - Using clientUrl:', clientUrl);
       
       const emailSent = await EmailService.sendPasswordResetEmail({
         user,
@@ -198,7 +195,6 @@ export class PasswordResetService {
   static async cleanupExpiredTokens(): Promise<number> {
     try {
       const result = await PasswordResetToken.cleanupExpiredTokens();
-      console.log(`Cleaned up ${result.deletedCount} expired password reset tokens`);
       return result.deletedCount || 0;
     } catch (error) {
       console.error('Error cleaning up expired tokens:', error);

@@ -17,7 +17,6 @@ export class SocketService {
     }
 
     this.io.to(`role-${role}`).emit(event, data);
-    console.log(`Emitted ${event} to role-${role}:`, data);
   }
 
   /**
@@ -30,7 +29,6 @@ export class SocketService {
     }
 
     this.io.emit(event, data);
-    console.log(`Emitted ${event} to all users:`, data);
   }
 
   /**
@@ -92,7 +90,6 @@ export class SocketService {
     this.emitToRole('manager', 'analytics:update', analyticsData);
     this.emitToRole('superadmin', 'analytics:update', analyticsData);
     
-    console.log('Emitted analytics:update to managers and superadmins');
   }
 
   /**
@@ -117,7 +114,6 @@ export class SocketService {
       ...analyticsData
     });
     
-    console.log(`Emitted cashier analytics update for cashier ${cashierId}`);
   }
 
   /**
@@ -133,7 +129,6 @@ export class SocketService {
     this.emitToRole('manager', 'manager:analytics:update', analyticsData);
     this.emitToRole('superadmin', 'manager:analytics:update', analyticsData);
     
-    console.log('Emitted manager analytics update');
   }
 
   /**
@@ -162,7 +157,6 @@ export class SocketService {
       this.io.to(`user-${transactionData.cashierId}`).emit('notification', notification);
     }
     
-    console.log(`Emitted transaction refund notification for ${transactionData.transactionNumber}`);
   }
 
   /**
@@ -175,6 +169,5 @@ export class SocketService {
     }
 
     this.io.to(`user-${userId}`).emit(event, data);
-    console.log(`Emitted ${event} to user-${userId}:`, data);
   }
 }

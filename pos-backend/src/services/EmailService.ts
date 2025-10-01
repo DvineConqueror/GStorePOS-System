@@ -52,7 +52,6 @@ export class EmailService {
         console.error('Email service initialization failed:', error);
         this.transporter = null;
       } else {
-        console.log('Email service initialized successfully');
       }
     });
   }
@@ -76,7 +75,6 @@ export class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', result.messageId);
       return true;
     } catch (error) {
       console.error('Failed to send email:', error);

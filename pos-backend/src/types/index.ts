@@ -36,7 +36,7 @@ export interface IProduct extends Document {
   maxStock?: number;
   unit: string;
   image?: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   supplier?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -238,7 +238,7 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
-  isActive?: boolean;
+  status?: 'active' | 'inactive' | 'deleted' | { $ne: 'deleted' };
   search?: string;
 }
 

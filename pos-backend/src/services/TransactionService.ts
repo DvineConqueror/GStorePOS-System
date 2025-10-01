@@ -152,7 +152,7 @@ export class TransactionService {
         throw new Error(`Product with ID ${item.productId} not found`);
       }
 
-      if (!product.isActive) {
+      if (product.status !== 'active') {
         throw new Error(`Product ${product.name} is not active`);
       }
 

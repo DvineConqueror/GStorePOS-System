@@ -11,7 +11,6 @@ export const requestMetrics = (req: Request, res: Response, next: NextFunction):
   // Reset counter every minute
   const now = Date.now();
   if (now - lastResetTime > RESET_INTERVAL) {
-    console.log(`Request Rate: ${requestCount} requests/minute`);
     requestCount = 0;
     lastResetTime = now;
   }

@@ -203,14 +203,12 @@ export class DatabaseIndexService {
    */
   static async ensureIndexes() {
     try {
-      console.log('Ensuring database indexes...');
       
       // This will create indexes defined in the schemas
       await User.createIndexes();
       await Product.createIndexes();
       await Transaction.createIndexes();
       
-      console.log('All indexes created successfully');
       return true;
     } catch (error) {
       console.error('Error creating indexes:', error);
@@ -234,7 +232,6 @@ export class DatabaseIndexService {
       const collections = ['users', 'products', 'transactions'];
       
       for (const collectionName of collections) {
-        console.log(`Reindexing ${collectionName}...`);
         await db.command({ reIndex: collectionName });
         results[collectionName] = 'reindexed';
       }
@@ -242,12 +239,10 @@ export class DatabaseIndexService {
       // Compact collections to reclaim space
       for (const collectionName of collections) {
         try {
-          console.log(`Compacting ${collectionName}...`);
           await db.command({ compact: collectionName });
           results[`${collectionName}_compact`] = 'completed';
         } catch (error) {
           // Compact may not be available in all MongoDB deployments
-          console.log(`Compact not available for ${collectionName}`);
           results[`${collectionName}_compact`] = 'not_available';
         }
       }

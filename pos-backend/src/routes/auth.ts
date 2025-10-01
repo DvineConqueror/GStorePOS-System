@@ -306,9 +306,6 @@ router.post('/login', authRateLimit, async (req, res): Promise<void> => {
       return;
     }
 
-    console.log('Login successful for user:', result.user.username);
-    console.log('Access token length:', result.tokens.accessToken.length);
-    console.log('Refresh token length:', result.tokens.refreshToken.length);
 
     res.json({
       success: true,

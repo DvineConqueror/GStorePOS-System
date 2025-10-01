@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/pagination"
 import { useEffect } from 'react';
 import { Product } from '@/types';
+import { useRefresh } from '@/context/RefreshContext';
+import { ProductImage } from '@/components/ui/ProductImage';
 
 export function CashierProductCatalog() {
   const { state, addToCart, fetchProducts } = usePos();
@@ -26,6 +28,7 @@ export function CashierProductCatalog() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const { refreshTrigger } = useRefresh();
 
   const isProductInCart = (productId: string): boolean => {
     return state.cart.some(item => item._id === productId);
@@ -50,7 +53,7 @@ export function CashierProductCatalog() {
                            product.category === selectedCategory ||
                            (selectedCategory === 'Others' && !categories.slice(1, -1).includes(product.category));
     
-    return matchesSearch && matchesCategory && product.isActive;
+    return matchesSearch && matchesCategory && product.status === 'active';
   });
 
   // Pagination logic
@@ -63,6 +66,11 @@ export function CashierProductCatalog() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory]);
+
+  // Refresh products when refresh trigger changes
+  useEffect(() => {
+    fetchProducts();
+  }, [refreshTrigger]); // Remove fetchProducts from dependencies to prevent infinite loop
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
@@ -108,18 +116,13 @@ export function CashierProductCatalog() {
         {currentProducts.map((product) => (
           <Card key={product._id} className="p-4 hover:shadow-md transition-shadow">
             <div className="space-y-3">
-              {/* Product Image Placeholder */}
-              <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center">
-                {product.image ? (
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                ) : (
-                  <div className="text-gray-400 text-sm">No Image</div>
-                )}
-              </div>
+              {/* Product Image */}
+              <ProductImage 
+                imageId={product.image}
+                alt={product.name}
+                className="w-full h-32 object-cover rounded-lg"
+                fallbackClassName="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center"
+              />
 
               {/* Product Info */}
               <div className="space-y-2">

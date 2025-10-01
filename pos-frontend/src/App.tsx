@@ -41,10 +41,11 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <SocketProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+            <RefreshProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
                 <ApprovalStatusNotification />
                 <Routes>
                 {/* Public Routes */}
@@ -89,9 +90,7 @@ const App = () => {
                 {/* Superadmin Routes (Hidden - accessible via direct URL) */}
                 <Route path="/superadmin" element={
                   <SuperadminRoute>
-                    <RefreshProvider>
-                      <SuperadminLayout />
-                    </RefreshProvider>
+                    <SuperadminLayout />
                   </SuperadminRoute>
                 }>
                   <Route index element={<SuperadminDashboard />} />
@@ -130,6 +129,7 @@ const App = () => {
               </Routes>
               </BrowserRouter>
             </TooltipProvider>
+            </RefreshProvider>
           </SocketProvider>
         </AuthProvider>
       </QueryClientProvider>

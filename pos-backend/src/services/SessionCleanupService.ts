@@ -16,7 +16,6 @@ export class SessionCleanupService {
    */
   static start(): void {
     if (this.isRunning) {
-      console.log('Session cleanup service is already running');
       return;
     }
 
@@ -26,7 +25,6 @@ export class SessionCleanupService {
     }, 5 * 60 * 1000);
 
     this.isRunning = true;
-    console.log('Session cleanup service started');
   }
 
   /**
@@ -38,7 +36,6 @@ export class SessionCleanupService {
       this.cleanupInterval = null;
     }
     this.isRunning = false;
-    console.log('Session cleanup service stopped');
   }
 
   /**
@@ -49,12 +46,10 @@ export class SessionCleanupService {
       const cleanedCount = AuthService.cleanupExpiredSessions();
       
       if (cleanedCount > 0) {
-        console.log(`Session cleanup: Removed ${cleanedCount} expired sessions`);
       }
 
       // Log session statistics
       const stats = AuthService.getSessionStats();
-      console.log(`Session stats: ${stats.activeSessions} active, ${stats.expiredSessions} expired`);
     } catch (error) {
       console.error('Error during session cleanup:', error);
     }

@@ -15,7 +15,7 @@ export interface Product {
   maxStock?: number;
   unit: string;
   image?: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   supplier?: string;
   createdAt: string;
   updatedAt: string;

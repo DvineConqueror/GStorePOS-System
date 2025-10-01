@@ -17,6 +17,7 @@ import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { PosProvider } from '@/context/PosContext';
 import { Users, Package, BarChart3, ShoppingCart } from 'lucide-react';
+import { ProductForm } from '@/components/pos/ProductForm';
 
 const AdminPageContent = () => {
   const { user, signOut } = useAuth();
@@ -173,6 +174,8 @@ const AdminPageContent = () => {
               onImageChange={productManagement.handleImageChange}
               onAddProduct={productManagement.handleAddProduct}
               onToggleProductStatus={productManagement.handleToggleProductStatus}
+              onDeleteProduct={productManagement.handleDeleteProduct}
+              onEditProduct={productManagement.handleEditProduct}
             />
           </TabsContent>
 
@@ -196,6 +199,17 @@ const AdminPageContent = () => {
 
         </Tabs>
       </div>
+      
+      {/* Edit Product Form */}
+      <ProductForm
+        open={productManagement.showEditForm}
+        onClose={productManagement.handleCloseEditForm}
+        onSuccess={() => {
+          productManagement.handleCloseEditForm();
+          productManagement.fetchProducts();
+        }}
+        product={productManagement.editProduct || undefined}
+      />
       
       {/* Notification Alert */}
       <NotificationAlert />

@@ -219,6 +219,11 @@ export const productsAPI = {
     return response.data;
   },
 
+  toggleProductStatus: async (id: string) => {
+    const response = await api.patch(`/products/${id}/toggle-status`);
+    return response.data;
+  },
+
   updateStock: async (id: string, stockData: {
     stock: number;
     operation?: 'set' | 'add' | 'subtract';
@@ -491,6 +496,46 @@ export const superadminAPI = {
     });
     return response.data;
   },
+};
+
+// Image API functions
+export const uploadImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  const response = await api.post('/images/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const getImageUrl = (imageId: string) => {
+  return `${import.meta.env.VITE_API_URL}/images/${imageId}`;
+};
+
+export const deleteImage = async (imageId: string) => {
+  const response = await api.delete(`/images/${imageId}`);
+  return response.data;
+};
+
+export const getAllImages = async () => {
+  const response = await api.get('/images');
+  return response.data;
+};
+
+export const cleanupOrphanedImages = async () => {
+  const response = await api.post('/images/cleanup');
+  return response.data;
+};
+
+export const imageAPI = {
+  uploadImage,
+  getImageUrl,
+  deleteImage,
+  getAllImages,
+  cleanupOrphanedImages,
 };
 
 export default api;

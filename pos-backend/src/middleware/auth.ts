@@ -44,8 +44,6 @@ declare global {
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.header('Authorization');
-    console.log('Authorization header:', authHeader);
-    
     const token = authHeader?.replace('Bearer ', '');
 
     if (!token) {
@@ -56,13 +54,10 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
-    console.log('Token received:', token.substring(0, 50) + '...');
-
     // Verify token using AuthService
     const decoded = AuthService.verifyAccessToken(token);
     
     if (!decoded) {
-      console.log('Token verification failed for:', req.path);
       res.status(401).json({
         success: false,
         message: 'Invalid or expired token.',

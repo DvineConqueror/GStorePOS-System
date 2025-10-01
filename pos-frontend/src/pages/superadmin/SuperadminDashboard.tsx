@@ -201,10 +201,6 @@ export default function SuperadminDashboard() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Create Manager button clicked');
-                  console.log('Current location:', window.location.pathname);
-                  console.log('Navigate function:', navigate);
-                  alert('Button clicked! Check console for details.');
                   navigate('/superadmin/create-manager');
                 }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"

@@ -70,9 +70,11 @@ const productSchema = new Schema<IProduct>({
     type: String,
     trim: true,
   },
-  isActive: {
-    type: Boolean,
-    default: true,
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'deleted'],
+    default: 'active',
+    required: true,
   },
   supplier: {
     type: String,
@@ -102,27 +104,27 @@ productSchema.index({
 // Single field indexes for basic filtering
 productSchema.index({ category: 1 });
 productSchema.index({ brand: 1 });
-productSchema.index({ isActive: 1 });
+productSchema.index({ status: 1 });
 productSchema.index({ stock: 1 });
 productSchema.index({ price: 1 });
 // Note: sku and barcode indexes are automatically created due to unique: true in schema
 
 // Compound indexes for common product listing queries
 productSchema.index({ 
-  isActive: 1, 
+  status: 1, 
   category: 1, 
   name: 1 
 }); // For filtered product listings
 
 productSchema.index({ 
-  isActive: 1, 
+  status: 1, 
   brand: 1, 
   price: 1 
 }); // For brand-based price filtering
 
 productSchema.index({ 
   category: 1, 
-  isActive: 1, 
+  status: 1, 
   stock: -1 
 }); // For category inventory management
 
@@ -130,17 +132,17 @@ productSchema.index({
 productSchema.index({ 
   stock: 1, 
   minStock: 1, 
-  isActive: 1 
+  status: 1 
 }); // Optimized for low stock queries
 
 productSchema.index({ 
-  isActive: 1, 
+  status: 1, 
   stock: 1 
 }); // For general stock filtering (in-stock, out-of-stock)
 
 // Price range filtering indexes
 productSchema.index({ 
-  isActive: 1, 
+  status: 1, 
   price: 1, 
   category: 1 
 }); // For price range filtering by category
@@ -152,23 +154,23 @@ productSchema.index({
 
 // Sorting and pagination optimization
 productSchema.index({ 
-  isActive: 1, 
+  status: 1, 
   name: 1 
 }); // For alphabetical sorting of active products
 
 productSchema.index({ 
-  isActive: 1, 
+  status: 1, 
   createdAt: -1 
 }); // For newest products first
 
 productSchema.index({ 
-  isActive: 1, 
+  status: 1, 
   updatedAt: -1 
 }); // For recently updated products
 
 // Advanced search combinations
 productSchema.index({ 
-  isActive: 1, 
+  status: 1, 
   category: 1, 
   brand: 1, 
   price: 1 
@@ -213,7 +215,7 @@ productSchema.statics.findLowStock = function() {
     $expr: {
       $lte: ['$stock', '$minStock']
     },
-    isActive: true
+    status: 'active'
   });
 };
 
@@ -221,7 +223,7 @@ productSchema.statics.findLowStock = function() {
 productSchema.statics.findOutOfStock = function() {
   return this.find({
     stock: 0,
-    isActive: true
+    status: 'active'
   });
 };
 
@@ -234,7 +236,7 @@ productSchema.statics.searchProducts = function(query: string, filters: any = {}
       { sku: { $regex: query, $options: 'i' } },
       { barcode: { $regex: query, $options: 'i' } },
     ],
-    isActive: true,
+    status: 'active',
     ...filters
   };
 

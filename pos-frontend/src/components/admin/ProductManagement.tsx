@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Search, Plus, Eye, EyeOff, AlertTriangle, Package } from 'lucide-react';
+import { Search, Plus, Eye, EyeOff, AlertTriangle, Package, Edit, Trash2 } from 'lucide-react';
 
 interface Product {
   _id: string;
@@ -23,7 +23,7 @@ interface Product {
   maxStock?: number;
   unit: string;
   image?: string;
-  isActive: boolean;
+  status: 'active' | 'inactive' | 'deleted';
   supplier?: string;
   createdAt: string;
   updatedAt: string;
@@ -55,7 +55,9 @@ interface ProductManagementProps {
   onNewProductChange: (product: NewProduct) => void;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAddProduct: (e: React.FormEvent) => void;
-  onToggleProductStatus: (productId: string, currentStatus: boolean) => void;
+  onToggleProductStatus: (productId: string, currentStatus: 'active' | 'inactive') => void;
+  onDeleteProduct?: (productId: string) => void;
+  onEditProduct?: (product: Product) => void;
 }
 
 export const ProductManagement: React.FC<ProductManagementProps> = ({
@@ -75,7 +77,9 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
   onNewProductChange,
   onImageChange,
   onAddProduct,
-  onToggleProductStatus
+  onToggleProductStatus,
+  onDeleteProduct,
+  onEditProduct
 }) => {
   // Organized categories by groups (same as ProductForm)
   const categoryGroups = {
@@ -237,7 +241,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredProducts.map((product) => (
-                        <Card key={product._id} className={`${!product.isActive ? 'opacity-60' : ''}`}>
+                        <Card key={product._id} className={`${product.status !== 'active' ? 'opacity-60' : ''}`}>
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -248,8 +252,8 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                                 {product.stock === 0 && (
                                   <AlertTriangle className="h-4 w-4 text-red-500" />
                                 )}
-                                <Badge variant={product.isActive ? 'default' : 'secondary'}>
-                                  {product.isActive ? 'Active' : 'Inactive'}
+                                <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                                  {product.status === 'active' ? 'Active' : product.status === 'inactive' ? 'Inactive' : 'Deleted'}
                                 </Badge>
                               </div>
                             </div>
@@ -272,24 +276,48 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                               </div>
                             </div>
                             <div className="mt-4 flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => onToggleProductStatus(product._id, product.isActive)}
-                                className="flex-1"
-                              >
-                                {product.isActive ? (
-                                  <>
-                                    <EyeOff className="mr-2 h-4 w-4" />
-                                    Hide
-                                  </>
-                                ) : (
-                                  <>
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    Show
-                                  </>
-                                )}
-                              </Button>
+                              {onEditProduct && product.status !== 'deleted' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onEditProduct(product)}
+                                  className="flex-1"
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </Button>
+                              )}
+                              {product.status !== 'deleted' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onToggleProductStatus(product._id, product.status as 'active' | 'inactive')}
+                                  className="flex-1"
+                                >
+                                  {product.status === 'active' ? (
+                                    <>
+                                      <EyeOff className="mr-2 h-4 w-4" />
+                                      Hide
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      Show
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                              {onDeleteProduct && product.status !== 'deleted' && (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => onDeleteProduct(product._id)}
+                                  className="flex-1"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </Button>
+                              )}
                             </div>
                           </CardContent>
                         </Card>

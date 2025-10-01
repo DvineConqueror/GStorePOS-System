@@ -20,19 +20,9 @@ export const connectDB = async (): Promise<void> => {
     // Set mongoose buffer settings after connection
     mongoose.set('bufferCommands', false);
     
-    console.log('MongoDB connected successfully');
-    
     // Handle connection events
     mongoose.connection.on('error', (err) => {
       console.error('MongoDB connection error:', err);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected');
     });
 
   } catch (error) {
@@ -44,7 +34,6 @@ export const connectDB = async (): Promise<void> => {
 export const disconnectDB = async (): Promise<void> => {
   try {
     await mongoose.connection.close();
-    console.log('MongoDB connection closed');
   } catch (error) {
     console.error('Error closing MongoDB connection:', error);
   }

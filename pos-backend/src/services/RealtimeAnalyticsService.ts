@@ -21,7 +21,6 @@ export class RealtimeAnalyticsService {
     operation: 'create' | 'update' | 'void' | 'refund' = 'create'
   ): Promise<void> {
     try {
-      console.log(`Recalculating analytics after transaction ${operation}:`, transactionId);
       
       // Get all transactions for analytics calculation
       const allTransactions = await Transaction.find({})
@@ -78,7 +77,6 @@ export class RealtimeAnalyticsService {
         SocketService.emitCashierAnalyticsUpdate(cashierId, cashierAnalyticsData);
       }
       
-      console.log('Analytics recalculated and broadcasted successfully');
     } catch (error) {
       console.error('Error recalculating analytics:', error);
     }

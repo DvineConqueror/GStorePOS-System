@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { productsAPI } from '@/lib/api';
+import { productsAPI, imageAPI } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { useToast } from '@/components/ui/use-toast';
 import { Product } from '@/types';
 import { useEffect } from 'react';
+import { ImageUpload } from '@/components/ui/ImageUpload';
+import { useRefresh } from '@/context/RefreshContext';
 
 interface ProductFormProps {
   open: boolean;
@@ -22,10 +24,12 @@ export function ProductForm({ open, onClose, onSuccess, product }: ProductFormPr
   const [price, setPrice] = useState(product?.price.toString() || '');
   const [category, setCategory] = useState(product?.category || '');
   const [stock, setStock] = useState(product?.stock.toString() || '');
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState(product?.image || '');
+  const [barcode, setBarcode] = useState(product?.barcode || '');
+  const [imageId, setImageId] = useState<string | null>(product?.image || null);
+  const [imageUrl, setImageUrl] = useState<string | null>(product?.image ? imageAPI.getImageUrl(product.image) : null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { triggerRefresh } = useRefresh();
 
   // Reset form when product changes
   useEffect(() => {
@@ -33,17 +37,19 @@ export function ProductForm({ open, onClose, onSuccess, product }: ProductFormPr
     setPrice(product?.price.toString() || '');
     setCategory(product?.category || '');
     setStock(product?.stock.toString() || '');
-    setImagePreview(product?.image || '');
-    setImage(null);
+    setBarcode(product?.barcode || '');
+    setImageId(product?.image || null);
+    setImageUrl(product?.image ? imageAPI.getImageUrl(product.image) : null);
   }, [product]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImage(file);
-      // Create preview URL for the new image
-      setImagePreview(URL.createObjectURL(file));
-    }
+  const handleImageUploaded = (newImageId: string, newImageUrl: string) => {
+    setImageId(newImageId);
+    setImageUrl(newImageUrl);
+  };
+
+  const handleImageRemoved = () => {
+    setImageId(null);
+    setImageUrl(null);
   };
 
   // Organized categories by groups
@@ -60,27 +66,24 @@ export function ProductForm({ open, onClose, onSuccess, product }: ProductFormPr
     setLoading(true);
 
     try {
-      // For now, we'll skip image upload and just use a placeholder
-      // TODO: Implement image upload with the new backend
-      const imageUrl = product?.image || null;
-
       const productData = {
         name,
         description: '', // Add description field if needed
         price: parseFloat(price),
         cost: 0, // Add cost field if needed
-        barcode: '', // Add barcode field if needed
-        sku: `SKU-${Date.now()}`, // Generate SKU
+        barcode: barcode || undefined, // Use the state, and send undefined if empty
+        sku: product?.sku || `SKU-${Date.now()}`, // Use existing SKU for edits, generate new for creates
         category,
         brand: '', // Add brand field if needed
         stock: parseInt(stock),
         minStock: 0,
         maxStock: 1000,
         unit: 'pcs', // Default unit
-        image: imageUrl,
-        isActive: true,
+        image: imageId || undefined, // Use the GridFS image ID, or undefined if no image
+        status: 'active',
         supplier: '' // Add supplier field if needed
       };
+
 
       let response;
       if (product) {
@@ -97,13 +100,17 @@ export function ProductForm({ open, onClose, onSuccess, product }: ProductFormPr
           description: `Product ${product ? 'updated' : 'added'} successfully`,
         });
 
+        // Trigger global refresh for all components
+        triggerRefresh();
+        
         onSuccess();
         onClose();
         setName('');
         setPrice('');
         setCategory('');
         setStock('');
-        setImage(null);
+        setImageId(null);
+        setImageUrl(null);
       } else {
         throw new Error(response.message || 'Failed to save product');
       }
@@ -177,21 +184,23 @@ export function ProductForm({ open, onClose, onSuccess, product }: ProductFormPr
             />
           </div>
           <div>
-            <Label htmlFor="image">Product Image</Label>
-            {imagePreview && (
-              <div className="mb-2 h-32 w-32 overflow-hidden rounded flex items-center justify-center bg-gray-100">
-                <img
-                  src={imagePreview}
-                  alt="Product preview"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
+            <Label htmlFor="barcode">Barcode</Label>
             <Input
-              id="image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
+              id="barcode"
+              value={barcode}
+              onChange={(e) => setBarcode(e.target.value)}
+              placeholder="Enter product barcode (optional)"
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <Label>Product Image</Label>
+            <ImageUpload
+              onImageUploaded={handleImageUploaded}
+              onImageRemoved={handleImageRemoved}
+              currentImageId={imageId}
+              currentImageUrl={imageUrl}
+              disabled={loading}
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>

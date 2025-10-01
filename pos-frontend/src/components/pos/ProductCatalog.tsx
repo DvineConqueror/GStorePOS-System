@@ -22,6 +22,7 @@ import {
 import { useEffect } from 'react';
 import { DeleteProductDialog } from './DeleteProductDialog';
 import { Product } from '@/types'; // Add this import
+import { ProductImage } from '@/components/ui/ProductImage';
 
 export function ProductCatalog() {
   const { state, addToCart, fetchProducts } = usePos();
@@ -153,16 +154,13 @@ export function ProductCatalog() {
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="h-20 w-full bg-muted rounded flex items-center justify-center mb-2">
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-full w-full object-scale-down rounded"
-                  />
-                ) : (
-                  <span className="text-muted-foreground">No image</span>
-                )}
+              <div className="h-20 w-full mb-2">
+                <ProductImage 
+                  imageId={product.image}
+                  alt={product.name}
+                  className="h-full w-full object-scale-down rounded"
+                  fallbackClassName="h-20 w-full bg-muted rounded flex items-center justify-center"
+                />
               </div>
               <div className="font-medium text-sm truncate">{product.name}</div>
               <div className="font-bold text-sm mt-1 text-green-700">{formatCurrency(product.price)}</div>

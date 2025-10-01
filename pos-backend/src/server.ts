@@ -13,6 +13,7 @@ import { SessionCleanupService } from './services/SessionCleanupService';
 import { EmailService } from './services/EmailService';
 import { PasswordResetService } from './services/PasswordResetService';
 import { SocketService } from './services/SocketService';
+import { ImageService } from './services/ImageService';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -23,6 +24,7 @@ import analyticsRoutes from './routes/analytics';
 import superadminRoutes from './routes/superadmin';
 import databaseRoutes from './routes/database';
 import notificationRoutes from './routes/notifications';
+import imageRoutes from './routes/images';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -64,17 +66,13 @@ app.use(limiter);
 // CORS configuration - Optimized for performance
 const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    console.log('CORS Origin:', origin);
-    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
-      console.log('CORS: Allowing request with no origin');
       return callback(null, true);
     }
-    
+
     // In development, allow any localhost port
     if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
-      console.log('CORS: Allowing localhost in development');
       return callback(null, true);
     }
     
@@ -89,15 +87,9 @@ const corsOptions = {
       process.env.FRONTEND_URL
     ].filter(Boolean);
     
-    console.log('CORS: Allowed origins:', allowedOrigins);
-    console.log('CORS: Request origin:', origin);
-    
     if (allowedOrigins.includes(origin)) {
-      console.log('CORS: Origin allowed');
       return callback(null, true);
     }
-    
-    console.log('CORS: Origin blocked');
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -159,6 +151,27 @@ app.get('/health', async (req, res) => {
   });
 });
 
+// Special middleware for images to ensure CORS headers
+app.use('/api/v1/images', (req, res, next) => {
+  // Set CORS headers for all image requests
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin',
+    'Access-Control-Allow-Credentials': 'false',
+    'Access-Control-Expose-Headers': 'Content-Length, Content-Type, Cache-Control, ETag'
+  });
+  
+  // Handle OPTIONS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Max-Age', '86400');
+    res.status(204).end();
+    return;
+  }
+  
+  next();
+});
+
 // API routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', productRoutes);
@@ -168,6 +181,7 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/superadmin', superadminRoutes);
 app.use('/api/v1/database', databaseRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/images', imageRoutes);
 
 // Error handling middleware
 app.use(notFound);
@@ -175,16 +189,9 @@ app.use(errorHandler);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-  
   // Join user to their role-based room for targeted notifications
   socket.on('join-role-room', (role: string) => {
     socket.join(`role-${role}`);
-    console.log(`User joined role room: role-${role}`);
-  });
-  
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
   });
 });
 
@@ -202,12 +209,11 @@ const startServer = async () => {
   try {
     await connectDB();
     
+    // Initialize GridFS bucket for image storage
+    ImageService.initializeBucket();
     // Ensure port is free before starting
     serverInstance = server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV}`);
-      console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
-      console.log(`Memory Usage: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`);
+      console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
       
       // Start session cleanup service
       SessionCleanupService.start();
@@ -249,8 +255,10 @@ const startServer = async () => {
         console.warn(`High memory usage: ${heapUsedMB} MB`);
       }
       
-      // Log periodic health status
-      console.log(`Health Check - Memory: ${heapUsedMB}MB, Uptime: ${Math.round(process.uptime())}s, DB: ${mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'}`);
+      // Log periodic health status (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Health Check - Memory: ${heapUsedMB}MB, Uptime: ${Math.round(process.uptime())}s, DB: ${mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'}`);
+      }
     }, 10 * 60 * 1000);
     
   } catch (error) {
@@ -277,9 +285,8 @@ const gracefulShutdown = async (signal: string) => {
   
   // Set a timeout to force exit if graceful shutdown takes too long
   const forceExit = setTimeout(() => {
-    console.log('Force exiting due to timeout...');
     process.exit(1);
-  }, 5000); // Reduced to 5 seconds for faster restart
+  }, 5000);
   
   try {
     // Stop session cleanup service
@@ -294,7 +301,6 @@ const gracefulShutdown = async (signal: string) => {
     // Close Socket.IO server
     if (io) {
       io.close();
-      console.log('Socket.IO server closed.');
     }
     
     // Close HTTP server
@@ -304,7 +310,6 @@ const gracefulShutdown = async (signal: string) => {
           if (err) {
             console.error('Error closing server:', err);
           } else {
-            console.log('HTTP server closed.');
           }
           resolve();
         });
@@ -313,15 +318,8 @@ const gracefulShutdown = async (signal: string) => {
     
     // Close database connection
     await mongoose.connection.close();
-    console.log('MongoDB connection closed.');
-    
     // Clear any caches/intervals
-    console.log('Cleaning up resources...');
-    
-    // Clear the force exit timeout
     clearTimeout(forceExit);
-    
-    console.log('Graceful shutdown completed');
     process.exit(0);
   } catch (error) {
     console.error('Error during shutdown:', error);

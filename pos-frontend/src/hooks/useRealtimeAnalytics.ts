@@ -99,7 +99,6 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions = {}) 
 
     // Listen for real-time analytics updates
     const handleAnalyticsUpdate = (event: CustomEvent) => {
-      console.log('Received real-time analytics update:', event.detail);
       setRealtimeData(event.detail);
       setLastUpdated(new Date());
       setLoading(false);
@@ -108,7 +107,6 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions = {}) 
 
     // Listen for manager analytics updates
     const handleManagerAnalyticsUpdate = (event: CustomEvent) => {
-      console.log('Received manager analytics update:', event.detail);
       setRealtimeData(event.detail);
       setLastUpdated(new Date());
       setLoading(false);
@@ -117,7 +115,6 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions = {}) 
 
     // Listen for cashier analytics updates (if user is a cashier)
     const handleCashierAnalyticsUpdate = (event: CustomEvent) => {
-      console.log('Received cashier analytics update:', event.detail);
       setRealtimeData(event.detail);
       setLastUpdated(new Date());
       setLoading(false);
@@ -134,7 +131,6 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions = {}) 
     if (fallbackToAPI) {
       fallbackTimeout = setTimeout(() => {
         if (!realtimeData) {
-          console.log('No real-time data received, falling back to API');
           setError('Real-time connection unavailable, using cached data');
           setLoading(false);
         }
@@ -146,7 +142,6 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions = {}) 
     if (refreshInterval > 0) {
       refreshIntervalId = setInterval(() => {
         if (!realtimeData) {
-          console.log('Periodic refresh: No real-time data available');
           setError('Real-time connection unavailable');
         }
       }, refreshInterval);
