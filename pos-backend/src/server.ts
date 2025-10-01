@@ -196,12 +196,14 @@ SocketService.initialize(io);
 
 // Start server
 let healthInterval: NodeJS.Timeout | null = null;
+let serverInstance: any = null;
 
 const startServer = async () => {
   try {
     await connectDB();
     
-    server.listen(PORT, () => {
+    // Ensure port is free before starting
+    serverInstance = server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
       console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
@@ -221,6 +223,17 @@ const startServer = async () => {
           console.error('Error cleaning up expired password reset tokens:', error);
         }
       }, 60 * 60 * 1000); // 1 hour
+    });
+
+    // Handle server errors
+    serverInstance.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Please stop the existing process or use a different port.`);
+        process.exit(1);
+      } else {
+        console.error('Server error:', err);
+        process.exit(1);
+      }
     });
 
     // Server timeout settings
@@ -266,7 +279,7 @@ const gracefulShutdown = async (signal: string) => {
   const forceExit = setTimeout(() => {
     console.log('Force exiting due to timeout...');
     process.exit(1);
-  }, 10000); // 10 seconds timeout
+  }, 5000); // Reduced to 5 seconds for faster restart
   
   try {
     // Stop session cleanup service
@@ -285,9 +298,9 @@ const gracefulShutdown = async (signal: string) => {
     }
     
     // Close HTTP server
-    if (server) {
+    if (serverInstance) {
       await new Promise<void>((resolve) => {
-        server.close((err: any) => {
+        serverInstance.close((err: any) => {
           if (err) {
             console.error('Error closing server:', err);
           } else {

@@ -29,9 +29,20 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid, clear auth data
-      Cookies.remove('auth_token');
-      window.location.href = '/login';
+      // Check if it's a server connection error vs actual auth failure
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        // Server is down, don't logout - just show error
+        console.warn('Server connection failed, keeping user logged in');
+        return Promise.reject(error);
+      }
+      
+      // Only logout on actual authentication failures
+      const isAuthEndpoint = error.config?.url?.includes('/auth/');
+      if (isAuthEndpoint && error.response?.data?.message?.includes('Token')) {
+        // Token expired or invalid, clear auth data
+        Cookies.remove('auth_token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
