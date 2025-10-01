@@ -32,7 +32,7 @@ export function Cart() {
       <Card className="flex flex-col h-[500px] p-4 sticky top-32 w-full">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-black flex items-center">
-            <ShoppingBag className="mr-4 h-10 w-10 text-green-600" />
+            <ShoppingBag className="mr-4 h-10 w-10 text-gray-600" />
             Grocery Items
           </h2>
           <Button
@@ -49,17 +49,17 @@ export function Cart() {
         <div className="flex-grow overflow-y-auto mb-4 pr-2">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <ShoppingBag className="h-12 w-12 mb-2 text-green-600" />
+              <ShoppingBag className="h-12 w-12 mb-2 text-gray-400" />
               <p className="text-lg font-medium text-black">Cart is empty</p>
-              <p className="text-sm text-gray-600">Click on products to add them to your cart</p>
+              <p className="text-sm text-gray-500">Click on products to add them to your cart</p>
             </div>
           ) : (
             <ul className="space-y-3">
               {cart.map(item => (
                 <li key={item._id} className="border-b pb-3 hover:bg-accent/50 rounded-lg transition-colors p-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium truncate flex-1 mr-2">{item.name}</span>
-                    <span className='text-green-700 shrink-0'>{formatCurrency(item.price)}</span>
+                    <span className="font-medium truncate flex-1 mr-2 text-black">{item.name}</span>
+                    <span className='text-gray-600 shrink-0'>{formatCurrency(item.price)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center space-x-2">
@@ -88,11 +88,11 @@ export function Cart() {
                       </Button>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-800">{formatCurrency(item.price * item.quantity)}</span>
+                      <span className="font-medium text-black">{formatCurrency(item.price * item.quantity)}</span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-destructive"
+                        className="h-7 w-7 text-red-600 hover:text-red-700"
                         onClick={() => removeFromCart(item._id)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -106,7 +106,7 @@ export function Cart() {
         </div>
 
         <div className="border-t pt-4 space-y-4 mt-auto">
-          <div className="flex flex-col space-y-2 text-sm text-gray-600">
+          <div className="flex flex-col space-y-2 text-sm text-gray-500">
             <div className="flex justify-between">
               <span>Items</span>
               <span>{cart.reduce((acc, item) => acc + item.quantity, 0)} items</span>
@@ -114,7 +114,7 @@ export function Cart() {
           </div>
           <div className="flex items-center justify-between font-bold text-lg">
             <span className="text-black">Total</span>
-            <span className='text-green-700'>{formatCurrency(calculateTotal())}</span>
+            <span className='text-black'>{formatCurrency(calculateTotal())}</span>
           </div>
           <Button
             className="w-full bg-green-600 hover:bg-green-700"
