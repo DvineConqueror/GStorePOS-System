@@ -17,6 +17,7 @@ import { ImageService } from './services/ImageService';
 import { AnalyticsCacheService } from './services/AnalyticsCacheService';
 import CategoryGroupService from './services/CategoryGroupService';
 import CategoryService from './services/CategoryService';
+import NotificationService from './services/NotificationService';
 import { User } from './models/User';
 
 // Import routes
@@ -31,6 +32,7 @@ import notificationRoutes from './routes/notifications';
 import imageRoutes from './routes/images';
 import categoryRoutes from './routes/categories';
 import categoryGroupRoutes from './routes/categoryGroups';
+import systemSettingsRoutes from './routes/systemSettings';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -190,6 +192,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/images', imageRoutes);
 app.use('/api/v1/categories', categoryRoutes);
 app.use('/api/v1/category-groups', categoryGroupRoutes);
+app.use('/api/v1/system-settings', systemSettingsRoutes);
 
 // Error handling middleware
 app.use(notFound);
@@ -232,6 +235,9 @@ const startServer = async () => {
       // Initialize analytics cache service
       AnalyticsCacheService.initialize();
       
+      // Initialize notification service low stock checker
+      (NotificationService.constructor as any).initializeLowStockChecker();
+      
       // Initialize default category groups and categories if they don't exist
       (async () => {
         try {
@@ -242,11 +248,11 @@ const startServer = async () => {
           if (adminUser) {
             // Initialize category groups first
             await CategoryGroupService.initializeDefaultCategoryGroups(adminUser.id);
-            console.log('✅ Category groups initialized');
+            console.log(' Category groups initialized');
             
             // Then initialize categories
             await CategoryService.initializeDefaultCategories(adminUser.id);
-            console.log('✅ Default categories initialized');
+            console.log(' Default categories initialized');
           } else {
             console.log('⚠️  No admin user found for initialization');
           }

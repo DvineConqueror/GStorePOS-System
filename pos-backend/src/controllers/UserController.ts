@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
 import { User } from '../models/User';
 import { ApiResponse } from '../types';
-import { NotificationService } from '../services/NotificationService';
+import NotificationService from '../services/NotificationService';
 
 export class UserController {
   /**
@@ -169,11 +169,11 @@ export class UserController {
           const approver = await User.findById(currentUserId);
           
           if (user && approver) {
-            await NotificationService.sendApprovalNotification({
-              user,
-              approvedBy: approver,
-              clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
-            });
+            await NotificationService.sendEmailNotification(
+              user.email,
+              'Account Approved - Grocery Store POS',
+              `Your ${user.role} account has been approved by ${approver.firstName} ${approver.lastName}. You can now log in to the system.`
+            );
           }
         } catch (emailError) {
           console.error('Failed to send approval notification email:', emailError);

@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { AuthService } from '../services/AuthService';
 import { PasswordResetService } from '../services/PasswordResetService';
+import SystemSettingsService from '../services/SystemSettingsService';
+import NotificationService from '../services/NotificationService';
 import { authenticate } from '../middleware/auth';
 import { authRateLimit, refreshRateLimit } from '../middleware/rateLimiter';
 import { ApiResponse } from '../types';
@@ -136,6 +138,18 @@ router.post('/register-cashier', async (req, res): Promise<void> => {
     try {
       const { SocketService } = await import('../services/SocketService');
       SocketService.emitNewUserRegistration({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        status: user.status,
+        createdAt: user.createdAt
+      });
+
+      // Send notification via NotificationService
+      await NotificationService.sendUserRegistrationNotification({
         id: user._id,
         username: user.username,
         email: user.email,
@@ -306,6 +320,22 @@ router.post('/login', authRateLimit, async (req, res): Promise<void> => {
       return;
     }
 
+    // Check maintenance mode for non-superadmin users
+    const maintenanceMode = await SystemSettingsService.isMaintenanceMode();
+    const maintenanceMessage = await SystemSettingsService.getMaintenanceMessage();
+
+    // Block cashiers during maintenance mode
+    if (maintenanceMode && result.user.role === 'cashier') {
+      res.status(403).json({
+        success: false,
+        message: maintenanceMessage || 'System is currently under maintenance. Please try again later.',
+        data: {
+          maintenanceMode: true,
+          role: result.user.role,
+        }
+      } as ApiResponse);
+      return;
+    }
 
     res.json({
       success: true,
@@ -329,7 +359,9 @@ router.post('/login', authRateLimit, async (req, res): Promise<void> => {
           sessionId: result.session.sessionId,
           deviceInfo: result.session.deviceInfo,
           createdAt: result.session.createdAt
-        }
+        },
+        maintenanceMode: maintenanceMode && result.user.role === 'manager',
+        maintenanceMessage: maintenanceMode && result.user.role === 'manager' ? maintenanceMessage : undefined,
       },
     } as ApiResponse);
   } catch (error) {

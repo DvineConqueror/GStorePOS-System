@@ -11,6 +11,7 @@ import {
   User,
   Zap
 } from 'lucide-react';
+import { MaintenanceBanner } from '@/components/system/MaintenanceBanner';
 
 interface CashierLayoutProps {
   children?: React.ReactNode;
@@ -33,6 +34,9 @@ export function CashierLayout({ children }: CashierLayoutProps) {
 
   return (
         <div className="min-h-screen bg-[#ececec]">
+      {/* Maintenance Banner */}
+      <MaintenanceBanner />
+      
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-green-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

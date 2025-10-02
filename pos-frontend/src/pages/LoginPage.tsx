@@ -4,11 +4,15 @@ import { useLoginAnimation } from '@/hooks/useLoginAnimation';
 import { getColorScheme } from '@/utils/colorSchemes';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { LoginLogo } from '@/components/auth/LoginLogo';
+import { MaintenanceDialog } from '@/components/system/MaintenanceDialog';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState('');
+  const [maintenanceRole, setMaintenanceRole] = useState<'cashier' | 'manager'>('cashier');
   
   const { isAdminMode, toggleRoleMode } = useLoginAnimation();
   const { formData, isLoading, passwordValidation, handleSubmit, updateFormData, resetForm } = useAuthForm({
@@ -45,6 +49,46 @@ export default function LoginPage() {
     updateFormData(field as any, value);
   };
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    const result = await handleSubmit(e);
+    console.log('Login result:', result); // Debug log
+    
+    // Check if login was successful but system is in maintenance mode (for managers)
+    if (result && result.success && (result as any).maintenanceMode) {
+      console.log('Manager maintenance mode detected'); // Debug log
+      setMaintenanceMessage((result as any).maintenanceMessage || 'System is currently under maintenance. Some features may be unavailable.');
+      setMaintenanceRole('manager');
+      setShowMaintenanceDialog(true);
+      // Store redirect URL for after user acknowledges
+      (window as any).__maintenanceRedirect = (result as any).redirectTo || '/dashboard';
+    }
+    // Check if login failed due to maintenance mode (for cashiers)
+    else if (result && !result.success && (result as any).maintenanceMode) {
+      console.log('Cashier maintenance mode detected'); // Debug log
+      setMaintenanceMessage(result.message || 'System is currently under maintenance.');
+      setMaintenanceRole((result as any).role || 'cashier');
+      setShowMaintenanceDialog(true);
+    }
+    // Fallback: Check if message contains maintenance keywords (in case maintenanceMode flag is missing)
+    else if (result && !result.success && result.message && result.message.toLowerCase().includes('maintenance')) {
+      console.log('Maintenance detected via message fallback'); // Debug log
+      setMaintenanceMessage(result.message);
+      setMaintenanceRole('cashier'); // Assume cashier if not specified
+      setShowMaintenanceDialog(true);
+    }
+  };
+
+  const handleCloseMaintenanceDialog = () => {
+    setShowMaintenanceDialog(false);
+    setMaintenanceMessage('');
+  };
+
+  const handleProceedToDashboard = () => {
+    setShowMaintenanceDialog(false);
+    const redirectUrl = (window as any).__maintenanceRedirect || '/dashboard';
+    window.location.href = redirectUrl;
+  };
+
   return (
     <div className={`min-h-screen flex items-center justify-center bg-[#ececec] transition-all duration-500 ease-in-out`}>
       <div className="container mx-auto flex items-center justify-center px-4 py-4">
@@ -60,15 +104,24 @@ export default function LoginPage() {
             passwordValidation={passwordValidation}
             rememberMe={rememberMe}
             showPassword={showPassword}
-            onFormSubmit={handleSubmit}
+            onFormSubmit={handleFormSubmit}
             onInputChange={handleInputChange}
             onToggleSignUp={handleToggleSignUp}
-          onToggleRoleMode={handleToggleRoleMode}
+            onToggleRoleMode={handleToggleRoleMode}
             onTogglePasswordVisibility={handleTogglePasswordVisibility}
             onToggleRememberMe={handleToggleRememberMe}
           />
         </div>
       </div>
+
+      {/* Maintenance Dialog */}
+      <MaintenanceDialog
+        open={showMaintenanceDialog}
+        onClose={handleCloseMaintenanceDialog}
+        role={maintenanceRole}
+        message={maintenanceMessage}
+        onProceed={maintenanceRole === 'manager' ? handleProceedToDashboard : undefined}
+      />
     </div>
   );
 }

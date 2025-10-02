@@ -427,6 +427,22 @@ export const analyticsAPI = {
   },
 };
 
+// System Settings API
+export const systemSettingsAPI = {
+  // Get system settings
+  getSettings: async () => api.get('/system-settings'),
+  
+  // Update system settings
+  updateSettings: async (settings: any) => api.put('/system-settings', settings),
+  
+  // Get maintenance status (public)
+  getMaintenanceStatus: async () => api.get('/system-settings/maintenance'),
+  
+  // Toggle maintenance mode
+  toggleMaintenanceMode: async (enabled: boolean, message?: string) => 
+    api.post('/system-settings/maintenance/toggle', { enabled, message }),
+};
+
 // Superadmin API
 export const superadminAPI = {
   getSystemStats: async () => {

@@ -204,7 +204,7 @@ export default function SuperadminDashboard() {
                   navigate('/superadmin/create-manager');
                 }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
-                style={{ zIndex: 9999, position: 'relative' }}
+                style={{ zIndex: 9, position: 'relative' }}
               >
                 Create Manager
               </Button>

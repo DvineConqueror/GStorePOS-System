@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticate, requireManager } from '../middleware/auth';
-import { NotificationService } from '../services/NotificationService';
+import { User } from '../models/User';
 
 const router = express.Router();
 
@@ -9,7 +9,10 @@ const router = express.Router();
 // @access  Private (Manager/Superadmin only)
 router.get('/pending-count', authenticate, requireManager, async (req, res) => {
   try {
-    const count = await NotificationService.getPendingApprovalCount(req.user!.role as 'superadmin' | 'manager');
+    const count = await User.countDocuments({
+      isApproved: false,
+      status: 'active'
+    });
     
     res.json({
       success: true,
@@ -30,7 +33,13 @@ router.get('/pending-count', authenticate, requireManager, async (req, res) => {
 router.get('/pending-users', authenticate, requireManager, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 5;
-    const users = await NotificationService.getPendingUsers(req.user!.role as 'superadmin' | 'manager', limit);
+    const users = await User.find({
+      isApproved: false,
+      status: 'active'
+    })
+    .select('username email firstName lastName role createdAt')
+    .sort({ createdAt: -1 })
+    .limit(limit);
     
     res.json({
       success: true,

@@ -3,7 +3,7 @@ import { User } from '../models/User';
 import { UserService } from '../services/UserService';
 import { ApiResponse } from '../types';
 import { hasPermission, shouldAutoApprove } from '../constants/permissions';
-import { NotificationService } from '../services/NotificationService';
+import NotificationService from '../services/NotificationService';
 
 export class SuperadminController {
   /**
@@ -160,11 +160,11 @@ export class SuperadminController {
         try {
           const approver = await User.findById(req.user!._id);
           if (approver) {
-            await NotificationService.sendApprovalNotification({
-              user,
-              approvedBy: approver,
-              clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
-            });
+            await NotificationService.sendEmailNotification(
+              user.email,
+              'Account Approved - Grocery Store POS',
+              `Your ${user.role} account has been approved by ${approver.firstName} ${approver.lastName}. You can now log in to the system.`
+            );
           }
         } catch (emailError) {
           console.error('Failed to send approval notification email:', emailError);

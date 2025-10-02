@@ -1,71 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { 
   Settings, 
-  Database, 
-  Shield, 
-  Bell, 
-  Mail,
   Save,
-  RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  Wrench,
+  Bell,
+  Mail,
+  Package
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { systemSettingsAPI } from '@/lib/api';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function SystemSettings() {
   const [loading, setLoading] = useState(false);
+  const [fetchingSettings, setFetchingSettings] = useState(true);
   const [settings, setSettings] = useState({
-    // System Settings
-    systemName: 'Grocery Store POS',
-    systemVersion: '1.0.0',
+    // Maintenance Mode
     maintenanceMode: false,
-    
-    // Security Settings
-    sessionTimeout: 30,
-    maxLoginAttempts: 5,
-    passwordMinLength: 6,
-    requireStrongPasswords: false,
+    maintenanceMessage: 'System is currently under maintenance. Some features may be unavailable.',
     
     // Notification Settings
     emailNotifications: true,
     lowStockAlerts: true,
     systemAlerts: true,
-    
-    // Database Settings
-    autoBackup: true,
-    backupFrequency: 'daily',
-    retentionDays: 30,
-    
-    // Store Settings
-    storeName: 'Grocery Store',
-    storeAddress: '123 Main St, City, State 12345',
-    storePhone: '+1 (555) 123-4567',
-    storeEmail: 'info@grocerystore.com',
-    currency: 'USD',
-    taxRate: 8.0,
   });
 
   const { toast } = useToast();
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setFetchingSettings(true);
+      const response = await systemSettingsAPI.getSettings();
+      if (response.data.success) {
+        setSettings(prevSettings => ({
+          ...prevSettings,
+          ...response.data.data,
+        }));
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch settings:', error);
+      toast({
+        title: "Info",
+        description: "Using default settings. Customize and save to persist changes.",
+      });
+    } finally {
+      setFetchingSettings(false);
+    }
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await systemSettingsAPI.updateSettings(settings);
       
-      toast({
-        title: "Settings Saved",
-        description: "System settings have been updated successfully.",
-      });
-    } catch (error) {
+      if (response.data.success) {
+        toast({
+          title: "Settings Saved",
+          description: "System settings have been updated successfully.",
+        });
+      } else {
+        throw new Error(response.data.message || 'Failed to save settings');
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to save settings. Please try again.",
+        description: error.response?.data?.message || "Failed to save settings. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -73,35 +81,24 @@ export default function SystemSettings() {
     }
   };
 
-  const handleReset = () => {
-    toast({
-      title: "Settings Reset",
-      description: "Settings have been reset to default values.",
-    });
-  };
+
+  if (fetchingSettings) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#ececec] p-4 sm:p-6">
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header - Responsive */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-black">System Settings</h2>
-          <p className="text-gray-600 text-sm sm:text-base">Configure system-wide settings and preferences</p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            className="bg-white border-gray-300 text-black hover:bg-gray-50 text-sm sm:text-base"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Reset
-          </Button>
+    <div className="min-h-screen bg-[#ececec] p-6">
+      <div className="max-w-4xl mx-auto space-y-5">
+        {/* Header with Save button */}
+        <div className="flex justify-end mb-1">
           <Button
             onClick={handleSave}
-            disabled={loading}
-            className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base"
+            disabled={loading || fetchingSettings}
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             {loading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -111,281 +108,167 @@ export default function SystemSettings() {
             Save Settings
           </Button>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* System Settings */}
-        <Card className="bg-white border-green-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-black flex items-center text-base sm:text-lg">
-              <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-              System Configuration
+        {/* Maintenance Mode Card */}
+        <Card className="bg-white border-gray-300">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-black flex items-center text-xl">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                <Settings className="h-5 w-5 text-green-600" />
+              </div>
+              System Settings
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="systemName" className="text-slate-300">System Name</Label>
-              <Input
-                id="systemName"
-                value={settings.systemName}
-                onChange={(e) => setSettings(prev => ({ ...prev, systemName: e.target.value }))}
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="systemVersion" className="text-slate-300">System Version</Label>
-              <Input
-                id="systemVersion"
-                value={settings.systemVersion}
-                disabled
-                className="bg-slate-700/50 border-slate-600 text-slate-400"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="maintenanceMode" className="text-slate-300">Maintenance Mode</Label>
-                <p className="text-xs text-slate-400">Enable to put system in maintenance mode</p>
+          <CardContent className="space-y-6">
+            {/* Toggle Switch */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <Wrench className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <Label htmlFor="maintenanceMode" className="text-black font-medium text-base">
+                    Maintenance Mode
+                  </Label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Enable to restrict cashier access during system maintenance
+                  </p>
+                </div>
               </div>
               <Switch
                 id="maintenanceMode"
                 checked={settings.maintenanceMode}
                 onCheckedChange={(checked) => setSettings(prev => ({ ...prev, maintenanceMode: checked }))}
+                className="data-[state=checked]:bg-green-600"
               />
+            </div>
+
+            {/* Maintenance Message */}
+            <div className="space-y-3">
+              <Label htmlFor="maintenanceMessage" className="text-black font-medium">
+                Maintenance Message
+              </Label>
+              <Textarea
+                id="maintenanceMessage"
+                value={settings.maintenanceMessage}
+                onChange={(e) => setSettings(prev => ({ ...prev, maintenanceMessage: e.target.value }))}
+                className="border-gray-300 min-h-[50px] resize-none"
+                placeholder="Enter message to display during maintenance..."
+              />
+              <p className="text-xs text-gray-500">
+                This message will be shown to users when maintenance mode is active
+              </p>
+            </div>
+
+            {/* Status Indicator */}
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className={`w-3 h-3 rounded-full ${settings.maintenanceMode ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+              <span className="text-sm font-medium text-gray-700">
+                Status: {settings.maintenanceMode ? 'Maintenance Active' : 'System Operational'}
+              </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Security Settings */}
-        <Card className="bg-white border-green-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-black flex items-center text-base sm:text-lg">
-              <Shield className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-              Security Settings
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="sessionTimeout" className="text-slate-300">Session Timeout (minutes)</Label>
-              <Input
-                id="sessionTimeout"
-                type="number"
-                value={settings.sessionTimeout}
-                onChange={(e) => setSettings(prev => ({ ...prev, sessionTimeout: parseInt(e.target.value) }))}
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="maxLoginAttempts" className="text-slate-300">Max Login Attempts</Label>
-              <Input
-                id="maxLoginAttempts"
-                type="number"
-                value={settings.maxLoginAttempts}
-                onChange={(e) => setSettings(prev => ({ ...prev, maxLoginAttempts: parseInt(e.target.value) }))}
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="passwordMinLength" className="text-slate-300">Minimum Password Length</Label>
-              <Input
-                id="passwordMinLength"
-                type="number"
-                value={settings.passwordMinLength}
-                onChange={(e) => setSettings(prev => ({ ...prev, passwordMinLength: parseInt(e.target.value) }))}
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="requireStrongPasswords" className="text-slate-300">Require Strong Passwords</Label>
-                <p className="text-xs text-slate-400">Enforce complex password requirements</p>
+        {/* Notification Settings Card */}
+        <Card className="bg-white border-gray-300">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-black flex items-center text-xl">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                <Bell className="h-5 w-5 text-green-600" />
               </div>
-              <Switch
-                id="requireStrongPasswords"
-                checked={settings.requireStrongPasswords}
-                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, requireStrongPasswords: checked }))}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Notification Settings */}
-        <Card className="bg-white border-green-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-black flex items-center text-base sm:text-lg">
-              <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
               Notification Settings
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="emailNotifications" className="text-slate-300">Email Notifications</Label>
-                <p className="text-xs text-slate-400">Send email notifications for system events</p>
-              </div>
-              <Switch
-                id="emailNotifications"
-                checked={settings.emailNotifications}
-                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, emailNotifications: checked }))}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="lowStockAlerts" className="text-slate-300">Low Stock Alerts</Label>
-                <p className="text-xs text-slate-400">Alert when products are low in stock</p>
-              </div>
-              <Switch
-                id="lowStockAlerts"
-                checked={settings.lowStockAlerts}
-                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, lowStockAlerts: checked }))}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="systemAlerts" className="text-slate-300">System Alerts</Label>
-                <p className="text-xs text-slate-400">Show system-wide alerts and notifications</p>
-              </div>
-              <Switch
-                id="systemAlerts"
-                checked={settings.systemAlerts}
-                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, systemAlerts: checked }))}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Database Settings */}
-        <Card className="bg-white border-green-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-black flex items-center text-base sm:text-lg">
-              <Database className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-              Database Settings
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="autoBackup" className="text-slate-300">Automatic Backup</Label>
-                <p className="text-xs text-slate-400">Enable automatic database backups</p>
-              </div>
-              <Switch
-                id="autoBackup"
-                checked={settings.autoBackup}
-                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, autoBackup: checked }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="backupFrequency" className="text-slate-300">Backup Frequency</Label>
-              <select
-                id="backupFrequency"
-                value={settings.backupFrequency}
-                onChange={(e) => setSettings(prev => ({ ...prev, backupFrequency: e.target.value }))}
-                className="w-full p-2 bg-slate-700/50 border border-slate-600 rounded-md text-white"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="retentionDays" className="text-slate-300">Backup Retention (days)</Label>
-              <Input
-                id="retentionDays"
-                type="number"
-                value={settings.retentionDays}
-                onChange={(e) => setSettings(prev => ({ ...prev, retentionDays: parseInt(e.target.value) }))}
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Store Settings */}
-        <Card className="bg-white border-green-200 lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-black flex items-center text-base sm:text-lg">
-              <Mail className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-              Store Information
-            </CardTitle>
-          </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="storeName" className="text-slate-300">Store Name</Label>
-                <Input
-                  id="storeName"
-                  value={settings.storeName}
-                  onChange={(e) => setSettings(prev => ({ ...prev, storeName: e.target.value }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
+            <div className="space-y-4">
+              {/* Email Notifications */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <Mail className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <Label htmlFor="emailNotifications" className="text-black font-medium">
+                      Email Notifications
+                    </Label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Send email notifications for system events and alerts
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="emailNotifications"
+                  checked={settings.emailNotifications}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, emailNotifications: checked }))}
+                  className="data-[state=checked]:bg-green-600"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="storePhone" className="text-slate-300">Store Phone</Label>
-                <Input
-                  id="storePhone"
-                  value={settings.storePhone}
-                  onChange={(e) => setSettings(prev => ({ ...prev, storePhone: e.target.value }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
+
+              {/* Low Stock Alerts */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <Package className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <Label htmlFor="lowStockAlerts" className="text-black font-medium">
+                      Low Stock Alerts
+                    </Label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Alert when products are running low in stock (every 6 hours)
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="lowStockAlerts"
+                  checked={settings.lowStockAlerts}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, lowStockAlerts: checked }))}
+                  className="data-[state=checked]:bg-green-600"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="storeEmail" className="text-slate-300">Store Email</Label>
-                <Input
-                  id="storeEmail"
-                  type="email"
-                  value={settings.storeEmail}
-                  onChange={(e) => setSettings(prev => ({ ...prev, storeEmail: e.target.value }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
+
+              {/* System Alerts */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <Label htmlFor="systemAlerts" className="text-black font-medium">
+                      System Alerts
+                    </Label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Show real-time system alerts and notifications
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="systemAlerts"
+                  checked={settings.systemAlerts}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, systemAlerts: checked }))}
+                  className="data-[state=checked]:bg-green-600"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="currency" className="text-slate-300">Currency</Label>
-                <Input
-                  id="currency"
-                  value={settings.currency}
-                  onChange={(e) => setSettings(prev => ({ ...prev, currency: e.target.value }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="taxRate" className="text-slate-300">Tax Rate (%)</Label>
-                <Input
-                  id="taxRate"
-                  type="number"
-                  step="0.1"
-                  value={settings.taxRate}
-                  onChange={(e) => setSettings(prev => ({ ...prev, taxRate: parseFloat(e.target.value) }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="storeAddress" className="text-slate-300">Store Address</Label>
-                <Input
-                  id="storeAddress"
-                  value={settings.storeAddress}
-                  onChange={(e) => setSettings(prev => ({ ...prev, storeAddress: e.target.value }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
-                />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Warning */}
+        <Card className="bg-yellow-50 border-yellow-300">
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="text-yellow-900 font-medium">Important Notice</h4>
+                <p className="text-yellow-800 text-sm mt-1">
+                  Changes to system settings may affect the entire application. Please review all changes carefully before saving.
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Warning */}
-      <Card className="bg-yellow-900/20 border-yellow-600/50">
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
-            <div>
-              <h4 className="text-yellow-400 font-medium">Important Notice</h4>
-              <p className="text-yellow-300 text-sm mt-1">
-                Changes to system settings may affect the entire application. Please review all changes carefully before saving.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
     </div>
   );
 }

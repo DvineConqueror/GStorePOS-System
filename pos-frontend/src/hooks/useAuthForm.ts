@@ -7,6 +7,7 @@ import { validatePassword, PasswordValidationResult } from '@/utils/passwordVali
 
 interface AuthFormData {
   email: string;
+  emailOrUsername: string;
   password: string;
   username: string;
   firstName: string;
@@ -22,6 +23,7 @@ interface UseAuthFormProps {
 export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormProps) => {
   const [formData, setFormData] = useState<AuthFormData>({
     email: '',
+    emailOrUsername: '',
     password: '',
     username: '',
     firstName: '',
@@ -59,6 +61,8 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
       
       if (data.success) {
         const userRole = data.data.user.role;
+        const maintenanceMode = data.data.maintenanceMode;
+        const maintenanceMessage = data.data.maintenanceMessage;
         
         // Set cookie expiration based on "Remember Me" option
         const cookieExpiration = rememberMe ? 30 : 7; // 30 days if remember me, 7 days otherwise
@@ -78,6 +82,18 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
           Cookies.set('refresh_token', data.data.refreshToken, { expires: 30 }); // 30 days
           // Refresh AuthContext to update user state
           await refreshSession();
+          
+          // Check if maintenance mode is active for managers
+          if (maintenanceMode && userRole === 'manager') {
+            return { 
+              success: true, 
+              maintenanceMode: true,
+              maintenanceMessage: maintenanceMessage || 'System is currently under maintenance. Some features may be unavailable.',
+              role: 'manager',
+              redirectTo: '/dashboard'
+            };
+          }
+          
           // Redirect based on role
           if (userRole === 'superadmin') {
             window.location.href = '/superadmin';
@@ -98,14 +114,40 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
       
       return { success: false, message: data.message || 'Login failed' };
     } catch (error: any) {
-      const message = error.message || 'Login failed';
+      console.log('Login error caught:', error.response?.data); // Debug log
+      console.log('Error status:', error.response?.status); // Debug log
+      // Handle maintenance mode for cashiers
+      if (error.response?.status === 403) {
+        const responseData = error.response.data;
+        console.log('403 response data:', responseData); // Debug log
+        console.log('Maintenance mode check:', responseData?.data?.maintenanceMode); // Debug log
+        if (responseData?.data?.maintenanceMode) {
+          console.log('Returning maintenance mode response for cashier'); // Debug log
+          return { 
+            success: false, 
+            message: responseData.message || 'System is currently under maintenance. Please try again later.',
+            maintenanceMode: true,
+            role: responseData.data.role
+          };
+        }
+      }
+      
+      const message = error.response?.data?.message || error.message || 'Login failed';
+      // Don't show toast for maintenance mode errors - let the modal handle it
+      if (!error.response?.data?.data?.maintenanceMode) {
+        toast({
+          title: "Login Failed",
+          description: message,
+          variant: "destructive",
+        });
+      }
       return { success: false, message };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<any> => {
     e.preventDefault();
     try {
       if (isSignUp) {
@@ -121,25 +163,31 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
           // Cashier accounts require manager approval, so don't auto-login
           // Reset form and switch back to login mode
           resetForm();
-        }
-      } else {
-        const result = await handleLogin(formData.email, formData.password);
-        if (!result.success) {
-          // Show error toast for failed login
           toast({
-            title: "Login Failed",
-            description: result.message || 'Invalid credentials or account not activated',
+            title: "Registration Successful",
+            description: "Your account has been created. Please wait for admin approval before logging in.",
+          });
+        } else {
+          toast({
+            title: "Registration Failed",
+            description: result.message || "Failed to create account. Please try again.",
             variant: "destructive",
           });
         }
+        return result;
+      } else {
+        const result = await handleLogin(formData.emailOrUsername, formData.password);
+        // Return result to component for maintenance dialog handling
+        return result;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Authentication error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+      return { success: false, message: error.message || 'An unexpected error occurred' };
     }
   };
 
@@ -156,6 +204,7 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
   const resetForm = () => {
     setFormData({
       email: '',
+      emailOrUsername: '',
       password: '',
       username: '',
       firstName: '',

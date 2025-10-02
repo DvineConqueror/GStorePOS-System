@@ -17,6 +17,7 @@ interface LoginFormProps {
   colors: ColorScheme;
   formData: {
     email: string;
+    emailOrUsername: string;
     password: string;
     username: string;
     firstName: string;
@@ -116,8 +117,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               <Input
                 id="email"
                 type={isSignUp && !isAdminMode ? 'email' : 'text'}
-                value={formData.email}
-                onChange={(e) => onInputChange('email', e.target.value)}
+                value={isSignUp ? formData.email : formData.emailOrUsername}
+                onChange={(e) => onInputChange(isSignUp ? 'email' : 'emailOrUsername', e.target.value)}
                 className="h-8 px-3 text-black text-sm border-gray-300 focus:outline-none focus:ring-0 focus:border-gray-300 transition-all duration-300"
                 placeholder={isSignUp && !isAdminMode ? 'you@example.com' : 'email@example.com or username'}
                 required

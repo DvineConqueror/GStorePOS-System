@@ -81,6 +81,13 @@ export function SocketProvider({ children }: SocketProviderProps) {
       window.dispatchEvent(new CustomEvent('cashier:analytics:update', { detail: analyticsData }));
     });
 
+    // Listen for maintenance mode updates
+    newSocket.on('system:maintenance', (data) => {
+      console.log('Received maintenance mode update:', data);
+      // Dispatch custom event for maintenance mode update
+      window.dispatchEvent(new CustomEvent('system:maintenance', { detail: data }));
+    });
+
     setSocket(newSocket);
 
     return () => {

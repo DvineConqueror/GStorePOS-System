@@ -44,7 +44,7 @@ async function initializeCategoryGroups() {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Find the first admin user to use as creator
     const User = mongoose.model('User', new mongoose.Schema({}, { strict: false }));
@@ -53,11 +53,11 @@ async function initializeCategoryGroups() {
     }).sort({ createdAt: 1 });
 
     if (!adminUser) {
-      console.error('❌ No admin user found. Please create a superadmin first using npm run create-superadmin');
+      console.error(' No admin user found. Please create a superadmin first using npm run create-superadmin');
       process.exit(1);
     }
 
-    console.log(`📝 Using admin user: ${adminUser.username} (${adminUser.role})`);
+    console.log(` Using admin user: ${adminUser.username} (${adminUser.role})`);
 
     // Initialize default category groups
     let created = 0;
@@ -71,23 +71,23 @@ async function initializeCategoryGroups() {
           ...groupData,
           createdBy: adminUser._id,
         });
-        console.log(`✅ Created category group: ${groupData.name}`);
+        console.log(` Created category group: ${groupData.name}`);
         created++;
       } else {
-        console.log(`ℹ️  Category group already exists: ${groupData.name}`);
+        console.log(`  Category group already exists: ${groupData.name}`);
         existing++;
       }
     }
 
-    console.log('\n📊 Summary:');
+    console.log('\n Summary:');
     console.log(`   Created: ${created}`);
     console.log(`   Already existed: ${existing}`);
     console.log(`   Total: ${created + existing}`);
 
-    console.log('\n✅ Category groups initialization complete!');
+    console.log('\n Category groups initialization complete!');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error initializing category groups:', error);
+    console.error(' Error initializing category groups:', error);
     process.exit(1);
   }
 }

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import NotificationButton from '@/components/notifications/NotificationButton';
 import NotificationAlert from '@/components/notifications/NotificationAlert';
+import { MaintenanceBanner } from '@/components/system/MaintenanceBanner';
 
 interface AdminLayoutProps {
   children?: React.ReactNode;
@@ -40,6 +41,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
         <div className="min-h-screen bg-[#ececec]">
+      {/* Maintenance Banner */}
+      <MaintenanceBanner />
+      
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-green-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

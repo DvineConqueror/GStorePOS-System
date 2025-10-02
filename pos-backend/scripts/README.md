@@ -155,7 +155,7 @@ This is your last chance. Type "YES" to permanently delete all data: YES
    Transactions: 0
  Database is now completely empty and ready for fresh data!
 
-📝 Next steps:
+ Next steps:
    1. Run "npm run create-superadmin" to create a new superadmin account
    2. Import your new product data
    3. Create new user accounts as needed

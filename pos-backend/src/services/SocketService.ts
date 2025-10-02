@@ -178,4 +178,27 @@ export class SocketService {
 
     this.io.to(`user-${userId}`).emit(event, data);
   }
+
+  /**
+   * Emit maintenance mode update to all users
+   */
+  static emitMaintenanceModeUpdate(data: {
+    maintenanceMode: boolean;
+    maintenanceMessage?: string;
+    updatedAt: Date;
+  }) {
+    if (!this.io) {
+      console.error('Socket.IO not initialized');
+      return;
+    }
+
+    // Emit to all connected clients
+    this.io.emit('system:maintenance', {
+      type: 'maintenance_mode_update',
+      data,
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(`Maintenance mode ${data.maintenanceMode ? 'enabled' : 'disabled'} - notification sent to all users`);
+  }
 }

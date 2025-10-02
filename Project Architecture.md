@@ -36,7 +36,7 @@ HTTP Request → Routes → Controllers → Services → Models → Database
 HTTP Response ← Routes ← Controllers ← Services ← Models ← Database
 ```
 
-### **📝 Layer Responsibilities**
+### ** Layer Responsibilities**
 
 #### **1. Controllers (Thin Layer)**
 - **Purpose**: Handle HTTP requests/responses only
