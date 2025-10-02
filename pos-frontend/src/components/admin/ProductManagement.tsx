@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Search, Plus, Eye, EyeOff, AlertTriangle, Package, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Eye, EyeOff, AlertTriangle, Package, Edit, Trash2, FolderPlus } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Product {
   _id: string;
@@ -38,6 +39,22 @@ interface NewProduct {
   imagePreview: string;
 }
 
+interface Category {
+  _id: string;
+  name: string;
+  group: string;
+  description?: string;
+  isActive: boolean;
+}
+
+interface CategoryGroup {
+  _id: string;
+  name: string;
+  description?: string;
+  order: number;
+  isActive: boolean;
+}
+
 interface ProductManagementProps {
   products: Product[];
   loading: boolean;
@@ -48,6 +65,8 @@ interface ProductManagementProps {
   productStatusFilter: string;
   filteredProducts: Product[];
   uniqueCategories: string[];
+  categories?: Category[];
+  categoryGroups?: CategoryGroup[];
   onSearchChange: (value: string) => void;
   onCategoryFilterChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
@@ -58,6 +77,8 @@ interface ProductManagementProps {
   onToggleProductStatus: (productId: string, currentStatus: 'active' | 'inactive') => void;
   onDeleteProduct?: (productId: string) => void;
   onEditProduct?: (product: Product) => void;
+  onCategoryAdded?: () => void;
+  onCategoryGroupAdded?: () => void;
 }
 
 export const ProductManagement: React.FC<ProductManagementProps> = ({
@@ -70,6 +91,8 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
   productStatusFilter,
   filteredProducts,
   uniqueCategories,
+  categories = [],
+  categoryGroups = [],
   onSearchChange,
   onCategoryFilterChange,
   onStatusFilterChange,
@@ -79,14 +102,101 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
   onAddProduct,
   onToggleProductStatus,
   onDeleteProduct,
-  onEditProduct
+  onEditProduct,
+  onCategoryAdded,
+  onCategoryGroupAdded
 }) => {
-  // Organized categories by groups (same as ProductForm)
-  const categoryGroups = {
-    "Food": ['Snacks', 'Candies', 'Instant Noodles', 'Canned Goods'],
-    "Beverages": ['Beverages', 'Soft Drinks', 'Juices', 'Water'],
-    "Personal Care": ['Personal Care', 'Soap', 'Shampoo', 'Toothpaste'],
-    "Other": ['Others']
+  const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
+  const [showAddGroupDialog, setShowAddGroupDialog] = useState(false);
+  const [newCategory, setNewCategory] = useState({
+    name: '',
+    group: '',
+    description: ''
+  });
+  const [newCategoryGroup, setNewCategoryGroup] = useState({
+    name: '',
+    description: ''
+  });
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [groupLoading, setGroupLoading] = useState(false);
+
+  // Organize categories by groups dynamically from database
+  const organizedCategories = React.useMemo(() => {
+    const grouped: Record<string, string[]> = {};
+
+    // Initialize groups from categoryGroups
+    categoryGroups.forEach(group => {
+      if (group.isActive) {
+        grouped[group.name] = [];
+      }
+    });
+
+    // If we have categories from the database, organize them
+    if (categories.length > 0) {
+      categories.forEach(cat => {
+        if (cat.isActive) {
+          if (!grouped[cat.group]) {
+            grouped[cat.group] = [];
+          }
+          grouped[cat.group].push(cat.name);
+        }
+      });
+    }
+
+    return grouped;
+  }, [categories, categoryGroups]);
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCategoryLoading(true);
+
+    try {
+      const { categoryAPI } = await import('@/services/categoryService');
+      await categoryAPI.create(newCategory);
+      
+      // Reset form
+      setNewCategory({ name: '', group: '', description: '' });
+      setShowAddCategoryDialog(false);
+      
+      // Notify parent to refresh categories
+      if (onCategoryAdded) {
+        onCategoryAdded();
+      }
+
+      // Show success toast (you can add a toast library)
+      alert('Category added successfully!');
+    } catch (error: any) {
+      console.error('Failed to add category:', error);
+      alert(error.response?.data?.message || 'Failed to add category');
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  const handleAddCategoryGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGroupLoading(true);
+
+    try {
+      const { categoryGroupAPI } = await import('@/services/categoryGroupService');
+      await categoryGroupAPI.create(newCategoryGroup);
+      
+      // Reset form
+      setNewCategoryGroup({ name: '', description: '' });
+      setShowAddGroupDialog(false);
+      
+      // Notify parent to refresh category groups
+      if (onCategoryGroupAdded) {
+        onCategoryGroupAdded();
+      }
+
+      alert('Category group added successfully!');
+    } catch (error: any) {
+      console.error('Failed to add category group:', error);
+      alert(error.response?.data?.message || 'Failed to add category group');
+    } finally {
+      setGroupLoading(false);
+    }
   };
 
   return (
@@ -95,10 +205,23 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle>Product Management</CardTitle>
-            <Button onClick={() => onShowAddForm(true)} className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                onClick={() => setShowAddCategoryDialog(true)} 
+                variant="outline"
+                className="flex-1 sm:flex-initial"
+              >
+                <FolderPlus className="mr-2 h-4 w-4" />
+                Add Category
+              </Button>
+              <Button 
+                onClick={() => onShowAddForm(true)} 
+                className="flex-1 sm:flex-initial"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Product
+              </Button>
+            </div>
           </div>
           
           {/* Search and Filter Controls */}
@@ -140,6 +263,173 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
           </div>
         </CardHeader>
         <CardContent>
+          {/* Add Category Dialog */}
+          <Dialog open={showAddCategoryDialog} onOpenChange={setShowAddCategoryDialog}>
+            <DialogContent className="max-w-md p-0">
+              <DialogHeader className="px-4 pt-4 pb-2 border-b flex-shrink-0">
+                <DialogTitle className="text-lg text-black font-semibold">Add New Category</DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  Create a new product category to organize your inventory
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddCategory} className="flex flex-col flex-1">
+                <div className="px-4 py-4 space-y-3">
+                  <div>
+                    <Label htmlFor="category-name" className="text-sm font-medium text-black">
+                      Category Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="category-name"
+                      value={newCategory.name}
+                      onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                      placeholder="e.g., Frozen Foods"
+                      required
+                      className="mt-1 text-black placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <Label htmlFor="category-group" className="text-sm font-medium text-black">
+                        Category Group <span className="text-red-500">*</span>
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAddGroupDialog(true)}
+                        className="h-auto py-0 px-2 text-xs text-green-600 hover:text-green-700"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        New Group
+                      </Button>
+                    </div>
+                    <Select 
+                      value={newCategory.group} 
+                      onValueChange={(value) => setNewCategory({ ...newCategory, group: value })}
+                      required
+                    >
+                      <SelectTrigger className="mt-1 text-black">
+                        <SelectValue placeholder="Select group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryGroups.length > 0 ? (
+                          categoryGroups.map((group) => (
+                            <SelectItem key={group._id} value={group.name} className="text-black">
+                              {group.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <>
+                            <SelectItem value="Food" className="text-black">Food</SelectItem>
+                            <SelectItem value="Beverages" className="text-black">Beverages</SelectItem>
+                            <SelectItem value="Personal Care" className="text-black">Personal Care</SelectItem>
+                            <SelectItem value="Other" className="text-black">Other</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="category-description" className="text-sm font-medium text-black">
+                      Description (Optional)
+                    </Label>
+                    <Textarea
+                      id="category-description"
+                      value={newCategory.description}
+                      onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                      placeholder="Brief description of this category..."
+                      rows={3}
+                      className="mt-1 text-black placeholder:text-gray-400 resize-none"
+                    />
+                  </div>
+                </div>
+                <div className="px-4 pb-4 border-t bg-background flex-shrink-0 pt-3">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAddCategoryDialog(false)}
+                      className="flex-1"
+                      disabled={categoryLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      disabled={categoryLoading}
+                    >
+                      {categoryLoading ? 'Adding...' : 'Add Category'}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Add Category Group Dialog */}
+          <Dialog open={showAddGroupDialog} onOpenChange={setShowAddGroupDialog}>
+            <DialogContent className="max-w-md p-0">
+              <DialogHeader className="px-4 pt-4 pb-2 border-b flex-shrink-0">
+                <DialogTitle className="text-lg text-black font-semibold">Add New Category Group</DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  Create a new category group to organize categories
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddCategoryGroup} className="flex flex-col flex-1">
+                <div className="px-4 py-4 space-y-3">
+                  <div>
+                    <Label htmlFor="group-name" className="text-sm font-medium text-black">
+                      Group Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="group-name"
+                      value={newCategoryGroup.name}
+                      onChange={(e) => setNewCategoryGroup({ ...newCategoryGroup, name: e.target.value })}
+                      placeholder="e.g., Household Items"
+                      required
+                      className="mt-1 text-black placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="group-description" className="text-sm font-medium text-black">
+                      Description (Optional)
+                    </Label>
+                    <Textarea
+                      id="group-description"
+                      value={newCategoryGroup.description}
+                      onChange={(e) => setNewCategoryGroup({ ...newCategoryGroup, description: e.target.value })}
+                      placeholder="Brief description of this category group..."
+                      rows={3}
+                      className="mt-1 text-black placeholder:text-gray-400 resize-none"
+                    />
+                  </div>
+                </div>
+                <div className="px-4 pb-4 border-t bg-background flex-shrink-0 pt-3">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAddGroupDialog(false)}
+                      className="flex-1"
+                      disabled={groupLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      disabled={groupLoading}
+                    >
+                      {groupLoading ? 'Adding...' : 'Add Group'}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Add Product Dialog */}
           <Dialog open={showAddProductForm} onOpenChange={onShowAddForm}>
               <DialogContent className="max-w-md p-0">
                 <DialogHeader className="px-4 pt-4 pb-2 border-b flex-shrink-0">
@@ -180,7 +470,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
                               <SelectValue placeholder="Select category" className="text-gray-400" />
                             </SelectTrigger>
                             <SelectContent className="max-h-[300px]">
-                              {Object.entries(categoryGroups).map(([groupName, categories]) => (
+                              {Object.entries(organizedCategories).map(([groupName, categories]) => (
                                 <SelectGroup key={groupName} className="relative">
                                   <SelectLabel className="px-2 py-1.5 text-sm font-semibold bg-muted/50 text-black">{groupName}</SelectLabel>
                                   {categories.map((cat) => (

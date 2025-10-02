@@ -15,6 +15,9 @@ import { PasswordResetService } from './services/PasswordResetService';
 import { SocketService } from './services/SocketService';
 import { ImageService } from './services/ImageService';
 import { AnalyticsCacheService } from './services/AnalyticsCacheService';
+import CategoryGroupService from './services/CategoryGroupService';
+import CategoryService from './services/CategoryService';
+import { User } from './models/User';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -26,6 +29,8 @@ import superadminRoutes from './routes/superadmin';
 import databaseRoutes from './routes/database';
 import notificationRoutes from './routes/notifications';
 import imageRoutes from './routes/images';
+import categoryRoutes from './routes/categories';
+import categoryGroupRoutes from './routes/categoryGroups';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -183,6 +188,8 @@ app.use('/api/v1/superadmin', superadminRoutes);
 app.use('/api/v1/database', databaseRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/images', imageRoutes);
+app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/category-groups', categoryGroupRoutes);
 
 // Error handling middleware
 app.use(notFound);
@@ -224,6 +231,29 @@ const startServer = async () => {
       
       // Initialize analytics cache service
       AnalyticsCacheService.initialize();
+      
+      // Initialize default category groups and categories if they don't exist
+      (async () => {
+        try {
+          const adminUser = await User.findOne({ 
+            role: { $in: ['manager', 'superadmin'] } 
+          }).sort({ createdAt: 1 });
+          
+          if (adminUser) {
+            // Initialize category groups first
+            await CategoryGroupService.initializeDefaultCategoryGroups(adminUser.id);
+            console.log('✅ Category groups initialized');
+            
+            // Then initialize categories
+            await CategoryService.initializeDefaultCategories(adminUser.id);
+            console.log('✅ Default categories initialized');
+          } else {
+            console.log('⚠️  No admin user found for initialization');
+          }
+        } catch (error) {
+          console.error('Error initializing categories:', error);
+        }
+      })();
       
       // Start password reset token cleanup (every hour)
       setInterval(async () => {

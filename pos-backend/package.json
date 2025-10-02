@@ -13,7 +13,8 @@
     "create-admin": "node scripts/create-admin.js",
     "create-superadmin": "node scripts/create-superadmin.js",
     "init-indexes": "node scripts/init-indexes.js",
-    "reset-indexes": "node scripts/reset-indexes.js"
+    "reset-indexes": "node scripts/reset-indexes.js",
+    "init-category-groups": "node scripts/init-category-groups.js"
   },
   "keywords": [
     "pos",

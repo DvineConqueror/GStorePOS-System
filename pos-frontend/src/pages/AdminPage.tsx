@@ -158,6 +158,8 @@ const AdminPageContent = () => {
           <TabsContent value="products" className="space-y-6">
             <ProductManagement
               products={productManagement.products}
+              categories={productManagement.categories}
+              categoryGroups={productManagement.categoryGroups}
               loading={productManagement.loading}
               showAddProductForm={productManagement.showAddProductForm}
               newProduct={productManagement.newProduct}
@@ -176,6 +178,8 @@ const AdminPageContent = () => {
               onToggleProductStatus={productManagement.handleToggleProductStatus}
               onDeleteProduct={productManagement.handleDeleteProduct}
               onEditProduct={productManagement.handleEditProduct}
+              onCategoryAdded={productManagement.fetchCategories}
+              onCategoryGroupAdded={productManagement.fetchCategoryGroups}
             />
           </TabsContent>
 

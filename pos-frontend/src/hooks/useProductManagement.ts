@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { productsAPI } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { useRefresh } from '@/context/RefreshContext';
+import { categoryAPI, Category } from '@/services/categoryService';
+import { categoryGroupAPI, CategoryGroup } from '@/services/categoryGroupService';
 
 interface Product {
   _id: string;
@@ -35,6 +37,8 @@ interface NewProduct {
 
 export const useProductManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddProductForm, setShowAddProductForm] = useState(false);
   const [newProduct, setNewProduct] = useState<NewProduct>({
@@ -75,9 +79,31 @@ export const useProductManagement = () => {
     }
   };
 
-  // Refresh products when refresh trigger changes
+  const fetchCategories = async () => {
+    try {
+      const data = await categoryAPI.getAll();
+      setCategories(data);
+    } catch (error: any) {
+      console.error('Error fetching categories:', error);
+      // Silent fail for categories - will use default categories
+    }
+  };
+
+  const fetchCategoryGroups = async () => {
+    try {
+      const data = await categoryGroupAPI.getAll();
+      setCategoryGroups(data);
+    } catch (error: any) {
+      console.error('Error fetching category groups:', error);
+      // Silent fail for category groups - will use default groups
+    }
+  };
+
+  // Refresh products, categories, and category groups when refresh trigger changes
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
+    fetchCategoryGroups();
   }, [refreshTrigger]); // Remove fetchProducts from dependencies to prevent infinite loop
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,6 +248,8 @@ export const useProductManagement = () => {
   return {
     // State
     products,
+    categories,
+    categoryGroups,
     loading,
     showAddProductForm,
     newProduct,
@@ -234,6 +262,8 @@ export const useProductManagement = () => {
     
     // Actions
     fetchProducts,
+    fetchCategories,
+    fetchCategoryGroups,
     handleImageChange,
     handleAddProduct,
     handleToggleProductStatus,
