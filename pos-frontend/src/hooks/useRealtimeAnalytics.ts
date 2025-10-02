@@ -31,6 +31,17 @@ interface RealtimeAnalyticsData {
     transactions: number;
     averageTransaction: number;
   };
+  growth?: {
+    salesGrowth: number;
+    transactionGrowth: number;
+    avgTransactionGrowth: number;
+    todaySalesGrowth?: number;
+  };
+  daily?: {
+    totalSales: number;
+    totalTransactions: number;
+    averageTransactionValue: number;
+  };
   formattedMetrics: {
     totalSales: {
       value: number;
@@ -74,7 +85,6 @@ interface RealtimeAnalyticsData {
     transactions: number;
   }>;
   weekly?: any;
-  daily?: any;
 }
 
 interface UseRealtimeAnalyticsOptions {
@@ -89,7 +99,7 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions = {}) 
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const { fallbackToAPI = true, refreshInterval = 30000 } = options;
+  const { fallbackToAPI = true, refreshInterval = 60000 } = options; // Changed to 60 seconds
 
   useEffect(() => {
     if (!user || (user.role !== 'manager' && user.role !== 'superadmin')) {
@@ -99,26 +109,94 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions = {}) 
 
     // Listen for real-time analytics updates
     const handleAnalyticsUpdate = (event: CustomEvent) => {
-      setRealtimeData(event.detail);
-      setLastUpdated(new Date());
+      setRealtimeData(prev => {
+        // Only update if data has actually changed
+        if (JSON.stringify(prev) !== JSON.stringify(event.detail)) {
+          setLastUpdated(new Date());
+          setError(null);
+          return event.detail;
+        }
+        return prev;
+      });
       setLoading(false);
-      setError(null);
     };
 
     // Listen for manager analytics updates
     const handleManagerAnalyticsUpdate = (event: CustomEvent) => {
-      setRealtimeData(event.detail);
-      setLastUpdated(new Date());
+      const newData = event.detail;
+      
+      // Handle background updates gracefully without UI disruption
+      if (newData.backgroundUpdate || newData.cacheRefreshed) {
+        console.log('Background analytics update received');
+        
+        // For background updates, only update data if user is not actively using the page
+        // Check if the user has been inactive or if this is truly background
+        setRealtimeData(prev => {
+          if (!prev) {
+            setLastUpdated(new Date());
+            setError(null);
+            return newData;
+          }
+          
+          // Smoothly merge new data without causing re-renders that disrupt UI
+          const mergedData = {
+            ...prev,
+            // Only update metrics if they have significantly changed (> 5% difference)
+            metrics: newData.metrics && prev.metrics ? {
+              ...prev.metrics,
+              ...Object.keys(newData.metrics).reduce((acc, key) => {
+                const newVal = newData.metrics[key];
+                const oldVal = prev.metrics[key];
+                // Only update if change is significant or if it's a new metric
+                if (typeof newVal === 'number' && typeof oldVal === 'number') {
+                  const percentChange = Math.abs((newVal - oldVal) / oldVal);
+                  if (percentChange > 0.05 || oldVal === 0) { // 5% threshold
+                    acc[key] = newVal;
+                  } else {
+                    acc[key] = oldVal; // Keep old value to prevent flashing
+                  }
+                } else {
+                  acc[key] = newVal;
+                }
+                return acc;
+              }, {} as any)
+            } : newData.metrics,
+            // Update other non-visual data
+            lastUpdated: new Date().toISOString(),
+            backgroundUpdate: true
+          };
+          
+          setLastUpdated(new Date());
+          setError(null);
+          return mergedData;
+        });
+      } else {
+        // Regular updates - only update if data has actually changed
+        setRealtimeData(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(newData)) {
+            setLastUpdated(new Date());
+            setError(null);
+            return newData;
+          }
+          return prev;
+        });
+      }
+      
       setLoading(false);
-      setError(null);
     };
 
     // Listen for cashier analytics updates (if user is a cashier)
     const handleCashierAnalyticsUpdate = (event: CustomEvent) => {
-      setRealtimeData(event.detail);
-      setLastUpdated(new Date());
+      setRealtimeData(prev => {
+        // Only update if data has actually changed
+        if (JSON.stringify(prev) !== JSON.stringify(event.detail)) {
+          setLastUpdated(new Date());
+          setError(null);
+          return event.detail;
+        }
+        return prev;
+      });
       setLoading(false);
-      setError(null);
     };
 
     // Add event listeners

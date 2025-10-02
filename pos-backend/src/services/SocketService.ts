@@ -8,6 +8,14 @@ export class SocketService {
   }
 
   /**
+   * Check if there are connected clients
+   */
+  static hasConnectedClients(): boolean {
+    if (!this.io) return false;
+    return this.io.engine.clientsCount > 0;
+  }
+
+  /**
    * Emit notification to all users with a specific role
    */
   static emitToRole(role: string, event: string, data: any) {

@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Bell, 
   BellRing, 
   Users, 
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
 import { getColorScheme } from '@/utils/colorSchemes';
 import { useSocket } from '@/context/SocketContext';
 
@@ -31,7 +32,6 @@ interface NotificationButtonProps {
 export default function NotificationButton({ className }: NotificationButtonProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const colors = getColorScheme();
   const { isConnected } = useSocket();
   
@@ -39,6 +39,7 @@ export default function NotificationButton({ className }: NotificationButtonProp
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNoApprovalsDialog, setShowNoApprovalsDialog] = useState(false);
 
   // Only show for superadmin and manager roles
   if (!user || (user.role !== 'superadmin' && user.role !== 'manager')) {
@@ -115,10 +116,7 @@ export default function NotificationButton({ className }: NotificationButtonProp
 
   const handleNotificationClick = () => {
     if (pendingCount === 0) {
-      toast({
-        title: "No Pending Approvals",
-        description: "There are no users waiting for approval.",
-      });
+      setShowNoApprovalsDialog(true);
       return;
     }
 
@@ -252,6 +250,40 @@ export default function NotificationButton({ className }: NotificationButtonProp
           onClick={() => setShowDropdown(false)}
         />
       )}
+
+      {/* No Approvals Dialog */}
+      <Dialog open={showNoApprovalsDialog} onOpenChange={setShowNoApprovalsDialog}>
+        <DialogContent className="max-w-md p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
+            <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              No Pending Approvals
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 py-4">
+            <div className="text-center py-4">
+              <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">All Caught Up!</h3>
+              <p className="text-gray-600 mb-4">
+                There are no users waiting for approval at this time. All user registrations have been processed.
+              </p>
+              <div className="text-sm text-gray-500">
+                New user registrations will appear here when they need your approval.
+              </div>
+            </div>
+          </div>
+          <div className="px-6 pb-6 border-t bg-gray-50 flex-shrink-0">
+            <Button
+              onClick={() => setShowNoApprovalsDialog(false)}
+              className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white"
+            >
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

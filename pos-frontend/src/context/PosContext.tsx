@@ -3,6 +3,7 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { CartItem, Product, Transaction } from '@/types';
 import { productsAPI, transactionsAPI } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useDataPrefetch } from './DataPrefetchContext';
 
 type PosState = {
   products: Product[];
@@ -119,6 +120,7 @@ const PosContext = createContext<PosContextType | undefined>(undefined);
 export function PosProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(posReducer, initialState);
   const { toast } = useToast();
+  const { data: prefetchedData, refreshData } = useDataPrefetch();
 
   const fetchProducts = async () => {
     try {
@@ -155,7 +157,7 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
           paymentMethod: t.paymentMethod,
           cashReceived: t.cashReceived,
           change: t.change,
-          status: t.status as 'completed' | 'refunded' | 'voided',
+          status: t.status === 'voided' ? 'refunded' : (t.status as 'completed' | 'refunded'),
           timestamp: t.createdAt,
           createdAt: t.createdAt,
           updatedAt: t.updatedAt,
@@ -233,8 +235,8 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
         
         dispatch({ type: 'COMPLETE_TRANSACTION', payload: completedTransaction });
         
-        // Refetch products to update stock levels
-        await fetchProducts();
+        // Refresh prefetched products to update stock levels
+        await refreshData(['products']);
         
         toast({
           title: "Success",
@@ -254,9 +256,57 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    fetchProducts();
-    fetchTransactions();
-  }, []);
+    // Use prefetched data if available, otherwise fetch
+    if (prefetchedData.products.length > 0 && state.products.length === 0) {
+      dispatch({ type: 'SET_PRODUCTS', payload: prefetchedData.products });
+    } else if (prefetchedData.products.length === 0 && state.products.length === 0) {
+      fetchProducts();
+    }
+
+    if (prefetchedData.transactions.length > 0 && state.transactions.length === 0) {
+      // Convert prefetched transactions to POS format
+      const formattedTransactions: Transaction[] = prefetchedData.transactions.map((t: any) => ({
+        _id: t._id,
+        id: t._id,
+        transactionNumber: t.transactionNumber,
+        total: t.total,
+        subtotal: t.subtotal,
+        tax: t.tax,
+        discount: t.discount,
+        paymentMethod: t.paymentMethod,
+        cashReceived: t.cashReceived,
+        change: t.change,
+        status: t.status === 'voided' ? 'refunded' : (t.status as 'completed' | 'refunded'),
+        timestamp: t.createdAt,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt,
+        cashierId: t.cashierId,
+        cashierName: t.cashierName || 'Unknown',
+        customerId: t.customerId,
+        customerName: t.customerName,
+        notes: t.notes,
+        items: t.items?.map((item: any) => ({
+          _id: item.productId,
+          id: item.productId,
+          name: item.productName,
+          price: item.unitPrice,
+          category: '',
+          image: '',
+          quantity: item.quantity,
+          stock: 0,
+          sku: '',
+          minStock: 0,
+          unit: '',
+          isActive: true,
+          createdAt: '',
+          updatedAt: ''
+        })) || []
+      }));
+      dispatch({ type: 'SET_TRANSACTIONS', payload: formattedTransactions });
+    } else if (prefetchedData.transactions.length === 0 && state.transactions.length === 0) {
+      fetchTransactions();
+    }
+  }, [prefetchedData.products.length, prefetchedData.transactions.length, state.products.length, state.transactions.length]);
 
   const addToCart = (product: Product) => {
     dispatch({ type: 'ADD_TO_CART', payload: product });

@@ -14,6 +14,7 @@ import { EmailService } from './services/EmailService';
 import { PasswordResetService } from './services/PasswordResetService';
 import { SocketService } from './services/SocketService';
 import { ImageService } from './services/ImageService';
+import { AnalyticsCacheService } from './services/AnalyticsCacheService';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -220,6 +221,9 @@ const startServer = async () => {
 
       // Initialize email service
       EmailService.initializeTransporter();
+      
+      // Initialize analytics cache service
+      AnalyticsCacheService.initialize();
       
       // Start password reset token cleanup (every hour)
       setInterval(async () => {

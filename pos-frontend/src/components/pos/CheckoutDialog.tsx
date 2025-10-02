@@ -23,7 +23,7 @@ export function CheckoutDialog() {
 
   const total = calculateTotal();
   const cashReceived = parseFloat(cashAmount) || 0;
-  const cashLimit = 10000; // Adjust this limit as needed
+  const cashLimit = 10000;
   const change = cashReceived - total;
 
   const handleCashAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +41,7 @@ export function CheckoutDialog() {
     if (cashReceived >= total && cashReceived <= cashLimit) {
       const transaction = {
         _id: uuidv4(),
-        id: uuidv4(), // For backward compatibility
+        id: uuidv4(),
         transactionNumber: `TXN-${Date.now()}`,
         items: [...cart],
         subtotal: total,
@@ -54,7 +54,6 @@ export function CheckoutDialog() {
         status: 'completed' as const,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        // Legacy fields for backward compatibility
         cashReceived,
         change,
         timestamp: new Date().toISOString(),
@@ -82,17 +81,17 @@ export function CheckoutDialog() {
     <Dialog 
       open={isCheckoutOpen} 
       onOpenChange={(open) => {
-        if (!open && !showReceipt) {  // Only allow closing if not showing receipt
+        if (!open && !showReceipt) {
           resetCheckout();
         }
       }}
     >
       <DialogContent className={cn(
-        "sm:max-w-[425px]",
-        showReceipt && "sm:max-w-[600px]"
+        "max-w-md p-0",
+        showReceipt && "max-w-lg"
       )}>
-        <DialogHeader>
-          <DialogTitle>
+        <DialogHeader className="px-4 pt-4 pb-2 border-b flex-shrink-0">
+          <DialogTitle className="text-lg font-semibold text-black">
             {showReceipt 
               ? "Transaction Complete" 
               : showCashInput 
@@ -102,103 +101,106 @@ export function CheckoutDialog() {
         </DialogHeader>
         
         {showReceipt ? (
-          <div className="space-y-4">
-            <div className="flex flex-col items-center py-4 space-y-4">
-              <Receipt className="h-16 w-16 text-pos-success" />
-              <p className="text-xl font-medium">Payment Successful</p>
-            </div>
-            {currentTransaction && (
-              <>
+          <div className="flex flex-col flex-1">
+            <div className="px-4 py-4 space-y-3">
+              <div className="flex flex-col items-center py-2 space-y-2">
+                <Receipt className="h-12 w-12 text-green-600" />
+                <p className="text-lg font-medium text-green-600">Payment Successful</p>
+              </div>
+              {currentTransaction && (
                 <TransactionReceipt transaction={currentTransaction} />
-                <div className="flex space-x-2 mt-4">
-                  <Button 
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={() => window.print()}
-                  >
-                    Print Receipt
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={handleClose}  // Just use resetCheckout directly
-                  >
-                    Close
-                  </Button>
-                </div>
-              </>
-            )}
+              )}
+            </div>
+            <div className="px-4 pb-4 border-t bg-background flex-shrink-0">
+              <div className="flex space-x-2 mt-3">
+                <Button 
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={() => window.print()}
+                >
+                  Print Receipt
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={handleClose}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
           </div>
         ) : showCashInput ? (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label>Total Amount:</Label>
-                <span className="font-bold">{formatCurrency(total)}</span>
+          <div className="flex flex-col flex-1">
+            <div className="px-4 py-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm font-medium text-black">Total Amount</Label>
+                  <div className="text-xl font-bold text-green-600">{formatCurrency(total)}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-black">Change</Label>
+                  <div className={`text-xl font-bold ${change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                    {formatCurrency(change >= 0 ? change : 0)}
+                  </div>
+                </div>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="cashAmount">Cash Received:</Label>
+              <div>
+                <Label htmlFor="cashAmount" className="text-sm font-medium text-black">Cash Received</Label>
                 <Input
                   id="cashAmount"
                   value={cashAmount}
                   onChange={handleCashAmountChange}
                   placeholder="0.00"
                   autoFocus
+                  className="mt-1 text-black"
                 />
                 {cashReceived > cashLimit && (
-                  <p className="text-sm text-destructive mt-1">
+                  <p className="text-sm text-red-500 mt-1">
                     Cash received exceeds the limit of {formatCurrency(cashLimit)}
                   </p>
                 )}
               </div>
-              {cashReceived > 0 && (
-                <div className="flex justify-between pt-2">
-                  <Label>Change:</Label>
-                  <span className={`font-bold ${change >= 0 ? 'text-pos-success' : 'text-destructive'}`}>
-                    {formatCurrency(change >= 0 ? change : 0)}
-                  </span>
-                </div>
-              )}
             </div>
-            
-            <div className="flex space-x-2">
-              <Button variant="outline" className="flex-1" onClick={resetCheckout}>
-                Cancel
-              </Button>
-              <Button 
-                className="flex-1 bg-pos-success hover:bg-pos-success/90" 
-                disabled={cashReceived < total || cashReceived > cashLimit}
-                onClick={handleCompleteTransaction}
-              >
-                Complete Payment
-              </Button>
+            <div className="px-4 pb-4 border-t bg-background flex-shrink-0">
+              <div className="flex space-x-2 mt-3">
+                <Button variant="outline" className="flex-1" onClick={resetCheckout}>
+                  Cancel
+                </Button>
+                <Button 
+                  className="flex-1 bg-green-600 hover:bg-green-700" 
+                  disabled={cashReceived < total || cashReceived > cashLimit}
+                  onClick={handleCompleteTransaction}
+                >
+                  Complete Payment
+                </Button>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div>
-              <div className="max-h-[300px] overflow-y-auto space-y-2">
+          <div className="flex flex-col flex-1">
+            <div className="px-4 py-4 space-y-3">
+              <div className="max-h-[200px] overflow-y-auto space-y-2">
                 {cart.map(item => (
-                  <div key={item.id} className="flex justify-between">
-                    <span>{item.name} × {item.quantity}</span>
-                    <span>{formatCurrency(item.price * item.quantity)}</span>
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span className="text-black">{item.name} × {item.quantity}</span>
+                    <span className="font-medium text-gray-500">{formatCurrency(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between font-bold pt-2 border-t">
+              <div className="flex justify-between font-bold text-lg pt-2 border-t text-black">
                 <span>Total</span>
-                <span>{formatCurrency(total)}</span>
+                <span className="text-green-600">{formatCurrency(total)}</span>
               </div>
-            </div>
-            
-            <div className="pt-4">
-              <p className="mb-2 text-sm text-muted-foreground">Select payment method:</p>
-              <Button
-                className="w-full flex items-center justify-start mb-2 bg-green-600 hover:bg-green-700"
-                onClick={handlePaymentMethodSelect}
-              >
-                <Banknote className="mr-2 h-4 w-4" />
-                Cash
-              </Button>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Select payment method:</Label>
+                <Button
+                  className="w-full flex items-center justify-center mt-2 bg-green-600 hover:bg-green-700"
+                  onClick={handlePaymentMethodSelect}
+                >
+                  <Banknote className="mr-2 h-4 w-4" />
+                  Cash
+                </Button>
+              </div>
             </div>
           </div>
         )}

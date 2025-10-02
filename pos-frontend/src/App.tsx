@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from '@/context/AuthContext';
+import { DataPrefetchProvider } from '@/context/DataPrefetchContext';
 import { RefreshProvider } from '@/context/RefreshContext';
 import { SocketProvider } from '@/context/SocketContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -40,8 +41,9 @@ const App = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <SocketProvider>
-            <RefreshProvider>
+          <DataPrefetchProvider>
+            <SocketProvider>
+              <RefreshProvider>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -129,8 +131,9 @@ const App = () => {
               </Routes>
               </BrowserRouter>
             </TooltipProvider>
-            </RefreshProvider>
-          </SocketProvider>
+              </RefreshProvider>
+            </SocketProvider>
+          </DataPrefetchProvider>
         </AuthProvider>
       </QueryClientProvider>
     </React.StrictMode>

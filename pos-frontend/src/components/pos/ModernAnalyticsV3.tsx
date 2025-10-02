@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useDataPrefetch } from '@/context/DataPrefetchContext';
 import { useRealtimeAnalytics } from '@/hooks/useRealtimeAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,6 +90,7 @@ const CATEGORY_COLORS = ['#107146', '#16a34a', '#22c55e', '#4ade80', '#86efac', 
 
 export function ModernAnalyticsV3() {
   const { user } = useAuth();
+  const { data: prefetchedData, isLoading: prefetchLoading } = useDataPrefetch();
   const { analytics: realtimeAnalytics, loading: realtimeLoading, error: realtimeError, isConnected } = useRealtimeAnalytics();
   const [analyticsData, setAnalyticsData] = useState<RawAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,10 +98,25 @@ export function ModernAnalyticsV3() {
   const analytics = useMemo(() => {
     // Prioritize real-time data if available
     if (realtimeAnalytics) {
+      // Real-time analytics comes from AnalyticsCacheService which has growth data
+      const rtData = realtimeAnalytics as any;
+      
+      // Log to debug the actual structure temporarily
+      if (rtData.growth) {
+        console.log('Growth data found:', rtData.growth);
+      } else {
+        console.log('No growth data, full structure:', rtData);
+      }
+      
       return {
-        totalSales: realtimeAnalytics.metrics.totalSales,
-        totalTransactions: realtimeAnalytics.metrics.totalTransactions,
-        avgTransaction: realtimeAnalytics.metrics.averageTransactionValue,
+        totalSales: rtData.sales?.totalSales || 0,
+        totalTransactions: rtData.sales?.totalTransactions || 0,
+        avgTransaction: rtData.sales?.averageTransactionValue || 0,
+        todaySales: rtData.daily?.sales?.totalSales || 0,
+        todayTransactions: rtData.daily?.sales?.totalTransactions || 0,
+        salesGrowth: rtData.growth?.salesGrowth || 0,
+        avgTransactionGrowth: rtData.growth?.avgTransactionGrowth || 0,
+        todaySalesGrowth: rtData.growth?.todaySalesGrowth || 0,
         formattedMetrics: realtimeAnalytics.formattedMetrics,
         salesByCategory: realtimeAnalytics.salesByCategory || [],
         hourlySales: realtimeAnalytics.hourlySales || [],
@@ -121,6 +138,60 @@ export function ModernAnalyticsV3() {
     const totalSales = userTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
     const totalTransactions = userTransactions.length;
     const avgTransaction = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+
+    // Calculate previous period for comparison (same period length)
+    const now = new Date();
+    const currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
+    const previousPeriodStart = new Date(currentPeriodStart.getTime() - 30 * 24 * 60 * 60 * 1000); // Previous 30 days
+    const previousPeriodEnd = currentPeriodStart;
+
+    // Filter transactions for previous period
+    const previousTransactions = transactions.filter((t: any) => {
+      const txDate = new Date(t.createdAt || t.timestamp);
+      return t.status === 'completed' && 
+             (user?.role === 'manager' || t.cashierId === user?.id) &&
+             txDate >= previousPeriodStart && 
+             txDate < previousPeriodEnd;
+    });
+
+    // Previous period metrics
+    const previousTotalSales = previousTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+    const previousTotalTransactions = previousTransactions.length;
+    const previousAvgTransaction = previousTotalTransactions > 0 ? previousTotalSales / previousTotalTransactions : 0;
+
+    // Calculate today's metrics
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTransactions = userTransactions.filter((t: any) => {
+      const txDate = new Date(t.createdAt || t.timestamp);
+      return txDate >= today;
+    });
+    const todaySales = todayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+
+    // Calculate yesterday's metrics for today's comparison
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayEnd = new Date(yesterday);
+    yesterdayEnd.setHours(23, 59, 59, 999);
+    
+    const yesterdayTransactions = userTransactions.filter((t: any) => {
+      const txDate = new Date(t.createdAt || t.timestamp);
+      return txDate >= yesterday && txDate <= yesterdayEnd;
+    });
+    const yesterdaySales = yesterdayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+
+    // Calculate percentage changes
+    const salesGrowth = previousTotalSales > 0 
+      ? ((totalSales - previousTotalSales) / previousTotalSales) * 100 
+      : 0;
+    
+    const avgTransactionGrowth = previousAvgTransaction > 0 
+      ? ((avgTransaction - previousAvgTransaction) / previousAvgTransaction) * 100 
+      : 0;
+    
+    const todaySalesGrowth = yesterdaySales > 0 
+      ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 
+      : 0;
 
     // Peak hour analysis
     const hourlySales = new Map();
@@ -200,6 +271,11 @@ export function ModernAnalyticsV3() {
       totalSales,
       totalTransactions,
       avgTransaction,
+      todaySales,
+      todayTransactions: todayTransactions.length,
+      salesGrowth: Number(salesGrowth.toFixed(1)),
+      avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
+      todaySalesGrowth: Number(todaySalesGrowth.toFixed(1)),
       peakHour: peakHour ? { hour: peakHour[0], sales: peakHour[1] } : null,
       topPerformer: topPerformer ? { name: topPerformer[0], ...topPerformer[1] } : null,
       topCategory: topCategory ? { name: topCategory[0], sales: topCategory[1] } : null,
@@ -237,10 +313,22 @@ export function ModernAnalyticsV3() {
       ]);
       
       if (transactionsResponse.success && productsResponse.success) {
-        setAnalyticsData({
+        const analyticsData = {
           transactions: transactionsResponse.data,
           products: productsResponse.data
-        });
+        };
+        
+        setAnalyticsData(analyticsData);
+        
+        // Cache the analytics data for faster subsequent loads
+        try {
+          sessionStorage.setItem('analyticsData', JSON.stringify({
+            data: analyticsData,
+            timestamp: Date.now()
+          }));
+        } catch (error) {
+          console.warn('Failed to cache analytics data:', error);
+        }
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -251,13 +339,58 @@ export function ModernAnalyticsV3() {
 
   useEffect(() => {
     if (user?.id) {
-      fetchAnalytics();
-    }
-  }, [user?.id, realtimeAnalytics]);
+      // Prioritize real-time data, then prefetched data, then fetch
+      if (realtimeAnalytics) {
+        setLoading(false);
+        return;
+      }
 
-  if (loading || realtimeLoading) {
+      // Use prefetched data if available (instant loading)
+      if (prefetchedData.transactions.length > 0 && prefetchedData.products.length > 0) {
+        setAnalyticsData({
+          transactions: prefetchedData.transactions,
+          products: prefetchedData.products
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Check sessionStorage for cached analytics data
+      try {
+        const cachedAnalytics = sessionStorage.getItem('analyticsData');
+        if (cachedAnalytics) {
+          const parsed = JSON.parse(cachedAnalytics);
+          const cacheAge = Date.now() - parsed.timestamp;
+          // Use cached data if less than 5 minutes old
+          if (cacheAge < 300000) { // 5 minutes
+            setAnalyticsData(parsed.data);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load cached analytics:', error);
+      }
+
+      // Only fetch as last resort if no cached data available
+      if (!prefetchLoading.transactions && !prefetchLoading.products) {
+        fetchAnalytics();
+      }
+    }
+  }, [user?.id, realtimeAnalytics, prefetchedData, prefetchLoading.transactions, prefetchLoading.products]);
+
+  // Show loading only on initial load without any cached data
+  const isInitialLoad = (loading && !analytics) || (realtimeLoading && !realtimeAnalytics && !analyticsData);
+  
+  if (isInitialLoad) {
     return (
       <div className="space-y-8">
+        {/* Subtle loading indicator */}
+        <div className="flex items-center justify-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+          <span className="ml-2 text-sm text-gray-600">Loading analytics...</span>
+        </div>
+        
         {/* Main Stats Row Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
@@ -337,6 +470,16 @@ export function ModernAnalyticsV3() {
 
   return (
     <div className="space-y-8">
+      {/* Subtle background loading indicator */}
+      {(loading || realtimeLoading) && analytics && (
+        <div className="fixed bottom-4 right-4 z-50 bg-green-100 border border-green-300 rounded-lg px-3 py-2 shadow-sm">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
+            <span className="text-sm text-green-800">Updating data...</span>
+          </div>
+        </div>
+      )}
+      
       {/* Main Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
@@ -345,14 +488,15 @@ export function ModernAnalyticsV3() {
           subtitle={`${analytics.totalTransactions} transactions`}
           icon={DollarSign}
           color="bg-green-700"
-          trend={realtimeAnalytics?.formattedMetrics?.totalSales?.trend}
+          trend={realtimeAnalytics?.formattedMetrics?.totalSales?.trend || analytics.salesGrowth}
         />
         <StatCard
-          title="Peak Hour"
-          value={analytics.peakHour ? `${analytics.peakHour.hour}:00` : 'N/A'}
-          subtitle={analytics.peakHour ? formatCurrency(analytics.peakHour.sales) : 'No data'}
-          icon={Clock}
+          title="Today's Sales"
+          value={formatCurrency(analytics.todaySales)}
+          subtitle={`${analytics.todayTransactions} transactions today`}
+          icon={Calendar}
           color="bg-green-700"
+          trend={analytics.todaySalesGrowth}
         />
         <StatCard
           title="Avg Transaction"
@@ -360,7 +504,7 @@ export function ModernAnalyticsV3() {
           subtitle="Per transaction"
           icon={Target}
           color="bg-green-700"
-          trend={realtimeAnalytics?.formattedMetrics?.averageTransactionValue?.trend}
+          trend={realtimeAnalytics?.formattedMetrics?.averageTransactionValue?.trend || analytics.avgTransactionGrowth}
         />
       </div>
 

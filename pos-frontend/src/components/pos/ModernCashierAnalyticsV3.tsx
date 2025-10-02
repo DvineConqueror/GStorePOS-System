@@ -105,6 +105,26 @@ export function ModernCashierAnalyticsV3() {
       sum + t.items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0), 0
     );
 
+    // Calculate previous period for comparison (last 30 days vs previous 30 days)
+    const now = new Date();
+    const currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
+    const previousPeriodStart = new Date(currentPeriodStart.getTime() - 30 * 24 * 60 * 60 * 1000); // Previous 30 days
+    const previousPeriodEnd = currentPeriodStart;
+
+    // Filter transactions for previous period
+    const previousTransactions = transactions.filter((t: any) => {
+      const txDate = new Date(t.createdAt || t.timestamp);
+      return t.status === 'completed' && 
+             t.cashierId === user.id &&
+             txDate >= previousPeriodStart && 
+             txDate < previousPeriodEnd;
+    });
+
+    // Previous period metrics
+    const previousTotalSales = previousTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+    const previousTotalTransactions = previousTransactions.length;
+    const previousAvgTransaction = previousTotalTransactions > 0 ? previousTotalSales / previousTotalTransactions : 0;
+
     // Today's metrics
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -113,6 +133,31 @@ export function ModernCashierAnalyticsV3() {
       return txDate >= today;
     });
     const todaySales = todayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+
+    // Calculate yesterday's metrics for today's comparison
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayEnd = new Date(yesterday);
+    yesterdayEnd.setHours(23, 59, 59, 999);
+    
+    const yesterdayTransactions = userTransactions.filter((t: any) => {
+      const txDate = new Date(t.createdAt || t.timestamp);
+      return txDate >= yesterday && txDate <= yesterdayEnd;
+    });
+    const yesterdaySales = yesterdayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+
+    // Calculate percentage changes
+    const salesGrowth = previousTotalSales > 0 
+      ? ((totalSales - previousTotalSales) / previousTotalSales) * 100 
+      : totalSales > 0 ? 100 : 0;
+    
+    const avgTransactionGrowth = previousAvgTransaction > 0 
+      ? ((avgTransaction - previousAvgTransaction) / previousAvgTransaction) * 100 
+      : avgTransaction > 0 ? 100 : 0;
+    
+    const todaySalesGrowth = yesterdaySales > 0 
+      ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 
+      : todaySales > 0 ? 100 : 0;
 
     // Weekly trend (last 7 days)
     const weeklyData = [];
@@ -189,6 +234,9 @@ export function ModernCashierAnalyticsV3() {
       itemsSold,
       totalTransactions,
       todayTransactions: todayTransactions.length,
+      salesGrowth: Number(salesGrowth.toFixed(1)),
+      avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
+      todaySalesGrowth: Number(todaySalesGrowth.toFixed(1)),
       weeklyTrend: weeklyData,
       recentTransactions,
       hourlyPerformance,
@@ -316,7 +364,7 @@ export function ModernCashierAnalyticsV3() {
           subtitle={`${analytics.totalTransactions} transactions`}
           icon={DollarSign}
           color="bg-green-100"
-          trend={12.5}
+          trend={analytics.salesGrowth}
         />
         <StatCard
           title="Today's Sales"
@@ -324,6 +372,7 @@ export function ModernCashierAnalyticsV3() {
           subtitle={`${analytics.todayTransactions} transactions today`}
           icon={Calendar}
           color="bg-green-100"
+          trend={analytics.todaySalesGrowth}
         />
         <StatCard
           title="Avg Transaction"
@@ -331,7 +380,7 @@ export function ModernCashierAnalyticsV3() {
           subtitle="Per transaction"
           icon={Target}
           color="bg-green-100"
-          trend={-2.3}
+          trend={analytics.avgTransactionGrowth}
         />
       </div>
 

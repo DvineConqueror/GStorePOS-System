@@ -4,6 +4,7 @@ import { Product } from '../models/Product';
 import { User } from '../models/User';
 import { authenticate, requireAdmin } from '../middleware/auth';
 import { ApiResponse } from '../types';
+import { AnalyticsCacheService } from '../services/AnalyticsCacheService';
 
 const router = express.Router();
 
@@ -13,98 +14,153 @@ const router = express.Router();
 router.get('/dashboard', authenticate, requireAdmin, async (req, res): Promise<void> => {
   try {
     const { period = '30' } = req.query; // days
+    const cacheKey = `dashboard:${period}d`;
+    
+    // Try to get cached data first
+    let cachedData = AnalyticsCacheService.getCachedAnalytics(cacheKey);
+    
+    if (cachedData) {
+      res.json({
+        success: true,
+        message: 'Dashboard analytics retrieved successfully (cached).',
+        data: {
+          ...cachedData,
+          cached: true,
+          lastUpdated: new Date().toISOString()
+        }
+      } as ApiResponse);
+      return;
+    }
+
+    // If no cached data, calculate on demand (fallback)
     const days = parseInt(period as string);
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const endDate = new Date();
 
-    // Get sales data
-    const salesData = await Transaction.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate },
-          status: 'completed'
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalSales: { $sum: '$total' },
-          totalTransactions: { $sum: 1 },
-          averageTransactionValue: { $avg: '$total' }
-        }
-      }
-    ]);
+    // Get previous period for comparison
+    const prevStartDate = new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000);
+    const prevEndDate = new Date(startDate.getTime());
 
-    // Get sales by day
-    const salesByDay = await Transaction.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate },
-          status: 'completed'
-        }
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' },
-            day: { $dayOfMonth: '$createdAt' }
-          },
-          sales: { $sum: '$total' },
-          transactions: { $sum: 1 }
-        }
-      },
-      {
-        $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 }
-      }
-    ]);
-
-    // Get top products
-    const topProducts = await Transaction.getTopProducts(startDate, endDate, 5);
-
-    // Get sales by cashier
-    const salesByCashier = await Transaction.getSalesByCashier(startDate, endDate);
-
-    // Get low stock products
-    const lowStockProducts = await Product.findLowStock();
-
-    // Get out of stock products
-    const outOfStockProducts = await Product.findOutOfStock();
-
-    // Get user statistics
-    const userStats = await User.aggregate([
-      {
-        $group: {
-          _id: '$role',
-          count: { $sum: 1 },
-          activeCount: {
-            $sum: { $cond: ['$isActive', 1, 0] }
+    const [currentData, previousData, salesByDay, topProducts, salesByCashier, lowStockProducts, outOfStockProducts, userStats] = await Promise.all([
+      // Current period data
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: '$total' },
+            totalTransactions: { $sum: 1 },
+            averageTransactionValue: { $avg: '$total' }
           }
         }
-      }
+      ]),
+      // Previous period data for comparison
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: prevStartDate, $lte: prevEndDate },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: '$total' },
+            totalTransactions: { $sum: 1 },
+            averageTransactionValue: { $avg: '$total' }
+          }
+        }
+      ]),
+      // Sales by day
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' },
+              day: { $dayOfMonth: '$createdAt' }
+            },
+            sales: { $sum: '$total' },
+            transactions: { $sum: 1 }
+          }
+        },
+        {
+          $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 }
+        }
+      ]),
+      Transaction.getTopProducts(startDate, endDate, 5),
+      Transaction.getSalesByCashier(startDate, endDate),
+      Product.findLowStock(),
+      Product.findOutOfStock(),
+      User.aggregate([
+        {
+          $group: {
+            _id: '$role',
+            count: { $sum: 1 },
+            activeCount: {
+              $sum: { $cond: ['$isActive', 1, 0] }
+            }
+          }
+        }
+      ])
     ]);
+
+    const current = currentData[0] || { totalSales: 0, totalTransactions: 0, averageTransactionValue: 0 };
+    const previous = previousData[0] || { totalSales: 0, totalTransactions: 0, averageTransactionValue: 0 };
+
+    // Calculate percentage changes with fallback logic for new installations
+    const salesGrowth = previous.totalSales > 0 
+      ? ((current.totalSales - previous.totalSales) / previous.totalSales) * 100 
+      : current.totalSales > 0 ? 100 : 0; // If no previous data but current sales exist, show 100% growth
+    
+    const transactionGrowth = previous.totalTransactions > 0 
+      ? ((current.totalTransactions - previous.totalTransactions) / previous.totalTransactions) * 100 
+      : current.totalTransactions > 0 ? 100 : 0; // If no previous data but current transactions exist, show 100% growth
+    
+    const avgTransactionGrowth = previous.averageTransactionValue > 0 
+      ? ((current.averageTransactionValue - previous.averageTransactionValue) / previous.averageTransactionValue) * 100 
+      : current.averageTransactionValue > 0 ? 100 : 0; // If no previous data but current avg exists, show 100% growth
+
+    const responseData = {
+      period: `${days} days`,
+      sales: current,
+      salesByDay,
+      topProducts,
+      salesByCashier,
+      inventory: {
+        lowStock: lowStockProducts.length,
+        outOfStock: outOfStockProducts.length,
+        lowStockProducts: lowStockProducts.slice(0, 5),
+        outOfStockProducts: outOfStockProducts.slice(0, 5)
+      },
+      users: userStats,
+      growth: {
+        salesGrowth: Number(salesGrowth.toFixed(1)),
+        transactionGrowth: Number(transactionGrowth.toFixed(1)),
+        avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1))
+      },
+      cached: false,
+      lastUpdated: new Date().toISOString()
+    };
+
+    // Cache the result for future requests
+    AnalyticsCacheService.setCachedAnalytics(cacheKey, responseData);
 
     res.json({
       success: true,
       message: 'Dashboard analytics retrieved successfully.',
-      data: {
-        period: `${days} days`,
-        sales: salesData[0] || {
-          totalSales: 0,
-          totalTransactions: 0,
-          averageTransactionValue: 0
-        },
-        salesByDay,
-        topProducts,
-        salesByCashier,
-        inventory: {
-          lowStock: lowStockProducts.length,
-          outOfStock: outOfStockProducts.length,
-          lowStockProducts: lowStockProducts.slice(0, 5),
-          outOfStockProducts: outOfStockProducts.slice(0, 5)
-        },
-        users: userStats
-      }
+      data: responseData
     } as ApiResponse);
   } catch (error) {
     console.error('Get dashboard analytics error:', error);
