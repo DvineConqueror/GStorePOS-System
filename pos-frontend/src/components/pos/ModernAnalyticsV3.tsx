@@ -96,17 +96,159 @@ export function ModernAnalyticsV3() {
   const [loading, setLoading] = useState(true);
 
   const analytics = useMemo(() => {
-    // Prioritize real-time data if available
-    if (realtimeAnalytics) {
-      // Real-time analytics comes from AnalyticsCacheService which has growth data
-      const rtData = realtimeAnalytics as any;
+    // First, check if we have analytics data from API (which has growth data)
+    if (analyticsData && analyticsData.transactions && analyticsData.transactions.length > 0) {
+      // Use the fallback calculation which properly includes growth percentages
+      const { transactions, products } = analyticsData;
+      const userTransactions = transactions.filter((t: any) => 
+        t.status === 'completed' && 
+        (user?.role === 'manager' || user?.role === 'superadmin' || t.cashierId === user?.id)
+      );
+
+      // Core metrics
+      const totalSales = userTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+      const totalTransactions = userTransactions.length;
+      const avgTransaction = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+
+      // Calculate previous period for comparison (same period length)
+      const now = new Date();
+      const currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
+      const previousPeriodStart = new Date(currentPeriodStart.getTime() - 30 * 24 * 60 * 60 * 1000); // Previous 30 days
+      const previousPeriodEnd = currentPeriodStart;
+
+      // Filter transactions for previous period
+      const previousTransactions = transactions.filter((t: any) => {
+        const txDate = new Date(t.createdAt || t.timestamp);
+        return t.status === 'completed' && 
+               (user?.role === 'manager' || user?.role === 'superadmin' || t.cashierId === user?.id) &&
+               txDate >= previousPeriodStart && 
+               txDate < previousPeriodEnd;
+      });
+
+      // Previous period metrics
+      const previousTotalSales = previousTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+      const previousTotalTransactions = previousTransactions.length;
+      const previousAvgTransaction = previousTotalTransactions > 0 ? previousTotalSales / previousTotalTransactions : 0;
+
+      // Calculate today's metrics
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayTransactions = userTransactions.filter((t: any) => {
+        const txDate = new Date(t.createdAt || t.timestamp);
+        return txDate >= today;
+      });
+      const todaySales = todayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+
+      // Calculate yesterday's metrics for today's comparison
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayEnd = new Date(yesterday);
+      yesterdayEnd.setHours(23, 59, 59, 999);
       
-      // Log to debug the actual structure temporarily
-      if (rtData.growth) {
-        console.log('Growth data found:', rtData.growth);
-      } else {
-        console.log('No growth data, full structure:', rtData);
+      const yesterdayTransactions = userTransactions.filter((t: any) => {
+        const txDate = new Date(t.createdAt || t.timestamp);
+        return txDate >= yesterday && txDate <= yesterdayEnd;
+      });
+      const yesterdaySales = yesterdayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+
+      // Calculate percentage changes with proper fallback
+      const salesGrowth = previousTotalSales > 0 
+        ? ((totalSales - previousTotalSales) / previousTotalSales) * 100 
+        : totalSales > 0 ? 100 : 0;
+      
+      const avgTransactionGrowth = previousAvgTransaction > 0 
+        ? ((avgTransaction - previousAvgTransaction) / previousAvgTransaction) * 100 
+        : avgTransaction > 0 ? 100 : 0;
+      
+      const todaySalesGrowth = yesterdaySales > 0 
+        ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 
+        : todaySales > 0 ? 100 : 0;
+
+      console.log('Calculated growth percentages:', { 
+        salesGrowth: Number(salesGrowth.toFixed(1)), 
+        avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
+        todaySalesGrowth: Number(todaySalesGrowth.toFixed(1))
+      });
+
+      // Additional analytics data
+      // Top performer
+      const cashierPerformance = new Map();
+      userTransactions.forEach((t: any) => {
+        const cashier = t.cashierName || 'Unknown';
+        const current = cashierPerformance.get(cashier) || { sales: 0, transactions: 0 };
+        cashierPerformance.set(cashier, {
+          sales: current.sales + t.total,
+          transactions: current.transactions + 1
+        });
+      });
+      const topPerformer = Array.from(cashierPerformance.entries())
+        .sort(([,a], [,b]) => b.sales - a.sales)[0];
+
+      // Category analysis
+      const categorySales = new Map();
+      userTransactions.forEach((t: any) => {
+        t.items.forEach((item: any) => {
+          const category = inferCategoryFromProductName(item.productName);
+          const current = categorySales.get(category) || 0;
+          categorySales.set(category, current + item.totalPrice);
+        });
+      });
+
+      // Weekly trend (last 7 days)
+      const weeklyData = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dayTransactions = userTransactions.filter((t: any) => {
+          const txDate = new Date(t.createdAt || t.timestamp);
+          return txDate.toDateString() === date.toDateString();
+        });
+        const daySales = dayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+        weeklyData.push({
+          day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          sales: daySales
+        });
       }
+
+      // Recent transactions
+      const recentTransactions = userTransactions
+        .sort((a: any, b: any) => new Date(b.createdAt || b.timestamp).getTime() - new Date(a.createdAt || a.timestamp).getTime())
+        .slice(0, 5)
+        .map((t: any) => ({
+          id: t._id,
+          items: t.items.length,
+          total: t.total,
+          time: new Date(t.createdAt || t.timestamp).toLocaleTimeString(),
+          cashierName: t.cashierName
+        }));
+
+      return {
+        totalSales,
+        totalTransactions,
+        avgTransaction,
+        todaySales,
+        todayTransactions: todayTransactions.length,
+        salesGrowth: Number(salesGrowth.toFixed(1)),
+        avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
+        todaySalesGrowth: Number(todaySalesGrowth.toFixed(1)),
+        topPerformer: topPerformer ? { name: topPerformer[0], ...topPerformer[1] } : null,
+        categoryData: Array.from(categorySales.entries())
+          .map(([category, sales]) => ({
+            category,
+            sales,
+            percentage: (sales / totalSales) * 100
+          }))
+          .sort((a, b) => b.sales - a.sales)
+          .slice(0, 6),
+        weeklyTrend: weeklyData,
+        recentTransactions
+      } as any;
+    }
+    
+    // Fallback to real-time analytics if available
+    if (realtimeAnalytics) {
+      const rtData = realtimeAnalytics as any;
+      console.log('Using real-time analytics:', rtData);
       
       return {
         totalSales: rtData.sales?.totalSales || 0,
@@ -124,177 +266,9 @@ export function ModernAnalyticsV3() {
         weeklyTrend: realtimeAnalytics.weeklyTrend || []
       };
     }
-
-    // Fallback to legacy data
-    if (!analyticsData) return null;
-
-    const { transactions, products } = analyticsData;
-    const userTransactions = transactions.filter((t: any) => 
-      t.status === 'completed' && 
-      (user?.role === 'manager' || t.cashierId === user?.id)
-    );
-
-    // Core metrics
-    const totalSales = userTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
-    const totalTransactions = userTransactions.length;
-    const avgTransaction = totalTransactions > 0 ? totalSales / totalTransactions : 0;
-
-    // Calculate previous period for comparison (same period length)
-    const now = new Date();
-    const currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
-    const previousPeriodStart = new Date(currentPeriodStart.getTime() - 30 * 24 * 60 * 60 * 1000); // Previous 30 days
-    const previousPeriodEnd = currentPeriodStart;
-
-    // Filter transactions for previous period
-    const previousTransactions = transactions.filter((t: any) => {
-      const txDate = new Date(t.createdAt || t.timestamp);
-      return t.status === 'completed' && 
-             (user?.role === 'manager' || t.cashierId === user?.id) &&
-             txDate >= previousPeriodStart && 
-             txDate < previousPeriodEnd;
-    });
-
-    // Previous period metrics
-    const previousTotalSales = previousTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
-    const previousTotalTransactions = previousTransactions.length;
-    const previousAvgTransaction = previousTotalTransactions > 0 ? previousTotalSales / previousTotalTransactions : 0;
-
-    // Calculate today's metrics
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayTransactions = userTransactions.filter((t: any) => {
-      const txDate = new Date(t.createdAt || t.timestamp);
-      return txDate >= today;
-    });
-    const todaySales = todayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
-
-    // Calculate yesterday's metrics for today's comparison
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayEnd = new Date(yesterday);
-    yesterdayEnd.setHours(23, 59, 59, 999);
     
-    const yesterdayTransactions = userTransactions.filter((t: any) => {
-      const txDate = new Date(t.createdAt || t.timestamp);
-      return txDate >= yesterday && txDate <= yesterdayEnd;
-    });
-    const yesterdaySales = yesterdayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
-
-    // Calculate percentage changes
-    const salesGrowth = previousTotalSales > 0 
-      ? ((totalSales - previousTotalSales) / previousTotalSales) * 100 
-      : 0;
-    
-    const avgTransactionGrowth = previousAvgTransaction > 0 
-      ? ((avgTransaction - previousAvgTransaction) / previousAvgTransaction) * 100 
-      : 0;
-    
-    const todaySalesGrowth = yesterdaySales > 0 
-      ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 
-      : 0;
-
-    // Peak hour analysis
-    const hourlySales = new Map();
-    userTransactions.forEach((t: any) => {
-      const hour = new Date(t.createdAt || t.timestamp).getHours();
-      const current = hourlySales.get(hour) || 0;
-      hourlySales.set(hour, current + t.total);
-    });
-    const peakHour = Array.from(hourlySales.entries())
-      .sort(([,a], [,b]) => b - a)[0];
-
-    // Top performer
-    const cashierPerformance = new Map();
-    userTransactions.forEach((t: any) => {
-      const cashier = t.cashierName || 'Unknown';
-      const current = cashierPerformance.get(cashier) || { sales: 0, transactions: 0 };
-      cashierPerformance.set(cashier, {
-        sales: current.sales + t.total,
-        transactions: current.transactions + 1
-      });
-    });
-    const topPerformer = Array.from(cashierPerformance.entries())
-      .sort(([,a], [,b]) => b.sales - a.sales)[0];
-
-    // Category analysis using backend inference
-    const categorySales = new Map();
-    userTransactions.forEach((t: any) => {
-      t.items.forEach((item: any) => {
-        const category = inferCategoryFromProductName(item.productName);
-        const current = categorySales.get(category) || 0;
-        categorySales.set(category, current + item.totalPrice);
-      });
-    });
-    const topCategory = Array.from(categorySales.entries())
-      .sort(([,a], [,b]) => b - a)[0];
-
-    // Weekly trend (last 7 days)
-    const weeklyData = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dayTransactions = userTransactions.filter((t: any) => {
-        const txDate = new Date(t.createdAt || t.timestamp);
-        return txDate.toDateString() === date.toDateString();
-      });
-      const daySales = dayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
-      weeklyData.push({
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        sales: daySales
-      });
-    }
-
-    // Efficiency metrics
-    const totalItems = userTransactions.reduce((sum: number, t: any) => 
-      sum + t.items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0), 0
-    );
-    const totalHours = 24; // Assuming 24-hour operation
-    const efficiency = {
-      salesPerHour: totalSales / totalHours,
-      transactionsPerHour: totalTransactions / totalHours,
-      avgItemsPerTransaction: totalTransactions > 0 ? totalItems / totalTransactions : 0
-    };
-
-    // Recent transactions
-    const recentTransactions = userTransactions
-      .sort((a: any, b: any) => new Date(b.createdAt || b.timestamp).getTime() - new Date(a.createdAt || a.timestamp).getTime())
-      .slice(0, 5)
-      .map((t: any) => ({
-        id: t._id,
-        items: t.items.length,
-        total: t.total,
-        time: new Date(t.createdAt || t.timestamp).toLocaleTimeString(),
-        cashierName: t.cashierName
-      }));
-
-    return {
-      totalSales,
-      totalTransactions,
-      avgTransaction,
-      todaySales,
-      todayTransactions: todayTransactions.length,
-      salesGrowth: Number(salesGrowth.toFixed(1)),
-      avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
-      todaySalesGrowth: Number(todaySalesGrowth.toFixed(1)),
-      peakHour: peakHour ? { hour: peakHour[0], sales: peakHour[1] } : null,
-      topPerformer: topPerformer ? { name: topPerformer[0], ...topPerformer[1] } : null,
-      topCategory: topCategory ? { name: topCategory[0], sales: topCategory[1] } : null,
-      hourlyData: Array.from(hourlySales.entries())
-        .map(([hour, sales]) => ({ hour: `${hour}:00`, sales }))
-        .sort((a, b) => parseInt(a.hour) - parseInt(b.hour)),
-      categoryData: Array.from(categorySales.entries())
-        .map(([category, sales]) => ({
-          category,
-          sales,
-          percentage: (sales / totalSales) * 100
-        }))
-        .sort((a, b) => b.sales - a.sales)
-        .slice(0, 6),
-      weeklyTrend: weeklyData,
-      recentTransactions,
-      efficiency
-    };
-  }, [analyticsData, user, realtimeAnalytics]);
+    return null;
+  }, [analyticsData, realtimeAnalytics, user]);
 
   const fetchAnalytics = async () => {
     // Always fetch data asynchronously, even if real-time data is available
@@ -488,7 +462,7 @@ export function ModernAnalyticsV3() {
           subtitle={`${analytics.totalTransactions} transactions`}
           icon={DollarSign}
           color="bg-green-700"
-          trend={realtimeAnalytics?.formattedMetrics?.totalSales?.trend || analytics.salesGrowth}
+          trend={analytics.salesGrowth}
         />
         <StatCard
           title="Today's Sales"
@@ -504,7 +478,7 @@ export function ModernAnalyticsV3() {
           subtitle="Per transaction"
           icon={Target}
           color="bg-green-700"
-          trend={realtimeAnalytics?.formattedMetrics?.averageTransactionValue?.trend || analytics.avgTransactionGrowth}
+          trend={analytics.avgTransactionGrowth}
         />
       </div>
 
