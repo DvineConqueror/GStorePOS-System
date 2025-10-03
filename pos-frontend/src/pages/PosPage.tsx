@@ -20,8 +20,8 @@ function PosPageContent() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-black">Cashier Dashboard</h1>
-            <p className="text-gray-600 mt-2">Process sales and manage transactions</p>
+            <h1 className="text-3xl font-bold text-black hidden sm:block">Cashier Dashboard</h1>
+            <p className="text-gray-600 mt-2 hidden sm:block">Process sales and manage transactions</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-gray-700">
@@ -36,14 +36,20 @@ function PosPageContent() {
         </div>
 
         {/* Tabs for different sections */}
-        <Tabs defaultValue="pos" className="space-y-6">
+        <Tabs defaultValue="pos" className="space-y-4 lg:space-y-6">
           <TabsList className="grid w-full grid-cols-2 bg-white">
-            <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+            <TabsTrigger 
+              value="pos" 
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
+            >
               <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
               <span className="hidden sm:inline">Point of Sale</span>
               <span className="sm:hidden">POS</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+            <TabsTrigger 
+              value="analytics" 
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
+            >
               <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
               <span className="hidden sm:inline">Analytics</span>
               <span className="sm:hidden">Analytics</span>
@@ -51,14 +57,20 @@ function PosPageContent() {
           </TabsList>
 
           {/* POS System Tab */}
-          <TabsContent value="pos" className="space-y-6">
-            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-6">
-              <div className="flex-1 md:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 p-4 min-h-0">
+          <TabsContent value="pos" className="space-y-4 lg:space-y-6">
+            <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:space-x-4 lg:gap-6">
+              {/* Product Catalog - Better mobile layout */}
+              <div className="flex-1 lg:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 p-3 lg:p-4 min-h-0">
                 <CashierProductCatalog />
               </div>
-              <div className="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <Cart />
+              
+              {/* Cart - Sticky on mobile for better UX */}
+              <div className="w-full lg:w-1/3 lg:sticky lg:top-24 lg:self-start">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 lg:p-4">
+                  <Cart />
+                </div>
               </div>
+              
               <CheckoutDialog />
             </div>
           </TabsContent>

@@ -148,7 +148,7 @@ export default function SuperadminDashboard() {
         {/* Authority Header */}
         <div className="border-b border-gray-300 pb-6">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 bg-green-600 rounded-2xl hidden sm:flex items-center justify-center shadow-lg">
               <Shield className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -163,7 +163,7 @@ export default function SuperadminDashboard() {
           <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300 group">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-green-600 rounded-xl hidden sm:flex items-center justify-center shadow-lg">
                   <UserCheck className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -186,7 +186,7 @@ export default function SuperadminDashboard() {
           <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300 group">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-green-600 rounded-xl hidden sm:flex items-center justify-center shadow-lg">
                   <UserPlus className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -214,7 +214,7 @@ export default function SuperadminDashboard() {
           <Card className="bg-white border-gray-300 hover:border-gray-400 transition-all duration-300 group md:col-span-2 lg:col-span-1">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-green-600 rounded-xl hidden sm:flex items-center justify-center shadow-lg">
                   <Users className="h-6 w-6 text-white" />
                 </div>
                 <div>

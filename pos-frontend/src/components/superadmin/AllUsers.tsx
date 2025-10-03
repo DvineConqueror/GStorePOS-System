@@ -156,7 +156,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
         <div className="border-b border-gray-200 pb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl items-center justify-center shadow-lg shadow-green-500/25 hidden sm:flex">
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -246,7 +246,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                     }`}
                   >
                     <div className="flex items-center space-x-4 min-w-0 flex-1">
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 hidden sm:block">
                         <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                           <User className="h-6 w-6 text-green-600" />
                         </div>
@@ -265,11 +265,11 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                         </div>
                         <div className="flex items-center space-x-6 text-sm text-gray-600">
                           <div className="flex items-center">
-                            <Mail className="h-4 w-4 mr-2 text-green-600" />
+                            <Mail className="h-4 w-4 mr-2 text-green-600 hidden sm:block" />
                             <span className="truncate">{user.email}</span>
                           </div>
                           <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2 text-green-600" />
+                            <Calendar className="h-4 w-4 mr-2 text-green-600 hidden sm:block" />
                             {format(new Date(user.createdAt), 'MMM dd, yyyy')}
                           </div>
                         </div>

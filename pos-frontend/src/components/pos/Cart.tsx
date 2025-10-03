@@ -29,18 +29,19 @@ export function Cart() {
 
   return (
     <div className="relative h-full">
-      <Card className="flex flex-col h-[500px] p-4 sticky top-32 w-full">
+      <Card className="flex flex-col h-[400px] lg:h-[500px] p-3 lg:p-4 sticky top-16 lg:top-32 w-full">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-black flex items-center">
-            <ShoppingBag className="mr-4 h-10 w-10 text-gray-600" />
-            Grocery Items
+          <h2 className="text-lg lg:text-xl font-bold text-black flex items-center">
+            <ShoppingBag className="mr-2 lg:mr-4 h-8 w-8 lg:h-10 lg:w-10 text-gray-600" />
+            <span className="hidden sm:inline">Grocery Items</span>
+            <span className="sm:hidden">Cart</span>
           </h2>
           <Button
             variant="outline"
             size="sm"
             onClick={handleClearCart}
             disabled={cart.length === 0}
-            className={confirmClear ? 'bg-red-100 text-red-600 border-red-300' : 'border-gray-300 hover:bg-gray-50'}
+            className={`${confirmClear ? 'bg-red-100 text-red-600 border-red-300' : 'border-gray-300 hover:bg-gray-50'} text-xs lg:text-sm px-2 lg:px-4`}
           >
             {confirmClear ? 'Confirm Clear' : 'Clear'}
           </Button>
@@ -58,15 +59,15 @@ export function Cart() {
               {cart.map(item => (
                 <li key={item._id} className="border-b pb-3 hover:bg-accent/50 rounded-lg transition-colors p-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium truncate flex-1 mr-2 text-black">{item.name}</span>
-                    <span className='text-gray-600 shrink-0'>{formatCurrency(item.price)}</span>
+                    <span className="font-medium truncate flex-1 mr-2 text-black text-sm lg:text-base">{item.name}</span>
+                    <span className='text-gray-600 shrink-0 text-sm lg:text-base'>{formatCurrency(item.price)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 lg:space-x-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-6 w-6 lg:h-7 lg:w-7"
                         onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))}
                       >
                         <Minus className="h-3 w-3" />
@@ -75,27 +76,27 @@ export function Cart() {
                         type="number"
                         value={item.quantity}
                         onChange={(e) => updateQuantity(item._id, parseInt(e.target.value) || 1)}
-                        className="w-16 h-7 text-center"
+                        className="w-12 lg:w-16 h-6 lg:h-7 text-center text-sm"
                         min="1"
                       />
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-6 w-6 lg:h-7 lg:w-7"
                         onClick={() => updateQuantity(item._id, item.quantity + 1)}
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-black">{formatCurrency(item.price * item.quantity)}</span>
+                    <div className="flex items-center space-x-1 lg:space-x-2">
+                      <span className="font-medium text-black text-sm lg:text-base">{formatCurrency(item.price * item.quantity)}</span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-red-600 hover:text-red-700"
+                        className="h-6 w-6 lg:h-7 lg:w-7 text-red-600 hover:text-red-700"
                         onClick={() => removeFromCart(item._id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
                       </Button>
                     </div>
                   </div>
@@ -105,20 +106,20 @@ export function Cart() {
           )}
         </div>
 
-        <div className="border-t pt-4 space-y-4 mt-auto">
-          <div className="flex flex-col space-y-2 text-sm text-gray-500">
+        <div className="border-t pt-3 lg:pt-4 space-y-3 lg:space-y-4 mt-auto">
+          <div className="flex flex-col space-y-1 lg:space-y-2 text-xs lg:text-sm text-gray-500">
             <div className="flex justify-between">
               <span>Items</span>
               <span>{cart.reduce((acc, item) => acc + item.quantity, 0)} items</span>
             </div>
           </div>
-          <div className="flex items-center justify-between font-bold text-lg">
+          <div className="flex items-center justify-between font-bold text-base lg:text-lg">
             <span className="text-black">Total</span>
             <span className='text-black'>{formatCurrency(calculateTotal())}</span>
           </div>
           <Button
-            className="w-full bg-green-600 hover:bg-green-700"
-            size="lg"
+            className="w-full bg-green-600 hover:bg-green-700 text-sm lg:text-base"
+            size="default"
             onClick={handleCheckout}
             disabled={cart.length === 0}
           >

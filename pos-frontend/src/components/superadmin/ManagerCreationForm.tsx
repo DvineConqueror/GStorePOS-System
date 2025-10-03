@@ -193,7 +193,7 @@ export default function ManagerCreationForm({
         {/* Authority Header */}
         <div className="border-b border-gray-200 pb-6">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl hidden sm:flex items-center justify-center shadow-lg shadow-green-500/25">
               <UserPlus className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -376,7 +376,7 @@ export default function ManagerCreationForm({
                       </Button>
                     </div>
                     {/* Password validation feedback */}
-                    <div className="min-h-[4rem]">
+                    <div>
                       {formData.password && (
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
@@ -462,7 +462,7 @@ export default function ManagerCreationForm({
               </div>
 
               {/* Submit Actions */}
-              <div className="flex justify-end space-x-4 pt-6 border-t border-slate-800">
+              <div className="flex justify-end space-x-4">
                 <Button
                   type="button"
                   variant="ghost"

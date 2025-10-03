@@ -227,7 +227,7 @@ export function AdminDashboard() {
 
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white flex items-center text-base sm:text-lg">
+            <CardTitle className="text-white flex items-center text-base sm:text-lg ">
               <Users className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               Manage Cashiers
             </CardTitle>

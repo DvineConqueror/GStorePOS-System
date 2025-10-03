@@ -9,8 +9,8 @@ interface LoginLogoProps {
 export const LoginLogo: React.FC<LoginLogoProps> = ({ isAdminMode, colors }) => {
   return (
     <>
-      {/* Mobile Logo - Only visible on small screens */}
-      <div className="md:hidden mb-8 text-center transition-all duration-500 ease-in-out">
+      {/* Mobile Logo - Hidden as per user request */}
+      <div className="hidden">
         <div className={`w-32 h-32 mx-auto mb-6 ${colors.logoIcon} rounded-full flex items-center justify-center transition-all duration-500 ease-in-out transform hover:scale-105 shadow-lg`}>
           <img
             src={isAdminMode ? "/images/Manager_Logo.png" : "/images/Cashier_Logo.png"}

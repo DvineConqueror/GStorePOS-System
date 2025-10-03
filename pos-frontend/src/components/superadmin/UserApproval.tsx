@@ -247,7 +247,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         <div className="border-b border-gray-200 pb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl hidden sm:flex items-center justify-center shadow-lg shadow-green-500/25">
                 <UserCheck className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -377,7 +377,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                         onCheckedChange={(checked) => handleSelectUser(user._id, checked as boolean)}
                         className="flex-shrink-0"
                       />
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-green-100 rounded-lg hidden sm:flex items-center justify-center flex-shrink-0">
                         <User className="h-6 w-6 text-green-600" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -389,11 +389,11 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                         </div>
                         <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                           <div className="flex items-center">
-                            <Mail className="h-4 w-4 mr-2 text-green-600" />
+                            <Mail className="h-4 w-4 mr-2 text-green-600 hidden sm:block" />
                             <span className="truncate">{user.email}</span>
                           </div>
                           <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2 text-green-600" />
+                            <Calendar className="h-4 w-4 mr-2 text-green-600 hidden sm:block" />
                             {format(new Date(user.createdAt), 'MMM dd, yyyy')}
                           </div>
                         </div>
