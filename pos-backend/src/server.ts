@@ -92,13 +92,17 @@ const corsOptions = {
       'http://127.0.0.1:5173',
       'http://127.0.0.1:8080',
       'http://127.0.0.1:3000',
-      process.env.FRONTEND_URL
+      process.env.FRONTEND_URL,
+      process.env.CLIENT_URL,
+      'https://gstorepos-system.onrender.com' // Explicit frontend URL
     ].filter(Boolean);
     
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    
+    console.error(`CORS Error: Origin '${origin}' not allowed. Allowed origins:`, allowedOrigins);
+    return callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -225,6 +229,10 @@ const startServer = async () => {
     // Ensure port is free before starting
     serverInstance = server.listen(PORT, () => {
       console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+      console.log(`CORS Configuration:`);
+      console.log(`- FRONTEND_URL: ${process.env.FRONTEND_URL}`);
+      console.log(`- CLIENT_URL: ${process.env.CLIENT_URL}`);
+      console.log(`- NODE_ENV: ${process.env.NODE_ENV}`);
       
       // Start session cleanup service
       SessionCleanupService.start();
