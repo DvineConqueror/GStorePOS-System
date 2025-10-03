@@ -2,6 +2,14 @@ import { GridFSBucket, ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
 import { ApiResponse } from '../types';
 
+// Define the file type interface
+interface UploadedFile {
+  originalname: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
+
 export class ImageService {
   private static bucket: GridFSBucket;
 
@@ -20,7 +28,7 @@ export class ImageService {
   /**
    * Upload image to GridFS
    */
-  static async uploadImage(file: Express.Multer.File): Promise<string> {
+  static async uploadImage(file: UploadedFile): Promise<string> {
     if (!this.bucket) {
       this.initializeBucket();
     }
