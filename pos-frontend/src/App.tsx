@@ -33,9 +33,29 @@ import RecentTransactionsPage from '@/pages/RecentTransactionsPage';
 import VoidRefundPage from '@/pages/VoidRefundPage';
 import SystemSettings from '@/components/superadmin/SystemSettings';
 import ApprovalStatusNotification from '@/components/notifications/ApprovalStatusNotification';
+import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
+import { useState, useEffect } from 'react';
 
 const App = () => {
   const queryClient = new QueryClient();
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
+  // Show install prompt after a delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const hasSeenPrompt = localStorage.getItem('pwa-install-prompt-seen');
+      if (!hasSeenPrompt) {
+        setShowInstallPrompt(true);
+      }
+    }, 5000); // Show after 5 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleInstallPromptDismiss = () => {
+    setShowInstallPrompt(false);
+    localStorage.setItem('pwa-install-prompt-seen', 'true');
+  };
 
   return (
     <React.StrictMode>
@@ -49,6 +69,9 @@ const App = () => {
                 <Sonner />
                 <BrowserRouter>
                 <ApprovalStatusNotification />
+                {showInstallPrompt && (
+                  <PWAInstallPrompt onDismiss={handleInstallPromptDismiss} />
+                )}
                 <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
