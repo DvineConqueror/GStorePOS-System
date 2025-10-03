@@ -34,6 +34,7 @@ import VoidRefundPage from '@/pages/VoidRefundPage';
 import SystemSettings from '@/components/superadmin/SystemSettings';
 import ApprovalStatusNotification from '@/components/notifications/ApprovalStatusNotification';
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
+import { SessionTerminationHandler } from '@/components/auth/SessionTerminationHandler';
 import { useState, useEffect } from 'react';
 
 const App = () => {
@@ -68,6 +69,8 @@ const App = () => {
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
+                {/* Security and System Components */}
+                <SessionTerminationHandler />
                 <ApprovalStatusNotification />
                 {showInstallPrompt && (
                   <PWAInstallPrompt onDismiss={handleInstallPromptDismiss} />

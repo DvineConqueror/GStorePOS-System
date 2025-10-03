@@ -102,10 +102,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <div className="flex items-center gap-4">
               <CardTitle>Cashier Management</CardTitle>
             </div>
-            <Button onClick={onAddUser} className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Cashier
-            </Button>
           </div>
           
           {/* Search and Filter Controls */}

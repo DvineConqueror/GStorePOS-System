@@ -207,6 +207,11 @@ io.on('connection', (socket) => {
   // Join user to their role-based room for targeted notifications
   socket.on('join-role-room', (role: string) => {
     socket.join(`role-${role}`);
+    console.log(`👥 USER JOINED ROOM: role-${role} (Socket ID: ${socket.id})`);
+    
+    // Get room info for debugging
+    const room = io.sockets.adapter.rooms.get(`role-${role}`);
+    console.log(`📊 ROOM role-${role} now has ${room?.size || 0} member(s)`);
   });
 });
 
