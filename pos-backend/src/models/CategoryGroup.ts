@@ -41,7 +41,7 @@ const categoryGroupSchema = new Schema<ICategoryGroup>({
 });
 
 // Index for faster queries
-categoryGroupSchema.index({ name: 1 });
+// Note: name index is automatically created due to unique: true in schema
 categoryGroupSchema.index({ order: 1 });
 categoryGroupSchema.index({ isActive: 1 });
 
