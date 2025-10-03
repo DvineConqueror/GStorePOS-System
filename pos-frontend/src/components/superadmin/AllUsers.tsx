@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Users, 
   Search, 
@@ -14,11 +20,13 @@ import {
   User,
   Mail,
   Calendar,
-  MoreHorizontal
+  MoreHorizontal,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
-import { superadminAPI } from '@/lib/api';
+import { superadminAPI, usersAPI } from '@/lib/api';
 
 interface AllUser {
   _id: string;
@@ -57,6 +65,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -136,7 +145,95 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
     return <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white">Active</Badge>;
   };
 
-  const filteredUsers = users.filter(user => {
+  const handleApproveUser = async (userId: string) => {
+    try {
+      setActionLoading(prev => new Set(prev).add(userId));
+      
+      const response = await superadminAPI.approveUser(userId, true);
+      
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "User approved successfully",
+          variant: "default",
+        });
+        
+        // Refresh the users list
+        fetchAllUsers();
+        
+        // Call the change callback if provided
+        if (onUserChange) {
+          onUserChange();
+        }
+      } else {
+        throw new Error(response.message || 'Failed to approve user');
+      }
+    } catch (error) {
+      console.error('Error approving user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve user",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleUserStatusChange = async (userId: string, newStatus: 'active' | 'inactive' | 'deleted') => {
+    try {
+      setActionLoading(prev => new Set(prev).add(userId));
+      
+      let response;
+      
+      if (newStatus === 'deleted') {
+        // Use superadmin delete for soft delete
+        response = await superadminAPI.deleteUser(userId);
+      } else {
+        // Use usersAPI toggleStatus for activating/deactivating
+        // Note: toggleStatus automatically switches between 'active' and 'inactive'
+        response = await usersAPI.toggleStatus(userId);
+      }
+      
+      if (response.success) {
+        const statusText = newStatus === 'deleted' ? 'deleted' : 'status updated';
+        toast({
+          title: "Success",
+          description: `User ${statusText} successfully`,
+          variant: "success",
+        });
+        
+        // Refresh the users list
+        fetchAllUsers();
+        
+        // Call the change callback if provided
+        if (onUserChange) {
+          onUserChange();
+        }
+      } else {
+        throw new Error(response.message || 'Failed to update user status');
+      }
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user status",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
+
+  const filteredUsers = users.filter(user => user.status !== 'deleted').filter(user => {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       return (
@@ -197,7 +294,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                   <SelectTrigger className="w-40 bg-white border-gray-300 text-black">
                     <SelectValue placeholder="Role" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-300">
+                  <SelectContent className="bg-white border-gray-300 text-black">
                     <SelectItem value="all">All Roles</SelectItem>
                     <SelectItem value="manager">Managers</SelectItem>
                     <SelectItem value="cashier">Cashiers</SelectItem>
@@ -207,11 +304,10 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                   <SelectTrigger className="w-40 bg-white border-gray-300 text-black">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-300">
+                  <SelectContent className="bg-white border-gray-300 text-black">
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="deleted">Deleted</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -276,13 +372,72 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-600 hover:text-green-600 hover:bg-green-100"
-                      >
-                        <MoreHorizontal className="h-5 w-5" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-600 hover:text-green-600 hover:bg-green-100"
+                            disabled={actionLoading.has(user._id)}
+                          >
+                            {actionLoading.has(user._id) ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                            ) : (
+                              <MoreHorizontal className="h-5 w-5" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-48 bg-white border border-gray-200 shadow-lg">
+                          {user.status === 'inactive' ? (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handleUserStatusChange(user._id, 'active')}
+                                className="text-green-700 hover:bg-green-50 cursor-pointer"
+                                disabled={actionLoading.has(user._id)}
+                              >
+                                <UserCheck className="mr-2 h-4 w-4 text-green-600" />
+                                Activate User
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleUserStatusChange(user._id, 'deleted')}
+                                className="text-red-700 hover:bg-red-50 cursor-pointer"
+                                disabled={actionLoading.has(user._id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4 text-red-600" />
+                                Delete User
+                              </DropdownMenuItem>
+                            </>
+                          ) : user.status === 'active' ? (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handleUserStatusChange(user._id, 'inactive')}
+                                className="text-yellow-700 hover:bg-yellow-50 cursor-pointer"
+                                disabled={actionLoading.has(user._id)}
+                              >
+                                <UserX className="mr-2 h-4 w-4 text-yellow-600" />
+                                Deactivate User
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleUserStatusChange(user._id, 'deleted')}
+                                className="text-red-700 hover:bg-red-50 cursor-pointer"
+                                disabled={actionLoading.has(user._id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4 text-red-600" />
+                                Delete User
+                              </DropdownMenuItem>
+                            </>
+                          ) : !user.isApproved ? (
+                            <DropdownMenuItem
+                              onClick={() => handleApproveUser(user._id)}
+                              className="text-green-700 hover:bg-green-50 cursor-pointer"
+                              disabled={actionLoading.has(user._id)}
+                            >
+                              <UserCheck className="mr-2 h-4 w-4 text-green-600" />
+                              Approve User
+                            </DropdownMenuItem>
+                          ) : null}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 ))}

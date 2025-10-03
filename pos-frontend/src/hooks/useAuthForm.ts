@@ -54,12 +54,35 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
         body: JSON.stringify({
           emailOrUsername,
           password,
+          loginMode: isAdminMode ? 'admin' : 'cashier'
         }),
       });
       
       const data = await response.json();
       
+      // Show specific toast for failed logins with detailed error messages
+      if (!data.success) {
+        const errorType = data.data?.errorType;
+        const errorMessage = data.message || 'Login failed';
+        
+        // Show appropriate toast for different error types
+        toast({
+          title: errorType === 'account_pending' ? "Account Pending Approval" 
+                : errorType === 'account_inactive' ? "Account Inactive"
+                : errorType === 'invalid_password' ? "Login Failed"
+                : errorType === 'user_not_found' ? "Account Not Found"
+                : errorType === 'role_mismatch' ? "Role Access Error"
+                : "Login Failed",
+          description: errorMessage,
+          variant: errorType === 'role_mismatch' ? "warning" : "destructive",
+        });
+        
+        return { success: false, message: errorMessage };
+      }
+      
       if (data.success) {
+        // Role validation now handled server-side before authentication
+        // If we reach here, the login was successful and roles match
         const userRole = data.data.user.role;
         const maintenanceMode = data.data.maintenanceMode;
         const maintenanceMessage = data.data.maintenanceMessage;
@@ -67,24 +90,19 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
         // Set cookie expiration based on "Remember Me" option
         const cookieExpiration = rememberMe ? 30 : 7; // 30 days if remember me, 7 days otherwise
         
-        // Enforce role-based access
-        if (!isAdminMode && userRole === 'cashier') {
-          // Cashiers can only login in cashier mode
-          Cookies.set('auth_token', data.data.accessToken, { expires: cookieExpiration });
-          Cookies.set('refresh_token', data.data.refreshToken, { expires: 30 }); // 30 days
-          // Refresh AuthContext to update user state
-          await refreshSession();
+        // Set cookies and refresh context
+        Cookies.set('auth_token', data.data.accessToken, { expires: cookieExpiration });
+        Cookies.set('refresh_token', data.data.refreshToken, { expires: 30 }); // 30 days
+        // Refresh AuthContext to update user state
+        await refreshSession();
+        
+        // Handle redirects based on user role
+        if (userRole === 'cashier') {
           window.location.href = '/pos';
           return { success: true };
-        } else if (isAdminMode && (userRole === 'manager' || userRole === 'superadmin')) {
-          // Managers and superadmins can login in admin mode
-          Cookies.set('auth_token', data.data.accessToken, { expires: cookieExpiration });
-          Cookies.set('refresh_token', data.data.refreshToken, { expires: 30 }); // 30 days
-          // Refresh AuthContext to update user state
-          await refreshSession();
-          
+        } else if (userRole === 'manager') {
           // Check if maintenance mode is active for managers
-          if (maintenanceMode && userRole === 'manager') {
+          if (maintenanceMode) {
             return { 
               success: true, 
               maintenanceMode: true,
@@ -93,26 +111,13 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
               redirectTo: '/dashboard'
             };
           }
-          
-          // Redirect based on role
-          if (userRole === 'superadmin') {
-            window.location.href = '/superadmin';
-          } else {
-            window.location.href = '/dashboard';
-          }
+          window.location.href = '/dashboard';
           return { success: true };
-        } else {
-          // Invalid role/mode combination
-          return { 
-            success: false, 
-            message: (userRole === 'manager' || userRole === 'superadmin')
-              ? 'Manager/Superadmin access required. Please use Manager Mode to login.' 
-              : 'Cashier access required. Please use Cashier Mode to login.' 
-          };
+        } else if (userRole === 'superadmin') {
+          window.location.href = '/superadmin';
+          return { success: true };
         }
       }
-      
-      return { success: false, message: data.message || 'Login failed' };
     } catch (error: any) {
       console.log('Login error caught:', error.response?.data); // Debug log
       console.log('Error status:', error.response?.status); // Debug log
@@ -166,6 +171,7 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
           toast({
             title: "Registration Successful",
             description: "Your account has been created. Please wait for admin approval before logging in.",
+            variant: "success",
           });
         } else {
           toast({

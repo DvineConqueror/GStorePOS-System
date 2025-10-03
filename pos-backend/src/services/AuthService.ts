@@ -346,29 +346,33 @@ export class AuthService {
     emailOrUsername: string, 
     password: string,
     deviceInfo?: { userAgent: string; ip: string; platform?: string }
-  ): Promise<{ user: IUser; tokens: TokenPair; session: ISession } | null> {
-    // Find user by email or username
+  ): Promise<{ user: IUser; tokens: TokenPair; session: ISession; error?: { type: string; message: string } } | null> {
+    // Find user by email or username (including inactive users for better error messages)
     const user = await User.findOne({
       $or: [
         { email: emailOrUsername },
         { username: emailOrUsername }
-      ],
-      status: 'active'
+      ]
     }).select('+password');
 
     if (!user) {
-      return null;
+      return { error: { type: 'user_not_found', message: 'No account found with this email or username.' } } as any;
+    }
+
+    // Check if user account is inactive
+    if (user.status !== 'active') {
+      return { error: { type: 'account_inactive', message: 'Your account is currently inactive. Please contact an administrator.' } } as any;
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return null;
+      return { error: { type: 'invalid_password', message: 'Password is incorrect.' } } as any;
     }
 
     // Check if user is approved
     if (user.isApproved === false) {
-      return null;
+      return { error: { type: 'account_pending', message: 'Your account is pending approval. Please wait for an administrator to approve your account.' } } as any;
     }
 
     // **CONCURRENT SESSION DETECTION - Force Single Session (Most Secure)**
