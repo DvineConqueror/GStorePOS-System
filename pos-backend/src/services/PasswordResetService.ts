@@ -60,7 +60,7 @@ export class PasswordResetService {
       await resetToken.save();
 
       // Send password reset email
-      const clientUrl = process.env.CLIENT_URL!;
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
       
       const emailSent = await EmailService.sendPasswordResetEmail({
         user,

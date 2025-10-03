@@ -32,7 +32,7 @@ export class AuthService {
       tokenType: 'access'
     };
 
-    return jwt.sign(payload, process.env.JWT_SECRET!, {
+    return jwt.sign(payload, process.env.JWT_SECRET || 'fallback-secret-key', {
       expiresIn: ACCESS_TOKEN_EXPIRE,
       issuer: 'grocery-pos',
       audience: 'grocery-pos-client',
@@ -51,7 +51,7 @@ export class AuthService {
       tokenType: 'refresh'
     };
 
-    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
+    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret', {
       expiresIn: REFRESH_TOKEN_EXPIRE,
       issuer: 'grocery-pos',
       audience: 'grocery-pos-client',
@@ -227,7 +227,7 @@ export class AuthService {
         return null;
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!, {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key', {
         issuer: 'grocery-pos',
         audience: 'grocery-pos-client',
         algorithms: ['HS256']
@@ -261,7 +261,7 @@ export class AuthService {
         return null;
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET!, {
+      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret', {
         issuer: 'grocery-pos',
         audience: 'grocery-pos-client',
         algorithms: ['HS256']

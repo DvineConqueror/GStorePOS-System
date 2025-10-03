@@ -59,8 +59,8 @@ app.use(compression());
 
 // Rate limiting - More lenient for development
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS!), // 1 minute
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS!), // limit each IP to 1000 requests per minute
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000'), // 1 minute default
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '1000'), // limit each IP to 1000 requests per minute default
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
