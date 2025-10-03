@@ -255,6 +255,11 @@ export const productsAPI = {
 
 // Notifications API
 export const notificationsAPI = {
+  getAllNotifications: async () => {
+    const response = await api.get('/notifications/all');
+    return response.data;
+  },
+
   getPendingCount: async () => {
     const response = await api.get('/notifications/pending-count');
     return response.data;
@@ -262,6 +267,11 @@ export const notificationsAPI = {
 
   getPendingUsers: async (limit: number = 5) => {
     const response = await api.get(`/notifications/pending-users?limit=${limit}`);
+    return response.data;
+  },
+
+  getLowStockAlerts: async () => {
+    const response = await api.get('/notifications/low-stock');
     return response.data;
   },
 };

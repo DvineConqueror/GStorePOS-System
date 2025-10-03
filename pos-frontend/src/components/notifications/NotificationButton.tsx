@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Bell, 
   BellRing, 
   Users, 
-  Clock,
-  CheckCircle2,
-  CheckCircle
+  Package,
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { getColorScheme } from '@/utils/colorSchemes';
 import { useSocket } from '@/context/SocketContext';
+import NotificationDialog from './NotificationDialog';
 
 interface PendingUser {
   _id: string;
@@ -25,21 +24,41 @@ interface PendingUser {
   createdAt: string;
 }
 
+interface LowStockProduct {
+  _id: string;
+  name: string;
+  stock: number;
+  minStock: number;
+  sku: string;
+  category?: string;
+}
+
+interface NotificationData {
+  pendingApprovals: {
+    count: number;
+    users: PendingUser[];
+    enabled: boolean;
+  };
+  lowStockAlerts: {
+    count: number;
+    products: LowStockProduct[];
+    enabled: boolean;
+  };
+  totalNotifications: number;
+}
+
 interface NotificationButtonProps {
   className?: string;
 }
 
 export default function NotificationButton({ className }: NotificationButtonProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const colors = getColorScheme();
   const { isConnected } = useSocket();
   
-  const [pendingCount, setPendingCount] = useState(0);
-  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
+  const [notificationData, setNotificationData] = useState<NotificationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showNoApprovalsDialog, setShowNoApprovalsDialog] = useState(false);
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false);
 
   // Only show for superadmin and manager roles
   if (!user || (user.role !== 'superadmin' && user.role !== 'manager')) {
@@ -47,36 +66,36 @@ export default function NotificationButton({ className }: NotificationButtonProp
   }
 
   useEffect(() => {
-    fetchPendingApprovals();
+    fetchAllNotifications();
     
     // Listen for real-time updates from WebSocket
-    const handlePendingApprovalsUpdate = () => {
-      fetchPendingApprovals();
+    const handleNotificationUpdate = () => {
+      fetchAllNotifications();
     };
     
-    window.addEventListener('pendingApprovalsUpdate', handlePendingApprovalsUpdate);
+    window.addEventListener('pendingApprovalsUpdate', handleNotificationUpdate);
+    window.addEventListener('lowStockUpdate', handleNotificationUpdate);
     
     // Fallback polling every 30 seconds if WebSocket is not connected
     const interval = setInterval(() => {
       if (!isConnected) {
-        fetchPendingApprovals();
+        fetchAllNotifications();
       }
     }, 30000);
     
     return () => {
-      window.removeEventListener('pendingApprovalsUpdate', handlePendingApprovalsUpdate);
+      window.removeEventListener('pendingApprovalsUpdate', handleNotificationUpdate);
+      window.removeEventListener('lowStockUpdate', handleNotificationUpdate);
       clearInterval(interval);
     };
   }, [user?.role, isConnected]);
 
-  // Listen for WebSocket notifications and refresh count only (no toast - NotificationAlert handles that)
+  // Listen for WebSocket notifications and refresh data
   useEffect(() => {
     const handleNotification = (event: CustomEvent) => {
       const notification = event.detail;
-      if (notification.type === 'new_user_registration') {
-        // Only refresh pending approvals count, no toast notification
-        // NotificationAlert component will handle the toast
-        fetchPendingApprovals();
+      if (notification.type === 'new_user_registration' || notification.type === 'low_stock_alert') {
+        fetchAllNotifications();
       }
     };
 
@@ -87,203 +106,59 @@ export default function NotificationButton({ className }: NotificationButtonProp
     };
   }, []);
 
-  const fetchPendingApprovals = async () => {
+  const fetchAllNotifications = async () => {
     try {
       setIsLoading(true);
       
       // Import API dynamically to avoid circular dependencies
       const { notificationsAPI } = await import('@/lib/api');
       
-      // Fetch both count and users for consistency
-      const [countResponse, usersResponse] = await Promise.all([
-        notificationsAPI.getPendingCount(),
-        notificationsAPI.getPendingUsers(5)
-      ]);
+      const response = await notificationsAPI.getAllNotifications();
       
-      if (countResponse.success && usersResponse.success) {
-        const count = countResponse.data?.count || 0;
-        const users = usersResponse.data || [];
-        
-        setPendingCount(count);
-        setPendingUsers(users);
+      if (response.success) {
+        setNotificationData(response.data);
       }
     } catch (error) {
-      console.error('Error fetching pending approvals:', error);
+      console.error('Error fetching notifications:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleNotificationClick = () => {
-    if (pendingCount === 0) {
-      setShowNoApprovalsDialog(true);
-      return;
-    }
-
-    // Only show dropdown on manual click, not on WebSocket updates
-    setShowDropdown(!showDropdown);
-  };
-
-  const handleViewAll = () => {
-    setShowDropdown(false);
-    if (user.role === 'superadmin') {
-      navigate('/superadmin/approvals');
-    } else {
-      navigate('/dashboard?highlight=pending');
-    }
-  };
-
-  const handleUserClick = (userId: string) => {
-    setShowDropdown(false);
-    if (user.role === 'superadmin') {
-      navigate('/superadmin/approvals');
-    } else {
-      navigate(`/dashboard?highlight=pending&userId=${userId}`);
-    }
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'cashier': return 'Cashier';
-      case 'manager': return 'Manager';
-      default: return role;
-    }
+    setShowNotificationDialog(true);
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <>
       <Button
         variant="ghost"
         size="sm"
         onClick={handleNotificationClick}
         disabled={isLoading}
-        className={`relative p-2 h-8 w-8 ${colors.primaryText} hover:bg-gray-100`}
+        className={`relative p-2 h-8 w-8 ${colors.primaryText} hover:bg-gray-100 ${className}`}
       >
-        {pendingCount > 0 ? (
-          <BellRing className="h-4 w-4" />
+        {(notificationData?.totalNotifications || 0) > 0 ? (
+          <BellRing className=" h-4 w-4" />
         ) : (
           <Bell className="h-4 w-4" />
         )}
         
-        {pendingCount > 0 && (
+        {(notificationData?.totalNotifications || 0) > 0 && (
           <Badge 
             className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-600"
           >
-            {pendingCount > 9 ? '9+' : pendingCount}
+            {(notificationData?.totalNotifications || 0) > 9 ? '9+' : notificationData?.totalNotifications}
           </Badge>
         )}
       </Button>
 
-      {showDropdown && pendingCount > 0 && (
-        <div className="absolute right-0 top-10 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-yellow-600" />
-                Pending Approvals
-              </h3>
-              <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
-                {pendingCount}
-              </Badge>
-            </div>
-          </div>
-          
-          <div className="max-h-64 overflow-y-auto">
-            {pendingUsers.map((pendingUser) => (
-              <div
-                key={pendingUser._id}
-                className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                onClick={() => handleUserClick(pendingUser._id)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Users className="h-3 w-3 text-gray-500" />
-                      <span className="font-medium text-sm text-gray-900 truncate">
-                        {pendingUser.firstName} {pendingUser.lastName}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600 truncate">
-                      {pendingUser.email}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5">
-                        {getRoleDisplayName(pendingUser.role)}
-                      </Badge>
-                      <span className="text-xs text-gray-500">
-                        {formatTimeAgo(pendingUser.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="p-3 border-t border-gray-200">
-            <Button
-              onClick={handleViewAll}
-              className={`w-full ${colors.primaryButton} text-white text-sm`}
-            >
-              View All Approvals
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Backdrop to close dropdown */}
-      {showDropdown && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowDropdown(false)}
-        />
-      )}
-
-      {/* No Approvals Dialog */}
-      <Dialog open={showNoApprovalsDialog} onOpenChange={setShowNoApprovalsDialog}>
-        <DialogContent className="max-w-md p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-            <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              No Pending Approvals
-            </DialogTitle>
-          </DialogHeader>
-          <div className="px-6 py-4">
-            <div className="text-center py-4">
-              <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">All Caught Up!</h3>
-              <p className="text-gray-600 mb-4">
-                There are no users waiting for approval at this time. All user registrations have been processed.
-              </p>
-              <div className="text-sm text-gray-500">
-                New user registrations will appear here when they need your approval.
-              </div>
-            </div>
-          </div>
-          <div className="px-6 pb-6 border-t bg-gray-50 flex-shrink-0">
-            <Button
-              onClick={() => setShowNoApprovalsDialog(false)}
-              className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white"
-            >
-              Got it
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+      <NotificationDialog
+        open={showNotificationDialog}
+        onClose={() => setShowNotificationDialog(false)}
+        notificationData={notificationData || undefined}
+        isLoading={isLoading}
+      />
+    </>
   );
 }

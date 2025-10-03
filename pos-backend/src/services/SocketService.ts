@@ -201,4 +201,36 @@ export class SocketService {
 
     console.log(`Maintenance mode ${data.maintenanceMode ? 'enabled' : 'disabled'} - notification sent to all users`);
   }
+
+  /**
+   * Emit low stock alert to managers and superadmins
+   */
+  static emitLowStockAlert(data: {
+    products: any[];
+    count: number;
+    alertType: 'critical' | 'warning';
+    timestamp?: Date;
+  }) {
+    if (!this.io) {
+      console.error('Socket.IO not initialized');
+      return;
+    }
+
+    const notification = {
+      type: 'low_stock_alert',
+      message: `${data.count} product(s) require immediate attention`,
+      products: data.products,
+      count: data.count,
+      alertType: data.alertType,
+      timestamp: data.timestamp?.toISOString() || new Date().toISOString()
+    };
+
+    // Notify managers and superadmins
+    this.emitToRole('manager', 'notification', notification);
+    this.emitToRole('superadmin', 'notification', notification);
+    
+    // Also emit a custom event for the frontend to update counts
+    this.emitToRole('manager', 'lowStockUpdate', { count: data.count });
+    this.emitToRole('superadmin', 'lowStockUpdate', { count: data.count });
+  }
 }

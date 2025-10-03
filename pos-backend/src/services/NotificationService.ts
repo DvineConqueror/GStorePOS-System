@@ -128,6 +128,15 @@ class NotificationService {
         }
       }
 
+      // Emit real-time socket notification to managers and superadmins
+      const { SocketService } = await import('./SocketService');
+      SocketService.emitLowStockAlert({
+        products: lowStockProducts,
+        count: lowStockProducts.length,
+        alertType: lowStockProducts.length > 10 ? 'critical' : 'warning',
+        timestamp: new Date()
+      });
+
       console.log(`Low stock alerts sent for ${lowStockProducts.length} products`);
       return true;
     } catch (error) {
