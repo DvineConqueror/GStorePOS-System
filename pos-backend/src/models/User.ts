@@ -1,6 +1,6 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, HydratedDocument } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { IUser } from '../types';
+import { IUser, IUserModel } from '../types';
 
 const userSchema = new Schema<IUser>({
   username: {
@@ -127,14 +127,14 @@ userSchema.index({
 }); // For user registration analytics by role
 
 // Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
+userSchema.pre<IUser>('save', async function(next) {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) return next();
 
   try {
     // Hash password with cost of 12
     const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
+    (this as any).password = await bcrypt.hash((this as any).password, salt);
     next();
   } catch (error) {
     next(error as Error);
@@ -144,7 +144,7 @@ userSchema.pre('save', async function(next) {
 // Instance method to compare password
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   try {
-    return await bcrypt.compare(candidatePassword, this.password);
+    return await bcrypt.compare(candidatePassword, (this as any).password);
   } catch (error) {
     throw new Error('Password comparison failed');
   }
@@ -184,7 +184,7 @@ userSchema.statics.findByCredentials = async function(emailOrUsername: string, p
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {
-  return `${this.firstName} ${this.lastName}`;
+  return `${(this as any).firstName} ${(this as any).lastName}`;
 });
 
 // Ensure virtual fields are serialized
@@ -192,4 +192,4 @@ userSchema.set('toJSON', {
   virtuals: true,
 });
 
-export const User = mongoose.model<IUser>('User', userSchema);
+export const User = mongoose.model<IUser, IUserModel>('User', userSchema);

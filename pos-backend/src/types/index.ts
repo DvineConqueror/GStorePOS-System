@@ -1,4 +1,4 @@
-import { Document, Model } from 'mongoose';
+import { Document, Model, Types } from 'mongoose';
 
 // User Types
 export interface IUser extends Document {
@@ -11,13 +11,19 @@ export interface IUser extends Document {
   lastName: string;
   status: 'active' | 'inactive' | 'deleted';
   isApproved: boolean;
-  approvedBy?: string;
+  approvedBy?: Types.ObjectId | string;
   approvedAt?: Date;
-  createdBy?: string;
+  createdBy?: Types.ObjectId | string;
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
+  fullName: string; // Virtual property
   comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+// User Model Interface for static methods
+export interface IUserModel extends Model<IUser> {
+  findByCredentials(emailOrUsername: string, password: string): Promise<IUser>;
 }
 
 // Product Types
