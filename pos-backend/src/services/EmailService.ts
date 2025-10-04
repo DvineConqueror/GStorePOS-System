@@ -40,18 +40,22 @@ export class EmailService {
 
     // Validate email configuration
     if (!emailConfig.auth.user || !emailConfig.auth.pass) {
-      console.warn('Email configuration incomplete. Email functionality will be disabled.');
+      console.error('EMAIL CONFIG ERROR: Email configuration incomplete. Missing EMAIL_USER or EMAIL_PASS environment variables.');
+      console.error('Required environment variables: EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS');
       return;
     }
+
+    console.log(`EMAIL CONFIG: Initializing email service with host: ${emailConfig.host}, port: ${emailConfig.port}, user: ${emailConfig.auth.user}`);
 
     this.transporter = nodemailer.createTransport(emailConfig);
 
     // Verify connection configuration
     this.transporter.verify((error, success) => {
       if (error) {
-        console.error('Email service initialization failed:', error);
+        console.error('❌ EMAIL SERVICE ERROR: Email service initialization failed:', error.message);
         this.transporter = null;
       } else {
+        console.log('✅ EMAIL SERVICE: Email service initialized successfully');
       }
     });
   }

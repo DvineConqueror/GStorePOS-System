@@ -746,7 +746,12 @@ router.post('/forgot-password', authRateLimit, async (req, res): Promise<void> =
       } as ApiResponse);
     }
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error('FORGOT PASSWORD ERROR:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      email: req.body?.email || 'No email provided'
+    });
     res.status(500).json({
       success: false,
       message: 'Server error while processing password reset request.',
@@ -851,6 +856,42 @@ router.post('/reset-password/:token', authRateLimit, async (req, res): Promise<v
     res.status(500).json({
       success: false,
       message: 'Server error while resetting password.',
+    } as ApiResponse);
+  }
+});
+
+// @desc    Check email service health
+// @route   GET /api/v1/auth/email-health
+// @access  Public
+router.get('/email-health', async (req, res): Promise<void> => {
+  try {
+    const emailConfig = {
+      hasHost: !!process.env.EMAIL_HOST,
+      hasPort: !!process.env.EMAIL_PORT,
+      hasUser: !!process.env.EMAIL_USER,
+      hasPass: !!process.env.EMAIL_PASS,
+      hasStoreName: !!process.env.STORE_NAME,
+      hasClientUrl: !!process.env.CLIENT_URL,
+    };
+
+    const isConfigured = Object.values(emailConfig).every(Boolean);
+
+    res.json({
+      success: true,
+      data: {
+        emailServiceConfigured: isConfigured,
+        configuration: emailConfig,
+        environment: process.env.NODE_ENV,
+        message: isConfigured 
+          ? 'Email service is properly configured' 
+          : 'Email service configuration is incomplete'
+      }
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Email health check error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking email service health',
     } as ApiResponse);
   }
 });
