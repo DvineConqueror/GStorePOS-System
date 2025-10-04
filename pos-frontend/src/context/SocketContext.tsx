@@ -29,8 +29,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
     // Initialize socket connection
     const newSocket = io(import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000', {
       transports: ['websocket', 'polling'],
-      timeout: 20000,
-      forceNew: true
+      timeout: 60000, // Increased to 60 seconds for production
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
     });
 
     newSocket.on('connect', () => {

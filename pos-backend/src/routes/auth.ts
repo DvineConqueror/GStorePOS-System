@@ -628,10 +628,18 @@ router.post('/logout', authenticate, async (req, res): Promise<void> => {
     const accessToken = req.header('Authorization')?.replace('Bearer ', '');
     const { sessionId } = req.body;
 
+    // If no sessionId provided, try to get it from cookies or just blacklist the token
     if (!sessionId) {
-      res.status(400).json({
-        success: false,
-        message: 'Session ID is required.',
+      console.warn('LOGOUT WARNING: No sessionId provided in request body');
+      
+      // Still blacklist the access token if provided
+      if (accessToken) {
+        AuthService.blacklistToken(accessToken);
+      }
+      
+      res.json({
+        success: true,
+        message: 'Logged out successfully (token blacklisted).',
       } as ApiResponse);
       return;
     }
@@ -705,7 +713,17 @@ router.get('/sessions', authenticate, async (req, res): Promise<void> => {
 // @route   POST /api/v1/auth/forgot-password
 // @access  Public
 router.post('/forgot-password', authRateLimit, async (req, res): Promise<void> => {
+  // Set a longer timeout for email operations
+  req.setTimeout(30000); // 30 seconds
+  
   try {
+    console.log('FORGOT PASSWORD: Request received', {
+      email: req.body?.email,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      origin: req.get('Origin')
+    });
+
     const { email } = req.body;
 
     if (!email) {
@@ -730,16 +748,25 @@ router.post('/forgot-password', authRateLimit, async (req, res): Promise<void> =
     const ipAddress = req.ip || req.connection.remoteAddress || 'Unknown';
     const userAgent = req.get('User-Agent') || 'Unknown';
 
-    // Create reset token and send email
-    const result = await PasswordResetService.createResetToken(email, ipAddress, userAgent);
+    console.log('FORGOT PASSWORD: Starting email process for', email);
+
+    // Create reset token and send email with timeout handling
+    const result = await Promise.race([
+      PasswordResetService.createResetToken(email, ipAddress, userAgent),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Password reset process timeout')), 25000)
+      )
+    ]) as any;
 
     if (result.success) {
+      console.log('FORGOT PASSWORD: Success for', email);
       res.json({
         success: true,
         message: result.message,
         data: result.token ? { token: result.token } : undefined, // Only in development
       } as ApiResponse);
     } else {
+      console.log('FORGOT PASSWORD: Failed for', email, result.message);
       res.status(500).json({
         success: false,
         message: result.message,
@@ -752,9 +779,14 @@ router.post('/forgot-password', authRateLimit, async (req, res): Promise<void> =
       stack: error instanceof Error ? error.stack : undefined,
       email: req.body?.email || 'No email provided'
     });
+    
+    const errorMessage = error instanceof Error && error.message.includes('timeout') 
+      ? 'Email service is taking longer than expected. Please try again in a moment.'
+      : 'Server error while processing password reset request.';
+      
     res.status(500).json({
       success: false,
-      message: 'Server error while processing password reset request.',
+      message: errorMessage,
     } as ApiResponse);
   }
 });

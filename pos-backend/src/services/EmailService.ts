@@ -36,6 +36,13 @@ export class EmailService {
       tls: {
         rejectUnauthorized: process.env.NODE_ENV === 'production',
       },
+      // Add connection timeout settings for production
+      connectionTimeout: 30000, // 30 seconds
+      greetingTimeout: 30000,   // 30 seconds
+      socketTimeout: 30000,     // 30 seconds
+      pool: true,               // Use connection pooling
+      maxConnections: 5,        // Max concurrent connections
+      maxMessages: 100,         // Max messages per connection
     };
 
     // Validate email configuration
@@ -78,7 +85,26 @@ export class EmailService {
         text: options.text,
       };
 
-      const result = await this.transporter.sendMail(mailOptions);
+      // Add timeout wrapper for email sending
+      const sendEmailWithTimeout = () => {
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Email sending timeout after 25 seconds'));
+          }, 25000);
+
+          this.transporter!.sendMail(mailOptions, (error, info) => {
+            clearTimeout(timeout);
+            if (error) {
+              reject(error);
+            } else {
+              resolve(info);
+            }
+          });
+        });
+      };
+
+      await sendEmailWithTimeout();
+      console.log('EMAIL SENT: Successfully sent email to', options.to);
       return true;
     } catch (error) {
       console.error('Failed to send email:', error);

@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000,
+  timeout: 30000, // Increased to 30 seconds for production
   headers: {
     'Content-Type': 'application/json',
   },
