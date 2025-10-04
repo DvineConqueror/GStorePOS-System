@@ -54,17 +54,81 @@ export class EmailService {
 
     console.log(`EMAIL CONFIG: Initializing email service with host: ${emailConfig.host}, port: ${emailConfig.port}, user: ${emailConfig.auth.user}`);
 
-    this.transporter = nodemailer.createTransport(emailConfig);
+    try {
+      this.transporter = nodemailer.createTransport(emailConfig);
+      console.log('EMAIL TRANSPORTER: Created successfully');
 
-    // Verify connection configuration
-    this.transporter.verify((error, success) => {
-      if (error) {
-        console.error('❌ EMAIL SERVICE ERROR: Email service initialization failed:', error.message);
+      // Verify connection configuration with timeout
+      const verifyPromise = new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Email verification timeout after 15 seconds'));
+        }, 15000);
+
+        this.transporter!.verify((error, success) => {
+          clearTimeout(timeout);
+          if (error) {
+            console.error('EMAIL VERIFICATION ERROR:', {
+              code: (error as any).code,
+              command: (error as any).command,
+              response: (error as any).response,
+              message: error.message
+            });
+            reject(error);
+          } else {
+            console.log('EMAIL VERIFICATION SUCCESS: Email service verified and ready');
+            resolve();
+          }
+        });
+      });
+
+      // Handle verification asynchronously
+      verifyPromise.catch((error) => {
+        console.error('EMAIL SERVICE ERROR: Email service initialization failed:', error.message);
         this.transporter = null;
-      } else {
-        console.log('✅ EMAIL SERVICE: Email service initialized successfully');
-      }
-    });
+      });
+
+    } catch (error) {
+      console.error('EMAIL TRANSPORTER ERROR: Failed to create transporter:', error);
+      this.transporter = null;
+    }
+  }
+
+  /**
+   * Check if email service is initialized
+   */
+  static isInitialized(): boolean {
+    return this.transporter !== null;
+  }
+
+  /**
+   * Test email connection
+   */
+  static async testConnection(): Promise<boolean> {
+    if (!this.transporter) {
+      return false;
+    }
+
+    try {
+      const testPromise = new Promise<boolean>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Connection test timeout'));
+        }, 10000);
+
+        this.transporter!.verify((error, success) => {
+          clearTimeout(timeout);
+          if (error) {
+            reject(error);
+          } else {
+            resolve(true);
+          }
+        });
+      });
+
+      return await testPromise;
+    } catch (error) {
+      console.error('EMAIL CONNECTION TEST FAILED:', error);
+      return false;
+    }
   }
 
   /**
@@ -85,6 +149,14 @@ export class EmailService {
         text: options.text,
       };
 
+      console.log('EMAIL DEBUG: Attempting to send email', {
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT
+      });
+
       // Add timeout wrapper for email sending
       const sendEmailWithTimeout = () => {
         return new Promise((resolve, reject) => {
@@ -95,8 +167,18 @@ export class EmailService {
           this.transporter!.sendMail(mailOptions, (error, info) => {
             clearTimeout(timeout);
             if (error) {
+              console.error('EMAIL ERROR: SMTP error details:', {
+                code: (error as any).code,
+                command: (error as any).command,
+                response: (error as any).response,
+                message: error.message
+              });
               reject(error);
             } else {
+              console.log('EMAIL SUCCESS: Email sent successfully', {
+                messageId: info.messageId,
+                response: info.response
+              });
               resolve(info);
             }
           });
@@ -107,7 +189,7 @@ export class EmailService {
       console.log('EMAIL SENT: Successfully sent email to', options.to);
       return true;
     } catch (error) {
-      console.error('Failed to send email:', error);
+      console.error('EMAIL FAILED: Failed to send email:', error);
       return false;
     }
   }

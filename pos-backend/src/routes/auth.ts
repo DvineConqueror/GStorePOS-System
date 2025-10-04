@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { AuthService } from '../services/AuthService';
 import { PasswordResetService } from '../services/PasswordResetService';
+import { EmailService } from '../services/EmailService';
 import SystemSettingsService from '../services/SystemSettingsService';
 import NotificationService from '../services/NotificationService';
 import { authenticate } from '../middleware/auth';
@@ -907,16 +908,36 @@ router.get('/email-health', async (req, res): Promise<void> => {
     };
 
     const isConfigured = Object.values(emailConfig).every(Boolean);
+    const isInitialized = EmailService.isInitialized();
+
+    // Test actual email connection if configured
+    let connectionTest = null;
+    if (isConfigured && isInitialized) {
+      try {
+        const testResult = await EmailService.testConnection();
+        connectionTest = {
+          success: testResult,
+          message: testResult ? 'SMTP connection successful' : 'SMTP connection failed'
+        };
+      } catch (error) {
+        connectionTest = {
+          success: false,
+          message: `SMTP connection error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        };
+      }
+    }
 
     res.json({
       success: true,
       data: {
         emailServiceConfigured: isConfigured,
+        emailServiceInitialized: isInitialized,
         configuration: emailConfig,
+        connectionTest,
         environment: process.env.NODE_ENV,
-        message: isConfigured 
-          ? 'Email service is properly configured' 
-          : 'Email service configuration is incomplete'
+        message: isConfigured && isInitialized 
+          ? 'Email service is properly configured and initialized' 
+          : 'Email service configuration or initialization is incomplete'
       }
     } as ApiResponse);
   } catch (error) {
