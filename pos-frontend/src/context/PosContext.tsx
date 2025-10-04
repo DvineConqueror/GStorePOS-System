@@ -309,6 +309,30 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
   }, [prefetchedData.products.length, prefetchedData.transactions.length, state.products.length, state.transactions.length]);
 
   const addToCart = (product: Product) => {
+    // Check if product has stock available
+    if (product.stock <= 0) {
+      toast({
+        title: "Out of Stock",
+        description: `${product.name} is currently out of stock.`,
+        variant: "warning",
+      });
+      return;
+    }
+
+    const existingItem = state.cart.find(item => item._id === product._id);
+    
+    if (existingItem) {
+      // Check if adding one more would exceed stock
+      if (existingItem.quantity >= product.stock) {
+        toast({
+          title: "Stock Limit Reached",
+          description: `Cannot add more ${product.name}. Only ${product.stock} available in stock.`,
+          variant: "warning",
+        });
+        return;
+      }
+    }
+
     dispatch({ type: 'ADD_TO_CART', payload: product });
   };
 
@@ -317,6 +341,25 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateQuantity = (id: string, quantity: number) => {
+    // Find the product to get current stock
+    const product = state.products.find(p => p._id === id);
+    if (!product) return;
+
+    // Ensure quantity is at least 1
+    if (quantity < 1) {
+      quantity = 1;
+    }
+
+    // Check if quantity exceeds available stock
+    if (quantity > product.stock) {
+      toast({
+        title: "Stock Limit Exceeded",
+        description: `Cannot set quantity to ${quantity}. Only ${product.stock} ${product.unit} available in stock.`,
+        variant: "warning",
+      });
+      quantity = product.stock; // Set to maximum available
+    }
+
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
   };
 
