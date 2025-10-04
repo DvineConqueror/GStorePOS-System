@@ -207,11 +207,11 @@ io.on('connection', (socket) => {
   // Join user to their role-based room for targeted notifications
   socket.on('join-role-room', (role: string) => {
     socket.join(`role-${role}`);
-    console.log(`👥 USER JOINED ROOM: role-${role} (Socket ID: ${socket.id})`);
-    
-    // Get room info for debugging
-    const room = io.sockets.adapter.rooms.get(`role-${role}`);
-    console.log(`📊 ROOM role-${role} now has ${room?.size || 0} member(s)`);
+  });
+
+  // Join user to their user-specific room for session termination events
+  socket.on('join-user-room', (userId: string) => {
+    socket.join(`user-${userId}`);
   });
 });
 
@@ -267,7 +267,7 @@ const startServer = async () => {
             await CategoryService.initializeDefaultCategories(adminUser.id);
             console.log(' Default categories initialized');
           } else {
-            console.log('⚠️  No admin user found for initialization');
+            console.log('  No admin user found for initialization');
           }
         } catch (error) {
           console.error('Error initializing categories:', error);

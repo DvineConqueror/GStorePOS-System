@@ -9,7 +9,7 @@ Since you have a **monorepo** with both frontend (`pos-frontend`) and backend (`
 
 ## 🛠️ **Step-by-Step Deployment**
 
-### **🔧 Pre-Deployment Setup**
+### ** Pre-Deployment Setup**
 
 First, let's commit your deployment files:
 
@@ -164,7 +164,7 @@ mongodb+srv://admin:<password>@cluster0.xxxxx.mongodb.net/smart-grocery-pos?retr
 
 Replace `<password>` with your actual password.
 
-### **📧 Step 5: Setup Email (Gmail)**
+### ** Step 5: Setup Email (Gmail)**
 
 #### **5.1 Enable Gmail SMTP**
 
@@ -236,7 +236,7 @@ Replace `<password>` with your actual password.
 - Render free tier has cold starts (~30 seconds)
 - Upgrade to Starter ($7/month) for instant starts
 
-## 📊 **Render Features**
+##  **Render Features**
 
 ### **✅ What You Get**:
 - **Auto-Deploy**: Git push → automatic deployment

@@ -22,7 +22,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!user || (user.role !== 'superadmin' && user.role !== 'manager')) {
+    if (!user) {
       return;
     }
 
@@ -35,11 +35,14 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     newSocket.on('connect', () => {
       setIsConnected(true);
-      console.log(`🔌 FRONTEND: Connected to WebSocket as ${user.role} (${user.username})`);
       
-      // Join role-based room for targeted notifications
-      console.log(`👥 FRONTEND: Joining role room: role-${user.role}`);
-      newSocket.emit('join-role-room', user.role);
+      // Join role-based room for targeted notifications (only for admins)
+      if (user.role === 'superadmin' || user.role === 'manager') {
+        newSocket.emit('join-role-room', user.role);
+      } else {
+        // For cashiers, join user-specific room for session termination events
+        newSocket.emit('join-user-room', user.id);
+      }
     });
 
     newSocket.on('disconnect', () => {
@@ -92,8 +95,6 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     // Listen for session termination (forced logout due to concurrent login)
     newSocket.on('session_terminated', (data) => {
-      console.warn('Session terminated:', data);
-      
       // Show user notification about session termination
       window.dispatchEvent(new CustomEvent('sessionTerminated', { detail: data }));
       
@@ -112,7 +113,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
       
       // Show browser notification if permission granted
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(`🚨 Security Alert - ${alertData.alertType}`, {
+        new Notification(` Security Alert - ${alertData.alertType}`, {
           body: `User: ${alertData.username} from ${alertData.ipAddress}`,
           icon: '/favicon.ico',
           tag: `security-alert-${alertData.userId}`,
@@ -131,13 +132,9 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     // Listen for system alerts (security alerts, etc.)
     newSocket.on('system_alert', (alertData) => {
-      console.log('🚨 FRONTEND: System alert received:', alertData);
-      console.log('🔔 Adding to notifications state...');
-      
       // Add to notifications for the notification system
       setNotifications(prev => {
         const updated = [alertData, ...prev.slice(0, 9)];
-        console.log('📝 Updated notifications:', updated);
         return updated;
       });
       

@@ -93,6 +93,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshSession();
   }, []);
 
+  // Listen for manual logout events (from concurrent login modal)
+  useEffect(() => {
+    const handleManualLogout = () => {
+      setUser(null);
+      setLoading(false);
+      setAuthLoading(false);
+    };
+
+    window.addEventListener('manualLogout', handleManualLogout);
+    
+    return () => {
+      window.removeEventListener('manualLogout', handleManualLogout);
+    };
+  }, []);
+
   const signIn = async (emailOrUsername: string, password: string) => {
     try {
       setAuthLoading(true);

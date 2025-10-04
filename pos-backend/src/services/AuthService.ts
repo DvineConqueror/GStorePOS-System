@@ -203,7 +203,7 @@ export class AuthService {
       if (session.userId === userId && session.isActive) {
         session.isActive = false;
         count++;
-        console.log(`🔒 DEACTIVATED session ${session.sessionId} for user ${userId}`);
+        console.log(` DEACTIVATED session ${session.sessionId} for user ${userId}`);
       }
     }
 
@@ -393,9 +393,7 @@ export class AuthService {
 
     // Force logout all existing sessions for single session enforcement
     if (existingSessionCount > 0) {
-      const loggedOutCount = this.deactivateAllUserSessions(user._id.toString());
-      
-      // Notify existing sessions via WebSocket that a user tried to login with their account
+      // Notify existing sessions via WebSocket BEFORE deactivating them
       existingSessions.forEach(existingSession => {
         if (existingSession.isActive) {
           SocketService.emitToUser(user._id.toString(), 'session_terminated', {
@@ -407,6 +405,8 @@ export class AuthService {
         }
       });
 
+      // Now deactivate all existing sessions
+      const loggedOutCount = this.deactivateAllUserSessions(user._id.toString());
       console.log(`Forced logout: ${loggedOutCount} existing sessions terminated for user ${user.username} (${user._id})`);
 
       // Send email alerts to all superadmins and managers about concurrent session detection
@@ -659,7 +659,7 @@ export class AuthService {
               <p class="greeting">Hello ${user.firstName} ${user.lastName},</p>
               
               <div class="alert-info">
-                <h3>${alertType === 'suspicious_login' ? '🚨 Potential Security Risk' : '🔐 Login Confirmation'}</h3>
+                <h3>${alertType === 'suspicious_login' ? ' Potential Security Risk' : '🔐 Login Confirmation'}</h3>
                 <p>A ${alertTypeText.toLowerCase()} was detected on your SmartGrocery POS account.</p>
                 ${alertType === 'suspicious_login' 
                   ? `<p><strong>This login appears suspicious and requires immediate attention:</strong></p>
@@ -830,12 +830,12 @@ This is an automated message. Please do not reply to this email.
       }
 
       const currentTime = new Date().toLocaleString();
-      const subject = `🚨 SECURITY ALERT: Concurrent Session Detected - ${user.username}`;
+      const subject = ` SECURITY ALERT: Concurrent Session Detected - ${user.username}`;
       
       const emailBody = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-            <h1 style="margin: 0; font-size: 24px;">🚨 Security Alert</h1>
+            <h1 style="margin: 0; font-size: 24px;"> Security Alert</h1>
             <p style="margin: 5px 0 0 0; opacity: 0.9;">Concurrent Session Detected</p>
           </div>
           
@@ -864,12 +864,12 @@ This is an automated message. Please do not reply to this email.
             </div>
 
             <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 15px 0;">
-              <h3 style="margin-top: 0; color: #92400e;">⚠️ Action Taken</h3>
+              <h3 style="margin-top: 0; color: #92400e;"> Action Taken</h3>
               <p style="margin: 0;">All previous sessions for this user have been automatically terminated for security.</p>
             </div>
 
             <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 6px; margin: 15px 0;">
-              <h3 style="margin-top: 0; color: #1e40af;">🔧 Recommended Actions</h3>
+              <h3 style="margin-top: 0; color: #1e40af;"> Recommended Actions</h3>
               <ul style="margin: 5px 0 0 0; padding-left: 20px;">
                 <li>Review the user's account for any suspicious activity</li>
                 <li>Contact the user to verify this login was legitimate</li>
@@ -896,13 +896,13 @@ This is an automated message. Please do not reply to this email.
             text: `SECURITY ALERT: Concurrent session detected for user ${user.username} (${user.email}). ${sessionCount} existing session(s) were terminated. IP: ${deviceInfo.ip}. Time: ${currentTime}. Please review this activity and take appropriate action.`
           });
 
-          console.log(`✉️ Concurrent session alert sent to ${admin.role} ${admin.email}`);
+          console.log(` Concurrent session alert sent to ${admin.role} ${admin.email}`);
         } catch (emailError) {
           console.error(`Failed to send concurrent session alert to ${admin.email}:`, emailError);
         }
       }
 
-      console.log(`📧 Concurrent session alerts sent to ${adminUsers.length} admin(s) for user ${user.username}`);
+      console.log(` Concurrent session alerts sent to ${adminUsers.length} admin(s) for user ${user.username}`);
     } catch (error) {
       console.error('Failed to send concurrent session alerts to admins:', error);
     }
@@ -932,12 +932,12 @@ This is an automated message. Please do not reply to this email.
 
       const currentTime = new Date().toLocaleString();
       const timeDiffMinutes = Math.round(timeDiff / (1000 * 60));
-      const subject = `🚨 SECURITY ALERT: Suspicious Login Pattern - ${user.username}`;
+      const subject = ` SECURITY ALERT: Suspicious Login Pattern - ${user.username}`;
       
       const emailBody = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-            <h1 style="margin: 0; font-size: 24px;">🚨 Security Alert</h1>
+            <h1 style="margin: 0; font-size: 24px;"> Security Alert</h1>
             <p style="margin: 5px 0 0 0; opacity: 0.9;">Suspicious Login Pattern Detected</p>
           </div>
           
@@ -984,7 +984,7 @@ This is an automated message. Please do not reply to this email.
             </div>
 
             <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 6px; margin: 15px 0;">
-              <h3 style="margin-top: 0; color: #1e40af;">🔧 Immediate Actions Recommended</h3>
+              <h3 style="margin-top: 0; color: #1e40af;"> Immediate Actions Recommended</h3>
               <ul style="margin: 5px 0 0 0; padding-left: 20px;">
                 <li><strong>URGENT:</strong> Contact the user immediately to verify the login</li>
                 <li>Consider temporarily disabling the account</li>
@@ -1012,13 +1012,13 @@ This is an automated message. Please do not reply to this email.
             text: `SECURITY ALERT: Suspicious login pattern for user ${user.username} (${user.email}). User logged in from IP ${newDeviceInfo.ip} within ${timeDiffMinutes} minutes of previous login from ${previousDeviceInfo.ip}. Time: ${currentTime}. URGENT: Please investigate immediately.`
           });
 
-          console.log(`✉️ Suspicious login alert sent to ${admin.role} ${admin.email}`);
+          console.log(` Suspicious login alert sent to ${admin.role} ${admin.email}`);
         } catch (emailError) {
           console.error(`Failed to send suspicious login alert to ${admin.email}:`, emailError);
         }
       }
 
-      console.log(`📧 Suspicious login alerts sent to ${adminUsers.length} admin(s) for user ${user.username}`);
+      console.log(` Suspicious login alerts sent to ${adminUsers.length} admin(s) for user ${user.username}`);
     } catch (error) {
       console.error('Failed to send suspicious login alerts to admins:', error);
     }

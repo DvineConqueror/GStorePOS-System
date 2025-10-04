@@ -38,7 +38,7 @@ Drops and recreates all database indexes (use when updating indexing strategy).
 ```bash
 npm run clear-database
 ```
-**⚠️ WARNING: This permanently deletes ALL data from the database!**
+** WARNING: This permanently deletes ALL data from the database!**
 
 This script will:
 - Remove all user accounts (including superadmin)
@@ -120,7 +120,7 @@ Connecting to MongoDB...
    Transactions: 1,250
    Total records: 1,515
 
-⚠️  WARNING: This operation will permanently delete ALL data!
+  WARNING: This operation will permanently delete ALL data!
    - All user accounts (including superadmin)
    - All products and inventory
    - All transaction history

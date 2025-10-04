@@ -65,7 +65,7 @@ export default function SecurityAlertHandler({
 
       // Show toast notification
       toast({
-        title: "🚨 Security Alert",
+        title: " Security Alert",
         description: `${getAlertMessage(alertData.alertType)} - User: ${alertData.username}`,
         variant: alertData.severity === 'critical' || alertData.severity === 'high' 
           ? 'destructive' 
