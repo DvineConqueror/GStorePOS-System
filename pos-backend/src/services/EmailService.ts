@@ -83,12 +83,12 @@ export class EmailService {
 
       // Handle verification asynchronously
       verifyPromise.catch((error) => {
-        console.error('EMAIL SERVICE ERROR: Email service initialization failed:', error.message);
+        console.error('EMAIL SERVICE ERROR: Email services initialization failed:', error.message);
         this.transporter = null;
       });
 
     } catch (error) {
-      console.error('EMAIL TRANSPORTER ERROR: Failed to create transporter:', error);
+      console.error('EMAIL TRANSPORTER ERROR: Failed to create email transporter:', error);
       this.transporter = null;
     }
   }
