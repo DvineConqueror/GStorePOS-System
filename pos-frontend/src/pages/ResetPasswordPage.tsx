@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { validatePassword, getPasswordStrengthColor } from '@/utils/passwordVali
 
 export default function ResetPasswordPage() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const colors = getColorScheme();
@@ -32,12 +33,18 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (token) {
+      // Get email from query parameters for display
+      const email = searchParams.get('email');
+      if (email) {
+        setUserEmail(email);
+      }
+      // Verify the token with the backend
       verifyToken();
     } else {
       setError('Invalid reset link');
       setIsVerifying(false);
     }
-  }, [token]);
+  }, [token, searchParams]);
 
   const verifyToken = async () => {
     if (!token) return;
@@ -47,7 +54,10 @@ export default function ResetPasswordPage() {
       
       if (response.success && response.data?.user) {
         setTokenValid(true);
-        setUserEmail(response.data.user.email);
+        // Use the email from the backend response if available, otherwise use query param
+        if (response.data.user.email) {
+          setUserEmail(response.data.user.email);
+        }
       } else {
         setError(response.message || 'Invalid or expired reset link');
       }
@@ -86,13 +96,15 @@ export default function ResetPasswordPage() {
     setError('');
 
     try {
+      // Use the real backend password reset functionality
       const response = await AuthService.resetPassword(token, newPassword);
       
       if (response.success) {
         setIsSuccess(true);
         toast({
           title: "Password Reset Successful",
-          description: response.message,
+          description: response.message || "Your password has been reset successfully. Please log in with your new password.",
+          variant: "success"
         });
       } else {
         setError(response.message || 'Failed to reset password');

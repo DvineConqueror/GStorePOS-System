@@ -8,6 +8,7 @@ import { ArrowLeft, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import { AuthService } from '@/services/authService';
 import { getColorScheme } from '@/utils/colorSchemes';
 import { useToast } from '@/components/ui/use-toast';
+import emailjs from '@emailjs/browser';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -29,20 +30,84 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
-      const response = await AuthService.forgotPassword(email);
+      // First, get a real reset token from the backend
+      const resetResponse = await AuthService.forgotPassword(email);
       
-      if (response.success) {
+      if (!resetResponse.success) {
+        setError(resetResponse.message || 'Failed to generate reset token');
+        return;
+      }
+
+      // Initialize EmailJS with your public key
+      emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+
+      // Use the real token from the backend response
+      const realToken = resetResponse.data?.token || resetResponse.token;
+      
+      if (!realToken) {
+        setError('Failed to get reset token from server');
+        return;
+      }
+      
+      // Send password reset email using EmailJS with the real token
+      const templateParams = {
+        email: email,  // Changed from to_email to email to match template
+        reset_link: `${window.location.origin}/reset-password/${realToken}?email=${encodeURIComponent(email)}`,
+        store_name: 'SmartGrocery',
+        user_email: email,
+        reply_to: email
+      };
+
+      const result = await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        templateParams,
+        {
+          publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+        }
+      );
+
+      if (result.status === 200) {
         setIsSubmitted(true);
         toast({
           title: "Reset Link Sent",
-          description: response.message,
+          description: "Check your email for password reset instructions",
+          variant: "success"
         });
       } else {
-        setError(response.message || 'Failed to send reset link');
+        throw new Error('Failed to send email');
       }
     } catch (error: any) {
-      console.error('Forgot password error:', error);
-      setError(error.response?.data?.message || 'Failed to send reset link. Please try again.');
+      console.error('EmailJS error:', error);
+      console.error('Error details:', {
+        status: error.status,
+        text: error.text,
+        message: error.message
+      });
+      
+      // Handle specific EmailJS errors
+      if (error.status === 422) {
+        setError('Template validation error. Please check your EmailJS template configuration.');
+        toast({
+          title: "Template Error",
+          description: "Please check your EmailJS template configuration.",
+          variant: "destructive"
+        });
+      } else if (error.text && error.text.includes('insufficient authentication scopes')) {
+        setError('Gmail authentication issue. Please re-authorize your Gmail service in EmailJS dashboard.');
+        toast({
+          title: "Authentication Error",
+          description: "Please re-authorize your Gmail service in EmailJS dashboard.",
+          variant: "destructive"
+        });
+      } else {
+        setError(`Failed to send reset link: ${error.text || error.message}`);
+        toast({
+          title: "Email Failed",
+          description: `Failed to send reset link: ${error.text || error.message}`,
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
