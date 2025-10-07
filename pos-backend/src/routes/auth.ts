@@ -7,7 +7,7 @@ import { EmailService } from '../services/EmailService';
 import SystemSettingsService from '../services/SystemSettingsService';
 import NotificationService from '../services/NotificationService';
 import { authenticate } from '../middleware/auth';
-import { authRateLimit, refreshRateLimit } from '../middleware/rateLimiter';
+import { authRateLimit, refreshRateLimit, passwordResetRateLimit } from '../middleware/rateLimiter';
 import { ApiResponse } from '../types';
 
 const router = express.Router();
@@ -713,7 +713,7 @@ router.get('/sessions', authenticate, async (req, res): Promise<void> => {
 // @desc    Request password reset
 // @route   POST /api/v1/auth/forgot-password
 // @access  Public
-router.post('/forgot-password', authRateLimit, async (req, res): Promise<void> => {
+router.post('/forgot-password', passwordResetRateLimit, async (req, res): Promise<void> => {
   // Set a longer timeout for email operations
   req.setTimeout(30000); // 30 seconds
   
@@ -841,7 +841,7 @@ router.get('/verify-reset-token/:token', async (req, res): Promise<void> => {
 // @desc    Reset password using token
 // @route   POST /api/v1/auth/reset-password/:token
 // @access  Public
-router.post('/reset-password/:token', authRateLimit, async (req, res): Promise<void> => {
+router.post('/reset-password/:token', passwordResetRateLimit, async (req, res): Promise<void> => {
   try {
     const { token } = req.params;
     const { newPassword } = req.body;
