@@ -59,28 +59,19 @@ export class PasswordResetService {
 
       await resetToken.save();
 
-      // Send password reset email
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-      
-      const emailSent = await EmailService.sendPasswordResetEmail({
-        user,
-        resetToken: token,
-        clientUrl,
+      // Note: Email sending is now handled by EmailJS on the frontend
+      // The backend only generates and stores the token
+      console.log('PASSWORD RESET TOKEN CREATED:', {
+        userId: user._id,
+        email: user.email,
+        token: token.substring(0, 8) + '...', // Log partial token for debugging
+        expiresAt: expiresAt
       });
-
-      if (!emailSent) {
-        // If email fails, clean up the token
-        await PasswordResetToken.findByIdAndDelete(resetToken._id);
-        return {
-          success: false,
-          message: 'Failed to send password reset email. Please try again later.',
-        };
-      }
 
       return {
         success: true,
         message: 'If an account with that email exists, a password reset link has been sent.',
-        token: process.env.NODE_ENV === 'development' ? token : undefined, // Only return token in development
+        token: token, // Always return token since frontend uses EmailJS
       };
     } catch (error) {
       console.error('Error creating password reset token:', error);
