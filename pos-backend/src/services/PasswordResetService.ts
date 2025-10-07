@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import { User } from '../models/User';
 import { PasswordResetToken } from '../models/PasswordResetToken';
-import { EmailService } from './EmailService';
 import { IUser, IPasswordResetToken } from '../types';
 
 export class PasswordResetService {

@@ -10,7 +10,6 @@ import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { connectDB } from './config/database';
 import { SessionCleanupService } from './services/SessionCleanupService';
-import { EmailService } from './services/EmailService';
 import { PasswordResetService } from './services/PasswordResetService';
 import { SocketService } from './services/SocketService';
 import { ImageService } from './services/ImageService';
@@ -245,8 +244,8 @@ const startServer = async () => {
       // Start session cleanup service
       SessionCleanupService.start();
 
-      // Initialize email service
-      EmailService.initializeTransporter();
+      // Email service initialization removed - now using EmailJS on frontend
+      console.log('Email service: Using EmailJS on frontend for password reset emails');
       
       // Initialize analytics cache service
       AnalyticsCacheService.initialize();
