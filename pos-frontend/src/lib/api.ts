@@ -205,13 +205,33 @@ export const productsAPI = {
   },
 
   createProduct: async (productData: any) => {
-    const response = await api.post('/products', productData);
-    return response.data;
+    // Check if productData is FormData (has image)
+    if (productData instanceof FormData) {
+      const response = await api.post('/products/with-image', productData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } else {
+      const response = await api.post('/products', productData);
+      return response.data;
+    }
   },
 
   updateProduct: async (id: string, productData: any) => {
-    const response = await api.put(`/products/${id}`, productData);
-    return response.data;
+    // Check if productData is FormData (has image)
+    if (productData instanceof FormData) {
+      const response = await api.put(`/products/${id}/with-image`, productData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } else {
+      const response = await api.put(`/products/${id}`, productData);
+      return response.data;
+    }
   },
 
   deleteProduct: async (id: string) => {
@@ -243,12 +263,24 @@ export const productsAPI = {
   },
 
   getCategories: async () => {
-    const response = await api.get('/products/categories');
+    const response = await api.get('/categories');
     return response.data;
   },
 
   getBrands: async () => {
     const response = await api.get('/products/brands');
+    return response.data;
+  },
+};
+
+// Categories API - using Product.categories endpoint for single category system
+export const categoriesAPI = {
+  getCategories: async () => {
+    const response = await api.get('/products/categories');
+    return response.data;
+  },
+  createCategory: async (categoryData: { category: string }) => {
+    const response = await api.post('/products/categories', categoryData);
     return response.data;
   },
 };

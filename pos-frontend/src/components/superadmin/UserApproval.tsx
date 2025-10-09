@@ -114,6 +114,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         toast({
           title: "Success",
           description: "User approved successfully",
+          variant: "success",
         });
         fetchPendingUsers();
         triggerRefresh(); // Refresh quick stats
@@ -145,6 +146,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         toast({
           title: "Success",
           description: "User deleted successfully",
+          variant: "success",
         });
         fetchPendingUsers();
         triggerRefresh(); // Refresh quick stats
@@ -186,6 +188,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         toast({
           title: "Success",
           description: `${response.data.summary.successful} users ${action} successfully`,
+          variant: "success",
         });
         setSelectedUsers([]);
         setBulkAction('');

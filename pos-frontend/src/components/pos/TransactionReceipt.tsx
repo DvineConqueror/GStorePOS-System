@@ -10,7 +10,7 @@ export function TransactionReceipt({ transaction }: ReceiptProps) {
   return (
     <div className="flex justify-center w-full">
       <div className="receipt-container font-mono text-sm">
-        <div className="text-center mb-4">
+        <div className="text-center mb-4 text-black">
           <h2 className="font-bold">Grocery POS</h2>
           <div className="text-xs">
             <div>{new Date(transaction.timestamp).toLocaleString()}</div>
@@ -22,7 +22,7 @@ export function TransactionReceipt({ transaction }: ReceiptProps) {
         <div className="border-t border-b border-dashed py-2">
           {transaction.items.map((item, index) => (
             <div key={index} className="flex justify-between">
-              <div>
+              <div className="text-black">
                 {item.name} x {item.quantity}
               </div>
               <div>{formatCurrency(item.price * item.quantity)}</div>
@@ -32,20 +32,20 @@ export function TransactionReceipt({ transaction }: ReceiptProps) {
 
         <div className="mt-2">
           <div className="flex justify-between font-bold">
-            <div>Total</div>
+            <div className="text-black">Total</div>
             <div>{formatCurrency(transaction.total)}</div>
           </div>
           <div className="flex justify-between">
-            <div>Cash</div>
+            <div className="text-gray-600">Cash</div>
             <div>{formatCurrency(transaction.cashReceived)}</div>
           </div>
           <div className="flex justify-between">
-            <div>Change</div>
+            <div className="text-gray-600">Change</div>
             <div>{formatCurrency(transaction.change)}</div>
           </div>
         </div>
 
-        <div className="text-center mt-4 text-xs">
+        <div className="text-center mt-4 text-xs text-gray-600">
           <div>Thank you for shopping!</div>
           <div>Please come again</div>
         </div>

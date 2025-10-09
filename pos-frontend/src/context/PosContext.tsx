@@ -241,6 +241,7 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
         toast({
           title: "Success",
           description: "Transaction completed successfully",
+          variant: "success",
         });
       } else {
         throw new Error(response.message || 'Failed to complete transaction');

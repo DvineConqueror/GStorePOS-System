@@ -97,12 +97,6 @@ export class ProductService {
    * Create new product
    */
   static async createProduct(productData: any): Promise<IProduct> {
-    // Check if SKU already exists
-    const existingProduct = await Product.findOne({ sku: productData.sku });
-    if (existingProduct) {
-      throw new Error('Product with this SKU already exists');
-    }
-
     // Check if barcode already exists (if provided)
     if (productData.barcode) {
       const existingBarcode = await Product.findOne({ barcode: productData.barcode });

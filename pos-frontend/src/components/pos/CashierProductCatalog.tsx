@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePos } from '@/context/PosContext';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,10 +16,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { useEffect } from 'react';
 import { Product } from '@/types';
 import { useRefresh } from '@/context/RefreshContext';
 import { ProductImage } from '@/components/ui/ProductImage';
+import { categoriesAPI } from '@/lib/api';
 
 export function CashierProductCatalog() {
   const { state, addToCart, fetchProducts } = usePos();
@@ -27,20 +27,33 @@ export function CashierProductCatalog() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const [categories, setCategories] = useState<string[]>([]);
   const itemsPerPage = 8;
   const { refreshTrigger } = useRefresh();
+
+  // Fetch categories from products
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoriesAPI.getCategories();
+        if (response.success) {
+          setCategories(response.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const isProductInCart = (productId: string): boolean => {
     return state.cart.some(item => item._id === productId);
   };
 
-  // Extract unique categories
-  const categories = [
+  // Use categories for filtering
+  const categoryOptions = [
     'All',
-    ...Array.from(new Set(products.map(product => product.category)))
-      .filter(category => category !== 'Others')
-      .sort((a, b) => a.localeCompare(b)),
-    'Others'
+    ...categories.sort((a, b) => a.localeCompare(b))
   ];
 
   // Filter products based on search term and selected category
@@ -50,8 +63,7 @@ export function CashierProductCatalog() {
                          product.barcode?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = selectedCategory === 'All' || 
-                           product.category === selectedCategory ||
-                           (selectedCategory === 'Others' && !categories.slice(1, -1).includes(product.category));
+                           product.category === selectedCategory;
     
     return matchesSearch && matchesCategory && product.status === 'active';
   });
@@ -102,7 +114,7 @@ export function CashierProductCatalog() {
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent className="bg-white">
-            {categories.map((category) => (
+            {categoryOptions.map((category) => (
               <SelectItem key={category} value={category} className="text-black">
                 {category}
               </SelectItem>

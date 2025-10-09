@@ -110,7 +110,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 placeholder="Search cashiers..."
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10 text-black"
+                className="pl-10 text-black bg-white border-gray-300"
               />
             </div>
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>

@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useUserManagement } from '@/hooks/useUserManagement';
-import { useProductManagement } from '@/hooks/useProductManagement';
-import { useAdminStats } from '@/hooks/useAdminStats';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { ProductManagement } from '@/components/admin/ProductManagement';
@@ -17,7 +15,7 @@ import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { PosProvider } from '@/context/PosContext';
 import { Users, Package, BarChart3, ShoppingCart } from 'lucide-react';
-import { ProductForm } from '@/components/pos/ProductForm';
+import { ManagerLogo } from '@/components/ui/BrandLogo';
 
 const AdminPageContent = () => {
   const { user, signOut } = useAuth();
@@ -27,8 +25,6 @@ const AdminPageContent = () => {
   
   // Custom hooks for different concerns
   const userManagement = useUserManagement();
-  const productManagement = useProductManagement();
-  const adminStats = useAdminStats();
   
   // Get highlight parameters from URL
   const shouldHighlightPending = searchParams.get('highlight') === 'pending';
@@ -71,7 +67,6 @@ const AdminPageContent = () => {
     if (user?.role === 'manager' || user?.role === 'superadmin') {
       userManagement.fetchUsers();
       userManagement.fetchUserStats();
-      productManagement.fetchProducts();
     }
   }, [user]);
 
@@ -98,12 +93,26 @@ const AdminPageContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#ececec] p-6">
+    <div className="min-h-screen bg-cream-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <AdminHeader 
-          userName={`${user?.firstName} ${user?.lastName}`}
-          onLogout={signOut}
-        />
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <ManagerLogo size="lg" />
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 text-gray-700">
+              <Users className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
+            </div>
+            <button 
+              onClick={signOut} 
+              className="bg-white hover:bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-md flex items-center space-x-2"
+            >
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
 
         {/* Tabs for different admin sections */}
         <Tabs 
@@ -156,31 +165,7 @@ const AdminPageContent = () => {
 
           {/* Product Management Tab */}
           <TabsContent value="products" className="space-y-6">
-            <ProductManagement
-              products={productManagement.products}
-              categories={productManagement.categories}
-              categoryGroups={productManagement.categoryGroups}
-              loading={productManagement.loading}
-              showAddProductForm={productManagement.showAddProductForm}
-              newProduct={productManagement.newProduct}
-              productSearchTerm={productManagement.productSearchTerm}
-              productCategoryFilter={productManagement.productCategoryFilter}
-              productStatusFilter={productManagement.productStatusFilter}
-              filteredProducts={productManagement.filteredProducts}
-              uniqueCategories={productManagement.getUniqueCategories()}
-              onSearchChange={productManagement.setProductSearchTerm}
-              onCategoryFilterChange={productManagement.setProductCategoryFilter}
-              onStatusFilterChange={productManagement.setProductStatusFilter}
-              onShowAddForm={productManagement.setShowAddProductForm}
-              onNewProductChange={productManagement.setNewProduct}
-              onImageChange={productManagement.handleImageChange}
-              onAddProduct={productManagement.handleAddProduct}
-              onToggleProductStatus={productManagement.handleToggleProductStatus}
-              onDeleteProduct={productManagement.handleDeleteProduct}
-              onEditProduct={productManagement.handleEditProduct}
-              onCategoryAdded={productManagement.fetchCategories}
-              onCategoryGroupAdded={productManagement.fetchCategoryGroups}
-            />
+            <ProductManagement />
           </TabsContent>
 
           {/* POS System Tab */}
@@ -204,16 +189,7 @@ const AdminPageContent = () => {
         </Tabs>
       </div>
       
-      {/* Edit Product Form */}
-      <ProductForm
-        open={productManagement.showEditForm}
-        onClose={productManagement.handleCloseEditForm}
-        onSuccess={() => {
-          productManagement.handleCloseEditForm();
-          productManagement.fetchProducts();
-        }}
-        product={productManagement.editProduct || undefined}
-      />
+      {/* Edit Product Form - Now handled internally by ProductManagement */}
       
       {/* Notification Alert */}
       <NotificationAlert />

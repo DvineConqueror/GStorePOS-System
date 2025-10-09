@@ -30,7 +30,6 @@ const productSchema = new Schema<IProduct>({
   },
   sku: {
     type: String,
-    required: [true, 'SKU is required'],
     unique: true,
     trim: true,
     uppercase: true,
@@ -52,7 +51,6 @@ const productSchema = new Schema<IProduct>({
   },
   minStock: {
     type: Number,
-    required: [true, 'Minimum stock is required'],
     min: [0, 'Minimum stock cannot be negative'],
     default: 0,
   },
@@ -201,8 +199,16 @@ productSchema.set('toJSON', {
   virtuals: true,
 });
 
-// Pre-save middleware to validate stock
+// Pre-save middleware to generate SKU and validate stock
 productSchema.pre('save', function(next) {
+  // Generate SKU if not provided
+  if (!this.sku) {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    this.sku = `SKU-${timestamp}${random}`;
+  }
+  
+  // Validate stock limits
   if (this.maxStock && this.stock > this.maxStock) {
     return next(new Error('Stock cannot exceed maximum stock limit'));
   }

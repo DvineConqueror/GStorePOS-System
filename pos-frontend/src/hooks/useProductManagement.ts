@@ -1,282 +1,411 @@
-import { useState, useEffect } from 'react';
-import { productsAPI } from '@/lib/api';
+import { useState, useEffect, useMemo } from 'react';
+import { productsAPI, categoriesAPI } from '@/lib/api';
+import { Product, NewProduct, ProductFilters, ProductStats } from '@/types/product';
 import { useToast } from '@/components/ui/use-toast';
-import { useRefresh } from '@/context/RefreshContext';
-import { categoryAPI, Category } from '@/services/categoryService';
-import { categoryGroupAPI, CategoryGroup } from '@/services/categoryGroupService';
-
-interface Product {
-  _id: string;
-  name: string;
-  description?: string;
-  price: number;
-  cost?: number;
-  barcode?: string;
-  sku: string;
-  category: string;
-  brand?: string;
-  stock: number;
-  minStock: number;
-  maxStock?: number;
-  unit: string;
-  image?: string;
-  status: 'active' | 'inactive' | 'deleted';
-  supplier?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface NewProduct {
-  name: string;
-  price: string;
-  category: string;
-  stock: string;
-  image: File | null;
-  imagePreview: string;
-}
 
 export const useProductManagement = () => {
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Filters state
+  const [filters, setFilters] = useState<ProductFilters>({
+    search: '',
+    category: 'all',
+    status: 'all',
+  });
+
+  // Add product form state
   const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [showEditProductForm, setShowEditProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProduct, setNewProduct] = useState<NewProduct>({
     name: '',
     price: '',
     category: '',
     stock: '',
+    unit: 'pcs',
     image: null,
-    imagePreview: ''
+    imagePreview: '',
   });
-  const [productSearchTerm, setProductSearchTerm] = useState('');
-  const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
-  const [productStatusFilter, setProductStatusFilter] = useState<string>('all');
-  const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [showEditForm, setShowEditForm] = useState(false);
-  
-  const { toast } = useToast();
-  const { refreshTrigger } = useRefresh();
 
+  // Fetch products
   const fetchProducts = async () => {
     try {
-      // Fetch ALL products (both active and inactive) for admin dashboard
-      const response = await productsAPI.getProducts({});
-      
+      setLoading(true);
+      setError(null);
+      const response = await productsAPI.getProducts();
       if (response.success) {
-        setProducts(response.data);
+        setProducts(response.data || []);
       } else {
-        console.error('API returned success: false', response);
-        throw new Error(response.message || 'Failed to fetch products');
+        setError(response.message || 'Failed to fetch products');
       }
-    } catch (error: any) {
-      console.error('Error fetching products:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch products",
-        variant: "destructive"
-      });
+    } catch (err) {
+      setError('Failed to fetch products');
+      console.error('Error fetching products:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Fetch categories from products
   const fetchCategories = async () => {
     try {
-      const data = await categoryAPI.getAll();
-      setCategories(data);
-    } catch (error: any) {
-      console.error('Error fetching categories:', error);
-      // Silent fail for categories - will use default categories
+      const response = await categoriesAPI.getCategories();
+      if (response.success) {
+        setCategories(response.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
     }
   };
 
-  const fetchCategoryGroups = async () => {
+  // Add category
+  const addCategory = async (categoryName: string) => {
     try {
-      const data = await categoryGroupAPI.getAll();
-      setCategoryGroups(data);
+      const response = await categoriesAPI.createCategory({ category: categoryName });
+      if (response.success) {
+        // Refresh categories after adding
+        await fetchCategories();
+        
+        toast({
+          title: "Category Added",
+          description: "Category has been added successfully!",
+          variant: "success",
+        });
+        
+        return true;
+      } else {
+        throw new Error(response.message || 'Failed to add category');
+      }
     } catch (error: any) {
-      console.error('Error fetching category groups:', error);
-      // Silent fail for category groups - will use default groups
+      console.error('Error adding category:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to add category. Please try again.",
+        variant: "destructive",
+      });
+      return false;
     }
   };
 
-  // Refresh products, categories, and category groups when refresh trigger changes
+  // Filter products based on current filters
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = !filters.search || 
+        product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        product.category.toLowerCase().includes(filters.search.toLowerCase()) ||
+        product.sku.toLowerCase().includes(filters.search.toLowerCase());
+
+      const matchesCategory = filters.category === 'all' || product.category === filters.category;
+      const matchesStatus = filters.status === 'all' || product.status === filters.status;
+
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [products, filters]);
+
+  // Calculate product stats
+  const productStats: ProductStats = useMemo(() => {
+    return {
+      total: products.length,
+      active: products.filter(p => p.status === 'active').length,
+      inactive: products.filter(p => p.status === 'inactive').length,
+      lowStock: products.filter(p => p.stock <= p.minStock).length,
+    };
+  }, [products]);
+
+  // Handle image upload
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setNewProduct({
+          ...newProduct,
+          image: file,
+          imagePreview: e.target?.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Edit product
+  const editProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    
+    try {
+      setLoading(true);
+      
+      if (newProduct.image) {
+        // If there's an image, use FormData
+        const formData = new FormData();
+        formData.append('productData', JSON.stringify({
+          name: newProduct.name,
+          price: parseFloat(newProduct.price),
+          category: newProduct.category,
+          stock: parseInt(newProduct.stock),
+          unit: newProduct.unit,
+        }));
+        formData.append('image', newProduct.image);
+
+        const response = await productsAPI.updateProduct(editingProduct._id, formData);
+        if (response.success) {
+          await fetchProducts();
+          setShowEditProductForm(false);
+          setEditingProduct(null);
+          setNewProduct({
+            name: '',
+            price: '',
+            category: '',
+            stock: '',
+            unit: 'pcs',
+            image: null,
+            imagePreview: '',
+          });
+          toast({
+            title: "Product Updated",
+            description: "Product has been updated successfully!",
+            variant: "success",
+          });
+        } else {
+          setError(response.message || 'Failed to update product');
+          toast({
+            title: "Error",
+            description: response.message || 'Failed to update product',
+            variant: "destructive",
+          });
+        }
+      } else {
+        // If no image, send regular JSON
+        const productData = {
+          name: newProduct.name,
+          price: parseFloat(newProduct.price),
+          category: newProduct.category,
+          stock: parseInt(newProduct.stock),
+          unit: newProduct.unit,
+        };
+
+        const response = await productsAPI.updateProduct(editingProduct._id, productData);
+        if (response.success) {
+          await fetchProducts();
+          setShowEditProductForm(false);
+          setEditingProduct(null);
+          setNewProduct({
+            name: '',
+            price: '',
+            category: '',
+            stock: '',
+            unit: 'pcs',
+            image: null,
+            imagePreview: '',
+          });
+          toast({
+            title: "Product Updated",
+            description: "Product has been updated successfully!",
+            variant: "success",
+          });
+        } else {
+          setError(response.message || 'Failed to update product');
+          toast({
+            title: "Error",
+            description: response.message || 'Failed to update product',
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (err) {
+      setError('Failed to update product');
+      console.error('Error updating product:', err);
+      toast({
+        title: "Error",
+        description: 'Failed to update product',
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle edit product
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setNewProduct({
+      name: product.name,
+      price: product.price.toString(),
+      category: product.category,
+      stock: product.stock.toString(),
+      unit: product.unit,
+      image: null,
+      imagePreview: product.image || '',
+    });
+    setShowEditProductForm(true);
+  };
+
+  // Add new product
+  const addProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      
+      if (newProduct.image) {
+        // If there's an image, use FormData
+        const formData = new FormData();
+        formData.append('productData', JSON.stringify({
+          name: newProduct.name,
+          price: parseFloat(newProduct.price),
+          category: newProduct.category,
+          stock: parseInt(newProduct.stock),
+          unit: newProduct.unit,
+        }));
+        formData.append('image', newProduct.image);
+
+        const response = await productsAPI.createProduct(formData);
+        if (response.success) {
+          await fetchProducts();
+          setShowAddProductForm(false);
+          setNewProduct({
+            name: '',
+            price: '',
+            category: '',
+            stock: '',
+            unit: 'pcs',
+            image: null,
+            imagePreview: '',
+          });
+          toast({
+            title: "Product Added",
+            description: "Product has been added successfully!",
+            variant: "success",
+          });
+        } else {
+          setError(response.message || 'Failed to add product');
+          toast({
+            title: "Error",
+            description: response.message || 'Failed to add product',
+            variant: "destructive",
+          });
+        }
+      } else {
+        // If no image, send regular JSON
+        const productData = {
+          name: newProduct.name,
+          price: parseFloat(newProduct.price),
+          category: newProduct.category,
+          stock: parseInt(newProduct.stock),
+          unit: newProduct.unit,
+        };
+
+        const response = await productsAPI.createProduct(productData);
+        if (response.success) {
+          await fetchProducts();
+          setShowAddProductForm(false);
+          setNewProduct({
+            name: '',
+            price: '',
+            category: '',
+            stock: '',
+            unit: 'pcs',
+            image: null,
+            imagePreview: '',
+          });
+          toast({
+            title: "Product Added",
+            description: "Product has been added successfully!",
+            variant: "success",
+          });
+        } else {
+          setError(response.message || 'Failed to add product');
+          toast({
+            title: "Error",
+            description: response.message || 'Failed to add product',
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (err) {
+      setError('Failed to add product');
+      console.error('Error adding product:', err);
+      toast({
+        title: "Error",
+        description: 'Failed to add product',
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Toggle product status
+  const toggleProductStatus = async (productId: string, currentStatus: 'active' | 'inactive' | 'deleted') => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const response = await productsAPI.toggleProductStatus(productId);
+      if (response.success) {
+        await fetchProducts();
+      } else {
+        setError(response.message || 'Failed to update product status');
+      }
+    } catch (err) {
+      setError('Failed to update product status');
+      console.error('Error updating product status:', err);
+    }
+  };
+
+  // Delete product
+  const deleteProduct = async (productId: string) => {
+    try {
+      const response = await productsAPI.deleteProduct(productId);
+      if (response.success) {
+        await fetchProducts();
+      } else {
+        setError(response.message || 'Failed to delete product');
+      }
+    } catch (err) {
+      setError('Failed to delete product');
+      console.error('Error deleting product:', err);
+    }
+  };
+
+  // Initialize data
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-    fetchCategoryGroups();
-  }, [refreshTrigger]); // Remove fetchProducts from dependencies to prevent infinite loop
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setNewProduct({...newProduct, image: file, imagePreview: URL.createObjectURL(file)});
-    }
-  };
-
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Only include the required fields and avoid sending undefined/null fields that cause issues
-      const productData: any = {
-        name: newProduct.name,
-        price: parseFloat(newProduct.price),
-        category: newProduct.category,
-        stock: parseInt(newProduct.stock),
-        sku: `SKU-${Date.now()}`,
-        unit: 'pcs',
-        status: 'active',
-        minStock: 0
-      };
-
-      // Only add image if it exists and is a valid GridFS ID (not a blob URL)
-      if (newProduct.imagePreview && !newProduct.imagePreview.startsWith('blob:')) {
-        productData.image = newProduct.imagePreview;
-      }
-
-      const response = await productsAPI.createProduct(productData);
-      
-      if (response.success) {
-        toast({
-          title: "Success",
-          description: "Product created successfully",
-        });
-        setShowAddProductForm(false);
-        setNewProduct({
-          name: '',
-          price: '',
-          category: '',
-          stock: '',
-          image: null,
-          imagePreview: ''
-        });
-        fetchProducts();
-      } else {
-        throw new Error(response.message || 'Failed to create product');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to create product",
-        variant: "destructive"
-      });
-      console.error('Error creating product:', error);
-    }
-  };
-
-  const handleToggleProductStatus = async (productId: string, currentStatus: 'active' | 'inactive') => {
-    try {
-      const response = await productsAPI.toggleProductStatus(productId);
-      
-      if (response.success) {
-        toast({
-          title: "Success",
-          description: `Product ${currentStatus === 'active' ? 'deactivated' : 'activated'} successfully`,
-        });
-        fetchProducts(); // Refresh the list
-      } else {
-        throw new Error(response.message || 'Failed to update product status');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to update product status",
-        variant: "destructive"
-      });
-      console.error('Error updating product status:', error);
-    }
-  };
-
-  const handleDeleteProduct = async (productId: string) => {
-    try {
-      const response = await productsAPI.deleteProduct(productId);
-      
-      if (response.success) {
-        toast({
-          title: "Success",
-          description: "Product deleted successfully",
-        });
-        fetchProducts(); // Refresh the list
-      } else {
-        throw new Error(response.message || 'Failed to delete product');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to delete product",
-        variant: "destructive"
-      });
-      console.error('Error deleting product:', error);
-    }
-  };
-
-  const handleEditProduct = (product: Product) => {
-    setEditProduct(product);
-    setShowEditForm(true);
-  };
-
-  const handleCloseEditForm = () => {
-    setEditProduct(null);
-    setShowEditForm(false);
-  };
-
-  // Get unique categories from products for filter
-  const getUniqueCategories = () => {
-    const categories = products.map(product => product.category);
-    return [...new Set(categories)].sort();
-  };
-
-  // Filter products for display
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = !productSearchTerm || 
-      product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(productSearchTerm.toLowerCase());
-    
-    const matchesCategory = productCategoryFilter === 'all' || product.category === productCategoryFilter;
-    
-    let matchesStatus = true;
-    if (productStatusFilter === 'in-stock') matchesStatus = product.stock > 0;
-    else if (productStatusFilter === 'out-of-stock') matchesStatus = product.stock === 0;
-    else if (productStatusFilter === 'active') matchesStatus = product.status === 'active';
-    else if (productStatusFilter === 'inactive') matchesStatus = product.status === 'inactive';
-    // If productStatusFilter is 'all', matchesStatus remains true
-    
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
-
+  }, []);
 
   return {
-    // State
-    products,
+    // Data
+    products: filteredProducts,
+    allProducts: products,
     categories,
-    categoryGroups,
+    productStats,
+    
+    // State
     loading,
+    error,
+    filters,
     showAddProductForm,
+    showEditProductForm,
+    editingProduct,
     newProduct,
-    productSearchTerm,
-    productCategoryFilter,
-    productStatusFilter,
-    filteredProducts,
-    editProduct,
-    showEditForm,
     
     // Actions
+    setFilters,
+    setShowAddProductForm,
+    setShowEditProductForm,
+    setEditingProduct,
+    setNewProduct,
+    handleImageChange,
+    addProduct,
+    editProduct,
+    handleEditProduct,
+    toggleProductStatus,
+    deleteProduct,
     fetchProducts,
     fetchCategories,
-    fetchCategoryGroups,
-    handleImageChange,
-    handleAddProduct,
-    handleToggleProductStatus,
-    handleDeleteProduct,
-    handleEditProduct,
-    handleCloseEditForm,
-    getUniqueCategories,
-    
-    // Setters
-    setShowAddProductForm,
-    setNewProduct,
-    setProductSearchTerm,
-    setProductCategoryFilter,
-    setProductStatusFilter
+    addCategory,
   };
 };

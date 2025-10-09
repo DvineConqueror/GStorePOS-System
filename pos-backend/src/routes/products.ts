@@ -1,6 +1,8 @@
 import express from 'express';
 import multer from 'multer';
 import { Product } from '../models/Product';
+import Category from '../models/Category';
+import CategoryService from '../services/CategoryService';
 import { authenticate, requireAdmin, requireCashier } from '../middleware/auth';
 import { ImageService } from '../services/ImageService';
 import { ApiResponse, ProductFilters, PaginationOptions } from '../types';
@@ -127,6 +129,96 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
   }
 });
 
+// @desc    Get product categories
+// @route   GET /api/v1/products/categories
+// @access  Private (Cashier, Admin)
+router.get('/categories', authenticate, requireCashier, async (req, res): Promise<void> => {
+  try {
+    const categories = await CategoryService.getCategoryNames();
+    
+    res.json({
+      success: true,
+      message: 'Categories retrieved successfully.',
+      data: categories,
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while retrieving categories.',
+    } as ApiResponse);
+  }
+});
+
+// @desc    Add new category
+// @route   POST /api/v1/products/categories
+// @access  Private (Admin only)
+router.post('/categories', authenticate, requireAdmin, async (req, res): Promise<void> => {
+  try {
+    const { category } = req.body;
+
+    if (!category || typeof category !== 'string' || category.trim() === '') {
+      res.status(400).json({
+        success: false,
+        message: 'Category name is required.',
+      } as ApiResponse);
+      return;
+    }
+
+    const categoryName = category.trim();
+
+    // Create category using CategoryService
+    const newCategory = await CategoryService.createCategory({
+      name: categoryName,
+      createdBy: req.user!.id
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Category added successfully.',
+      data: { category: categoryName },
+    } as ApiResponse);
+  } catch (error: any) {
+    console.error('Add category error:', error);
+    
+    if (error.message === 'Category already exists') {
+      res.status(400).json({
+        success: false,
+        message: 'Category already exists.',
+      } as ApiResponse);
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Server error while adding category.',
+      } as ApiResponse);
+    }
+  }
+});
+
+// @desc    Get product brands
+// @route   GET /api/v1/products/brands
+// @access  Private (Cashier, Admin)
+router.get('/brands', authenticate, requireCashier, async (req, res): Promise<void> => {
+  try {
+    const brands = await Product.distinct('brand', { 
+      status: 'active', 
+      brand: { $exists: true, $ne: null, $nin: ['', null] } 
+    });
+    
+    res.json({
+      success: true,
+      message: 'Brands retrieved successfully.',
+      data: brands,
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Get brands error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while retrieving brands.',
+    } as ApiResponse);
+  }
+});
+
 // @desc    Get single product by ID
 // @route   GET /api/v1/products/:id
 // @access  Private (Cashier, Admin)
@@ -163,14 +255,16 @@ router.post('/', authenticate, requireAdmin, async (req, res): Promise<void> => 
   try {
     const productData = req.body;
 
-    // Check if SKU already exists
-    const existingProduct = await Product.findOne({ sku: productData.sku });
-    if (existingProduct) {
-      res.status(400).json({
-        success: false,
-        message: 'Product with this SKU already exists.',
-      } as ApiResponse);
-      return;
+    // Validate category exists
+    if (productData.category) {
+      const categoryExists = await CategoryService.getCategoryByName(productData.category);
+      if (!categoryExists) {
+        res.status(400).json({
+          success: false,
+          message: 'Category does not exist. Please create the category first.',
+        } as ApiResponse);
+        return;
+      }
     }
 
     // Check if barcode already exists (if provided)
@@ -208,6 +302,18 @@ router.post('/', authenticate, requireAdmin, async (req, res): Promise<void> => 
 router.post('/with-image', authenticate, requireAdmin, upload.single('image'), async (req, res): Promise<void> => {
   try {
     const productData = JSON.parse(req.body.productData);
+
+    // Validate category exists
+    if (productData.category) {
+      const categoryExists = await CategoryService.getCategoryByName(productData.category);
+      if (!categoryExists) {
+        res.status(400).json({
+          success: false,
+          message: 'Category does not exist. Please create the category first.',
+        } as ApiResponse);
+        return;
+      }
+    }
 
     // Check if SKU already exists
     const existingProduct = await Product.findOne({ sku: productData.sku });
@@ -574,27 +680,6 @@ router.get('/alerts/out-of-stock', authenticate, requireAdmin, async (req, res):
     res.status(500).json({
       success: false,
       message: 'Server error while retrieving out of stock products.',
-    } as ApiResponse);
-  }
-});
-
-// @desc    Get product categories
-// @route   GET /api/v1/products/categories
-// @access  Private (Cashier, Admin)
-router.get('/categories', authenticate, requireCashier, async (req, res): Promise<void> => {
-  try {
-    const categories = await Product.distinct('category', { status: 'active' });
-    
-    res.json({
-      success: true,
-      message: 'Categories retrieved successfully.',
-      data: categories,
-    } as ApiResponse);
-  } catch (error) {
-    console.error('Get categories error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while retrieving categories.',
     } as ApiResponse);
   }
 });

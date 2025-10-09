@@ -154,6 +154,7 @@ export default function ManagerCreationForm({
         toast({
           title: "Success",
           description: `Manager account created successfully for ${response.data.user.firstName} ${response.data.user.lastName}`,
+          variant: "success",
         });
 
         // Reset form

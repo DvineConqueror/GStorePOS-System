@@ -1,155 +1,90 @@
 import Category, { ICategory } from '../models/Category';
-import mongoose from 'mongoose';
 
 class CategoryService {
   /**
    * Get all categories
    */
-  async getAllCategories(includeInactive: boolean = false): Promise<ICategory[]> {
-    const filter = includeInactive ? {} : { isActive: true };
-    return await Category.find(filter).sort({ group: 1, name: 1 });
-  }
-
-  /**
-   * Get categories by group
-   */
-  async getCategoriesByGroup(group: string): Promise<ICategory[]> {
-    return await Category.find({ group, isActive: true }).sort({ name: 1 });
+  static async getAllCategories(includeInactive: boolean = false): Promise<ICategory[]> {
+    const query = includeInactive ? {} : { isActive: true };
+    return await Category.find(query).sort({ name: 1 });
   }
 
   /**
    * Get category by ID
    */
-  async getCategoryById(id: string): Promise<ICategory | null> {
+  static async getCategoryById(id: string): Promise<ICategory | null> {
     return await Category.findById(id);
+  }
+
+  /**
+   * Get category by name
+   */
+  static async getCategoryByName(name: string): Promise<ICategory | null> {
+    return await Category.findOne({ 
+      name: { $regex: new RegExp(`^${name}$`, 'i') },
+      isActive: true 
+    });
   }
 
   /**
    * Create new category
    */
-  async createCategory(data: {
+  static async createCategory(categoryData: {
     name: string;
-    group: string;
     description?: string;
     createdBy: string;
   }): Promise<ICategory> {
     // Check if category already exists
-    const existingCategory = await Category.findOne({ 
-      name: { $regex: new RegExp(`^${data.name}$`, 'i') } 
-    });
-    
+    const existingCategory = await this.getCategoryByName(categoryData.name);
     if (existingCategory) {
-      throw new Error('Category with this name already exists');
+      throw new Error('Category already exists');
     }
 
-    const category = new Category({
-      name: data.name,
-      group: data.group,
-      description: data.description,
-      createdBy: new mongoose.Types.ObjectId(data.createdBy),
-      isActive: true,
-    });
-
+    const category = new Category(categoryData);
     return await category.save();
   }
 
   /**
    * Update category
    */
-  async updateCategory(
-    id: string,
-    data: {
-      name?: string;
-      group?: string;
-      description?: string;
-      isActive?: boolean;
-    }
-  ): Promise<ICategory | null> {
+  static async updateCategory(id: string, updateData: {
+    name?: string;
+    description?: string;
+    isActive?: boolean;
+  }): Promise<ICategory | null> {
     // If updating name, check for duplicates
-    if (data.name) {
-      const existingCategory = await Category.findOne({ 
-        name: { $regex: new RegExp(`^${data.name}$`, 'i') },
-        _id: { $ne: id }
-      });
-      
-      if (existingCategory) {
-        throw new Error('Category with this name already exists');
+    if (updateData.name) {
+      const existingCategory = await this.getCategoryByName(updateData.name);
+      if (existingCategory && existingCategory._id.toString() !== id) {
+        throw new Error('Category name already exists');
       }
     }
 
     return await Category.findByIdAndUpdate(
       id,
-      { $set: data },
+      updateData,
       { new: true, runValidators: true }
     );
   }
 
   /**
-   * Delete category (soft delete by setting isActive to false)
+   * Delete category (soft delete)
    */
-  async deleteCategory(id: string): Promise<ICategory | null> {
+  static async deleteCategory(id: string): Promise<ICategory | null> {
     return await Category.findByIdAndUpdate(
       id,
-      { $set: { isActive: false } },
+      { isActive: false },
       { new: true }
     );
   }
 
   /**
-   * Get grouped categories (organized by group)
+   * Get distinct category names for products
    */
-  async getGroupedCategories(): Promise<Record<string, ICategory[]>> {
-    const categories = await this.getAllCategories();
-    
-    const grouped: Record<string, ICategory[]> = {
-      'Food': [],
-      'Beverages': [],
-      'Personal Care': [],
-      'Other': []
-    };
-
-    categories.forEach(category => {
-      if (grouped[category.group]) {
-        grouped[category.group].push(category);
-      } else {
-        grouped['Other'].push(category);
-      }
-    });
-
-    return grouped;
-  }
-
-  /**
-   * Initialize default categories
-   */
-  async initializeDefaultCategories(adminUserId: string): Promise<void> {
-    const defaultCategories = [
-      { name: 'Snacks', group: 'Food', description: 'Chips, crackers, and snack foods' },
-      { name: 'Candies', group: 'Food', description: 'Sweets and confectionery' },
-      { name: 'Instant Noodles', group: 'Food', description: 'Quick meal noodles' },
-      { name: 'Canned Goods', group: 'Food', description: 'Canned and preserved foods' },
-      { name: 'Beverages', group: 'Beverages', description: 'General beverages' },
-      { name: 'Soft Drinks', group: 'Beverages', description: 'Carbonated drinks' },
-      { name: 'Juices', group: 'Beverages', description: 'Fruit and vegetable juices' },
-      { name: 'Water', group: 'Beverages', description: 'Bottled water' },
-      { name: 'Personal Care', group: 'Personal Care', description: 'General personal care items' },
-      { name: 'Soap', group: 'Personal Care', description: 'Bath and hand soaps' },
-      { name: 'Shampoo', group: 'Personal Care', description: 'Hair care products' },
-      { name: 'Toothpaste', group: 'Personal Care', description: 'Dental care products' },
-      { name: 'Others', group: 'Other', description: 'Miscellaneous items' },
-    ];
-
-    for (const catData of defaultCategories) {
-      const exists = await Category.findOne({ name: catData.name });
-      if (!exists) {
-        await this.createCategory({
-          ...catData,
-          createdBy: adminUserId
-        });
-      }
-    }
+  static async getCategoryNames(): Promise<string[]> {
+    const categories = await Category.find({ isActive: true }).select('name');
+    return categories.map(cat => cat.name).sort();
   }
 }
 
-export default new CategoryService();
-
+export default CategoryService;

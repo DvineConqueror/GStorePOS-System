@@ -63,6 +63,18 @@ export default {
 					dark: '#1e293b',
 					blue: '#0973a3',
 				},
+				cream: {
+					50: '#fefcf7',
+					100: '#fdf9ed',
+					200: '#faf1d5',
+					300: '#f6e8bd',
+					400: '#f0d68c',
+					500: '#eac45c',
+					600: '#d3b153',
+					700: '#b09446',
+					800: '#8d7738',
+					900: '#73622e',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

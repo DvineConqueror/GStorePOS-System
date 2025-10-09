@@ -9,19 +9,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { PosProvider } from '@/context/PosContext';
 import { Button } from '@/components/ui/button';
+import { CashierLogo } from '@/components/ui/BrandLogo';
 import { LogOut, ShoppingCart, BarChart3, History, User } from 'lucide-react';
 
 function PosPageContent() {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-[#ececec] p-6">
+    <div className="min-h-screen bg-cream-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-black hidden sm:block">Cashier Dashboard</h1>
-            <p className="text-gray-600 mt-2 hidden sm:block">Process sales and manage transactions</p>
+          <div className="flex items-center space-x-4">
+            <CashierLogo size="lg" />
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-gray-700">
@@ -37,22 +37,22 @@ function PosPageContent() {
 
         {/* Tabs for different sections */}
         <Tabs defaultValue="pos" className="space-y-4 lg:space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-white">
+          <TabsList className="grid w-full grid-cols-2 bg-white border border-green-200">
             <TabsTrigger 
               value="pos" 
               className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
             >
-              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-              <span className="hidden sm:inline">Point of Sale</span>
+              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-gray-700" />
+              <span className="hidden sm:inline text-gray-700">Point of Sale</span>
               <span className="sm:hidden">POS</span>
             </TabsTrigger>
             <TabsTrigger 
               value="analytics" 
               className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
             >
-              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-              <span className="hidden sm:inline">Analytics</span>
-              <span className="sm:hidden">Analytics</span>
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-gray-700" />
+              <span className="hidden sm:inline text-gray-700">Analytics</span>
+              <span className="sm:hidden text-gray-700">Analytics</span>
             </TabsTrigger>
           </TabsList>
 

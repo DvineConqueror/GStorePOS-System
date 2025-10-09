@@ -105,7 +105,7 @@ export function CheckoutDialog() {
             <div className="px-4 py-4 space-y-3">
               <div className="flex flex-col items-center py-2 space-y-2">
                 <Receipt className="h-12 w-12 text-green-600" />
-                <p className="text-lg font-medium text-green-600">Payment Successful</p>
+                <p className="text-lg font-medium text-black">Payment Successful</p>
               </div>
               {currentTransaction && (
                 <TransactionReceipt transaction={currentTransaction} />

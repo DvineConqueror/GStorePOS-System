@@ -20,10 +20,7 @@ import AdminPage from './pages/AdminPage';
 import PosPage from './pages/PosPage';
 
 // Import new modular components
-import { AdminLayout } from '@/layouts/AdminLayout';
-import { CashierLayout } from '@/layouts/CashierLayout';
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
-import { CashierDashboard } from '@/pages/cashier/CashierDashboard';
 import SuperadminLayout from '@/layouts/SuperadminLayout';
 import SuperadminDashboard from '@/pages/superadmin/SuperadminDashboard';
 import UserApproval from '@/components/superadmin/UserApproval';
@@ -91,29 +88,61 @@ const App = () => {
                 {/* Admin Routes */}
                 <Route path="/admin" element={
                   <AdminRoute>
-                    <AdminLayout />
+                    <AdminDashboard />
                   </AdminRoute>
-                }>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="cashiers" element={<AdminPage />} />
-                  <Route path="products" element={<AdminPage />} />
-                  <Route path="pos" element={<AdminPage />} />
-                  <Route path="analytics" element={<AdminPage />} />
-                  <Route path="settings" element={<AdminPage />} />
-                </Route>
+                } />
+                <Route path="/admin/dashboard" element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/cashiers" element={
+                  <AdminRoute>
+                    <AdminPage />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/products" element={
+                  <AdminRoute>
+                    <AdminPage />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/pos" element={
+                  <AdminRoute>
+                    <AdminPage />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/analytics" element={
+                  <AdminRoute>
+                    <AdminPage />
+                  </AdminRoute>
+                } />
+                <Route path="/admin/settings" element={
+                  <AdminRoute>
+                    <AdminPage />
+                  </AdminRoute>
+                } />
                 
                 {/* Cashier Routes */}
-                <Route path="/cashier" element={
+                <Route path="/cashier/pos" element={
                   <ProtectedRoute>
-                    <CashierLayout />
+                    <PosPage />
                   </ProtectedRoute>
-                }>
-                  <Route path="pos" element={<PosPage />} />
-                  <Route path="analytics" element={<PosPage />} />
-                  <Route path="history" element={<PosPage />} />
-                  <Route path="profile" element={<PosPage />} />
-                </Route>
+                } />
+                <Route path="/cashier/analytics" element={
+                  <ProtectedRoute>
+                    <PosPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/cashier/history" element={
+                  <ProtectedRoute>
+                    <PosPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/cashier/profile" element={
+                  <ProtectedRoute>
+                    <PosPage />
+                  </ProtectedRoute>
+                } />
                 
                 {/* Superadmin Routes (Hidden - accessible via direct URL) */}
                 <Route path="/superadmin" element={

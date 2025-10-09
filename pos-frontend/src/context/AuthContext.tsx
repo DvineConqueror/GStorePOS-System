@@ -153,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast({
           title: "Success",
           description: "Initial manager account created successfully.",
+          variant: "success",
         });
         return { success: true };
       }
@@ -187,6 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast({
           title: "Success",
           description: "Cashier account created successfully. Please wait for manager approval.",
+          variant: "success",
         });
         return { success: true };
       }
@@ -222,6 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast({
           title: "Success",
           description: "Account created successfully.",
+          variant: "success",
         });
         return { success: true };
       }
@@ -252,6 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out.",
+        variant: "success",
       });
     } catch (error: any) {
       // Even if logout fails on server, clear local data
@@ -264,6 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out.",
+        variant: "success",
       });
     } finally {
       setAuthLoading(false);
