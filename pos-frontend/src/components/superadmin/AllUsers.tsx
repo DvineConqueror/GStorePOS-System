@@ -77,7 +77,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
       setLoading(true);
       const params: any = {
         page: currentPage,
-        limit: 10,
+        limit: 5, // Changed from 10 to 5
         sort: 'createdAt',
         order: 'desc'
       };
@@ -448,7 +448,7 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-8 pt-6 border-t border-green-200">
                 <div className="text-sm text-gray-600">
-                  Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, totalUsers)} of {totalUsers} users
+                  Showing {((currentPage - 1) * 5) + 1} to {Math.min(currentPage * 5, totalUsers)} of {totalUsers} users
                 </div>
                 <div className="flex items-center space-x-3">
                   <Button

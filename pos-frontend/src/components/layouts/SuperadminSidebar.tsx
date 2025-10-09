@@ -110,41 +110,6 @@ export const SuperadminSidebar: React.FC<SuperadminSidebarProps> = ({
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
-            <Card className="bg-white/70 backdrop-blur-md border-green-200/50 shadow-xl shadow-green-100/30 ring-1 ring-green-100/50 mt-4 sm:mt-6">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-gray-900 flex items-center text-sm sm:text-base font-semibold">
-                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-                  System Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 sm:space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 text-xs sm:text-sm">Total Users</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                    {loadingStats ? 'Loading...' : (quickStats?.totalUsers || 0)}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 text-xs sm:text-sm">Pending Approvals</span>
-                  <Badge variant="destructive" className="bg-gradient-to-r from-green-500 to-green-600 text-xs">
-                    {loadingStats ? 'Loading...' : (quickStats?.pendingApprovals || 0)}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 text-xs sm:text-sm">Active Managers</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                    {loadingStats ? 'Loading...' : (quickStats?.managerCount || 0)}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 text-xs sm:text-sm">Active Cashiers</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                    {loadingStats ? 'Loading...' : (quickStats?.cashierCount || 0)}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

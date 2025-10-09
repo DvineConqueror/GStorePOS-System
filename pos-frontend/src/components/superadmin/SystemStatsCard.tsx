@@ -72,28 +72,12 @@ export const SystemStatsCard: React.FC<SystemStatsCardProps> = ({ stats, loading
       description: 'Currently active'
     },
     {
-      title: 'Approved Users',
-      value: stats.approvedUsers,
-      icon: CheckCircle,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
-      description: 'Fully approved'
-    },
-    {
       title: 'Pending Approvals',
       value: stats.pendingApprovals,
       icon: Clock,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
       description: 'Awaiting approval'
-    },
-    {
-      title: 'Superadmins',
-      value: stats.superadminCount,
-      icon: Shield,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      description: 'System administrators'
     },
     {
       title: 'Managers',
@@ -110,19 +94,11 @@ export const SystemStatsCard: React.FC<SystemStatsCardProps> = ({ stats, loading
       color: 'text-teal-600',
       bgColor: 'bg-teal-50',
       description: 'Point of sale staff'
-    },
-    {
-      title: 'Growth Rate',
-      value: '+12%',
-      icon: TrendingUp,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      description: 'This month'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {statItems.map((item) => {
         const Icon = item.icon;
         return (

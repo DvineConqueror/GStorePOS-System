@@ -28,9 +28,13 @@ function PosPageContent() {
               <User className="h-4 w-4 text-green-600" />
               <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
             </div>
-            <Button onClick={signOut} variant="outline" className="bg-white hover:bg-green-50 border-green-200">
-              <LogOut className="mr-2 h-4 w-4 text-green-600" />
-              Logout
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              className=" text-green-600 hover:text-red-600"
+            >
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
         </div>

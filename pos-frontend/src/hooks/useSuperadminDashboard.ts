@@ -35,7 +35,7 @@ export const useSuperadminDashboard = () => {
     try {
       const response = await superadminAPI.getAllUsers({ 
         page: 1, 
-        limit: 5, 
+        limit: 50, // Fetch more users for pagination
         sort: 'createdAt', 
         order: 'desc' 
       });

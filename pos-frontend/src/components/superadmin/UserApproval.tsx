@@ -53,17 +53,25 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [bulkAction, setBulkAction] = useState<'approve' | 'delete' | ''>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
   const { toast } = useToast();
   const { triggerRefresh } = useRefresh();
 
   useEffect(() => {
     fetchPendingUsers();
-  }, [searchTerm, roleFilter]);
+  }, [searchTerm, roleFilter, currentPage]);
 
   const fetchPendingUsers = async () => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: any = {
+        page: currentPage,
+        limit: 5,
+        sort: 'createdAt',
+        order: 'desc'
+      };
       
       if (roleFilter !== 'all') {
         params.role = roleFilter;
@@ -85,6 +93,8 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
         }
         
         setPendingUsers(users);
+        setTotalPages(response.pagination?.pages || 1);
+        setTotalUsers(response.pagination?.total || users.length);
       } else {
         throw new Error('Failed to fetch pending users');
       }
@@ -440,6 +450,38 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
                 </CardContent>
               </Card>
             ))
+          )}
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-green-200">
+              <div className="text-sm text-gray-600">
+                Showing {((currentPage - 1) * 5) + 1} to {Math.min(currentPage * 5, totalUsers)} of {totalUsers} users
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="bg-white border-green-300 text-green-700 hover:bg-green-50"
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-600 px-3">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="bg-white border-green-300 text-green-700 hover:bg-green-50"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       </div>

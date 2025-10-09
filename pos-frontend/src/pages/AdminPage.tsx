@@ -14,8 +14,9 @@ import { CashierProductCatalog } from '@/components/pos/CashierProductCatalog';
 import { Cart } from '@/components/pos/Cart';
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog';
 import { PosProvider } from '@/context/PosContext';
-import { Users, Package, BarChart3, ShoppingCart } from 'lucide-react';
+import { Users, Package, BarChart3, ShoppingCart, LogOut} from 'lucide-react';
 import { ManagerLogo } from '@/components/ui/BrandLogo';
+import { Button } from '@/components/ui/button';
 
 const AdminPageContent = () => {
   const { user, signOut } = useAuth();
@@ -105,12 +106,14 @@ const AdminPageContent = () => {
               <Users className="h-4 w-4 text-green-600" />
               <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
             </div>
-            <button 
-              onClick={signOut} 
-              className="bg-white hover:bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-md flex items-center space-x-2"
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              className=" text-green-600 hover:text-red-600"
             >
-              <span>Logout</span>
-            </button>
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </div>
 
