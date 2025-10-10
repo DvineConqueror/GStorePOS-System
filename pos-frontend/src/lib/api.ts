@@ -190,7 +190,7 @@ export const productsAPI = {
     minPrice?: number;
     maxPrice?: number;
     inStock?: boolean;
-    isActive?: boolean;
+    status?: string;
     search?: string;
     sort?: string;
     order?: 'asc' | 'desc';

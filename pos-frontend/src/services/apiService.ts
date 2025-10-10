@@ -36,7 +36,7 @@ export const queryKeys = {
 export const apiService = {
   // Products
   products: {
-    getAll: () => productsAPI.getProducts(),
+    getAll: (filters?: any) => productsAPI.getProducts(filters),
     getById: (id: string) => productsAPI.getProduct(id),
     create: (productData: any) => productsAPI.createProduct(productData),
     update: (id: string, productData: any) => productsAPI.updateProduct(id, productData),

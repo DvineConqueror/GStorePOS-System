@@ -66,11 +66,38 @@ export const ProductManagement: React.FC = () => {
   const error = productsError ? 'Failed to load products' : null;
 
 
+  // Filter products based on current filters
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesSearch = 
+          product.name.toLowerCase().includes(searchLower) ||
+          product.category.toLowerCase().includes(searchLower) ||
+          product.sku.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Category filter
+      if (filters.category && filters.category !== 'all') {
+        if (product.category !== filters.category) return false;
+      }
+
+      // Status filter
+      if (filters.status && filters.status !== 'all') {
+        if (product.status !== filters.status) return false;
+      }
+
+      return true;
+    });
+  }, [products, filters]);
+
   // Calculate product stats
   const productStats = useMemo(() => {
     const totalProducts = products.length;
-    const activeProducts = products.filter(p => p.isActive).length;
-    const inactiveProducts = products.filter(p => !p.isActive).length;
+    const activeProducts = products.filter(p => p.status === 'active').length;
+    const inactiveProducts = products.filter(p => p.status === 'inactive').length;
     const lowStockProducts = products.filter(p => p.stock < 10).length;
     
     return {
@@ -207,7 +234,7 @@ export const ProductManagement: React.FC = () => {
         </CardHeader>
         <CardContent>
           <ProductList
-            products={products}
+            products={filteredProducts}
             loading={loading}
             onToggleStatus={handleToggleProductStatus}
             onEdit={handleEditProduct}

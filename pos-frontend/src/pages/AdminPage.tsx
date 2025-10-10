@@ -53,6 +53,7 @@ const AdminPageContent = () => {
     inactiveUsers: users.filter(u => u.status === 'inactive').length,
     cashierUsers: users.filter(u => u.role === 'cashier').length,
     managerUsers: users.filter(u => u.role === 'manager').length,
+    activeCashierUsers: users.filter(u => u.role === 'cashier' && u.status === 'active').length,
   };
   
   // Get highlight parameters from URL

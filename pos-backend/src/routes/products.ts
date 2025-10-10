@@ -38,7 +38,7 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
       minPrice,
       maxPrice,
       inStock,
-      isActive,
+      status,
       search,
       sort = 'name',
       order = 'asc'
@@ -47,8 +47,8 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
     const filters: ProductFilters = {};
     
     // Only filter by status if explicitly provided
-    if (isActive !== undefined) {
-      filters.status = isActive === 'true' ? 'active' : 'inactive';
+    if (status !== undefined) {
+      filters.status = status as string;
     } else {
       // Default: exclude deleted products from all queries
       filters.status = { $ne: 'deleted' };

@@ -27,7 +27,7 @@ export function CashierProductCatalog() {
   const { cart } = state;
   
   // React Query hooks
-  const { data: productsData, isLoading: productsLoading } = useProducts({ isActive: true });
+  const { data: productsData, isLoading: productsLoading } = useProducts({ status: 'active' });
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
   
   // Local state

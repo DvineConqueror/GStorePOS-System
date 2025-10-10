@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 export const useProducts = (filters?: any) => {
   return useQuery({
     queryKey: queryKeys.productsList(filters),
-    queryFn: () => apiService.products.getAll(),
+    queryFn: () => apiService.products.getAll(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,

@@ -26,6 +26,7 @@ interface UserStats {
   inactiveUsers: number;
   cashierUsers: number;
   managerUsers: number;
+  activeCashierUsers: number;
 }
 
 interface UserManagementProps {
@@ -80,7 +81,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <CardTitle className="text-sm text-gray-600 font-medium">Active Cashiers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl text-black font-bold">{userStats.activeUsers || 0}</div>
+            <div className="text-2xl text-black font-bold">{userStats.activeCashierUsers || 0}</div>
           </CardContent>
         </Card>
         <Card>

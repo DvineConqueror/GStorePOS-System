@@ -189,7 +189,7 @@ export class UserService {
     } = filters;
 
     const query: any = {
-      role: 'cashier' // Only return cashiers, exclude managers/superadmins
+      role: { $in: ['cashier', 'manager'] } // Return both cashiers and managers, exclude superadmins
     };
 
     if (status) query.status = status;
