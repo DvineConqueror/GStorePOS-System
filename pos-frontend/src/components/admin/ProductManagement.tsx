@@ -1,49 +1,73 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, FolderPlus } from 'lucide-react';
-import { useProductManagement } from '@/hooks/useProductManagement';
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, useToggleProductStatus } from '@/hooks/useProducts';
+import { useCategories, useCreateCategory } from '@/hooks/useCategories';
 import { ProductStats } from './ProductStats';
 import { ProductFilters } from './ProductFilters';
 import { ProductList } from './ProductList';
 import { ProductForm } from './ProductForm';
-import { useToast } from '@/components/ui/use-toast';
+import { ProductFilters as ProductFiltersType } from '@/types/product';
 
 export const ProductManagement: React.FC = () => {
-  const {
-    products,
-    categories,
-    productStats,
-    loading,
-    error,
-    filters,
-    showAddProductForm,
-    showEditProductForm,
-    editingProduct,
-    newProduct,
-    setFilters,
-    setShowAddProductForm,
-    setShowEditProductForm,
-    setEditingProduct,
-    setNewProduct,
-    handleImageChange,
-    addProduct,
-    editProduct,
-    handleEditProduct,
-    toggleProductStatus,
-    deleteProduct,
-    fetchCategories,
-    addCategory,
-  } = useProductManagement();
+  // React Query hooks
+  const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts();
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+  
+  // Mutations
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
+  const toggleStatusMutation = useToggleProductStatus();
+  const createCategoryMutation = useCreateCategory();
 
-  const { toast } = useToast();
+  // Local state
+  const [filters, setFilters] = useState<ProductFiltersType>({
+    search: '',
+    category: 'all',
+    status: 'all',
+  });
+  const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [showEditProductForm, setShowEditProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [newProduct, setNewProduct] = useState<any>({
+    name: '',
+    price: '',
+    category: '',
+    stock: '',
+    unit: 'pcs',
+    image: null,
+    imagePreview: '',
+  });
   const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
   const [newCategory, setNewCategory] = useState('');
-  const [categoryLoading, setCategoryLoading] = useState(false);
 
+  // Extract data from API responses
+  const products = productsData?.data || [];
+  const categories = categoriesData?.data || [];
+  const loading = productsLoading || categoriesLoading;
+  const error = productsError ? 'Failed to load products' : null;
+
+  // Calculate product stats
+  const productStats = useMemo(() => {
+    const totalProducts = products.length;
+    const activeProducts = products.filter(p => p.isActive).length;
+    const inactiveProducts = products.filter(p => !p.isActive).length;
+    const lowStockProducts = products.filter(p => p.stock < 10).length;
+    
+    return {
+      total: totalProducts,
+      active: activeProducts,
+      inactive: inactiveProducts,
+      lowStock: lowStockProducts,
+    };
+  }, [products]);
+
+  // Event handlers
   const handleSearchChange = (value: string) => {
     setFilters({ ...filters, search: value });
   };
@@ -60,22 +84,63 @@ export const ProductManagement: React.FC = () => {
     setNewProduct(product);
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    const preview = file ? URL.createObjectURL(file) : '';
+    setNewProduct({ ...newProduct, image: file, imagePreview: preview });
+  };
+
+  const handleAddProduct = async (productData: any) => {
+    await createProductMutation.mutateAsync(productData);
+    setShowAddProductForm(false);
+    setNewProduct({
+      name: '',
+      price: '',
+      category: '',
+      stock: '',
+      unit: 'pcs',
+      image: null,
+      imagePreview: '',
+    });
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setNewProduct({
+      name: product.name,
+      price: product.price.toString(),
+      category: product.category,
+      stock: product.stock.toString(),
+      unit: product.unit,
+      image: null,
+      imagePreview: product.image || '',
+    });
+    setShowEditProductForm(true);
+  };
+
+  const handleUpdateProduct = async (productData: any) => {
+    if (editingProduct) {
+      await updateProductMutation.mutateAsync({ id: editingProduct._id, data: productData });
+      setShowEditProductForm(false);
+      setEditingProduct(null);
+    }
+  };
+
+  const handleToggleProductStatus = async (id: string) => {
+    await toggleStatusMutation.mutateAsync(id);
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    await deleteProductMutation.mutateAsync(id);
+  };
+
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategory.trim()) return;
 
-    setCategoryLoading(true);
-    try {
-      const success = await addCategory(newCategory.trim());
-      if (success) {
-        setNewCategory('');
-        setShowAddCategoryDialog(false);
-      }
-    } catch (error) {
-      console.error('Error adding category:', error);
-    } finally {
-      setCategoryLoading(false);
-    }
+    await createCategoryMutation.mutateAsync(newCategory.trim());
+    setNewCategory('');
+    setShowAddCategoryDialog(false);
   };
 
   if (error) {
@@ -137,9 +202,9 @@ export const ProductManagement: React.FC = () => {
           <ProductList
             products={products}
             loading={loading}
-            onToggleStatus={toggleProductStatus}
+            onToggleStatus={handleToggleProductStatus}
             onEdit={handleEditProduct}
-            onDelete={deleteProduct}
+            onDelete={handleDeleteProduct}
           />
         </CardContent>
       </Card>
@@ -152,8 +217,8 @@ export const ProductManagement: React.FC = () => {
         categories={categories}
         onProductChange={handleNewProductChange}
         onImageChange={handleImageChange}
-        onSubmit={addProduct}
-        loading={loading}
+        onSubmit={handleAddProduct}
+        loading={createProductMutation.isPending}
       />
 
       {/* Edit Product Form */}
@@ -167,8 +232,8 @@ export const ProductManagement: React.FC = () => {
         categories={categories}
         onProductChange={handleNewProductChange}
         onImageChange={handleImageChange}
-        onSubmit={editProduct}
-        loading={loading}
+        onSubmit={handleUpdateProduct}
+        loading={updateProductMutation.isPending}
         isEdit={true}
         editingProduct={editingProduct}
       />
@@ -203,12 +268,12 @@ export const ProductManagement: React.FC = () => {
                 type="button" 
                 variant="outline" 
                 onClick={() => setShowAddCategoryDialog(false)}
-                disabled={categoryLoading}
+                disabled={createCategoryMutation.isPending}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={categoryLoading}>
-                {categoryLoading ? 'Adding...' : 'Add Category'}
+              <Button type="submit" disabled={createCategoryMutation.isPending}>
+                {createCategoryMutation.isPending ? 'Adding...' : 'Add Category'}
               </Button>
             </div>
           </form>

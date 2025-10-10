@@ -4,8 +4,10 @@ import { useDataPrefetch } from '@/context/DataPrefetchContext';
 import { useRealtimeAnalytics } from '@/hooks/useRealtimeAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { transactionsAPI, productsAPI, categoriesAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 
 // Category inference function (matching backend logic)
 const inferCategoryFromProductName = (productName: string): string => {
@@ -92,10 +94,22 @@ export function ModernAnalyticsV3() {
   const { user } = useAuth();
   const { data: prefetchedData, isLoading: prefetchLoading } = useDataPrefetch();
   const { analytics: realtimeAnalytics, loading: realtimeLoading, error: realtimeError, isConnected } = useRealtimeAnalytics();
+  
+  // React Query hooks
+  const { data: transactionsData, isLoading: transactionsLoading } = useTransactions({ limit: 1000 });
+  const { data: productsData, isLoading: productsLoading } = useProducts();
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+  
+  // Local state
   const [analyticsData, setAnalyticsData] = useState<RawAnalyticsData | null>(null);
   const [allCategories, setAllCategories] = useState<string[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loading, setLoading] = useState(true);
+  
+  // Extract data from API responses
+  const transactions = transactionsData?.data || [];
+  const products = productsData?.data || [];
+  const categories = categoriesData?.data || [];
 
   const analytics = useMemo(() => {
     // First, check if we have analytics data from API (which has growth data)
@@ -297,122 +311,46 @@ export function ModernAnalyticsV3() {
   // Add a function to force refresh data
   const forceRefreshData = async () => {
     clearAllCaches();
-    await fetchAnalytics();
+    // React Query will automatically refetch when needed
+    window.location.reload();
   };
 
-  const fetchAnalytics = async () => {
-    // Always fetch data asynchronously, even if real-time data is available
-    // This ensures we have the latest data and provides fallback
-    try {
-      setLoading(true);
-      
-      // Fetch data in parallel for better performance
-      const [transactionsResponse, productsResponse, categoriesResponse] = await Promise.all([
-        transactionsAPI.getTransactions({
-          limit: 1000, // Get more transactions for better analytics
-          sort: 'createdAt',
-          order: 'desc'
-        }),
-        productsAPI.getProducts(),
-        categoriesAPI.getCategories()
-      ]);
-      
-      if (transactionsResponse.success && productsResponse.success) {
-        const analyticsData = {
-          transactions: transactionsResponse.data,
-          products: productsResponse.data
-        };
-        
-        setAnalyticsData(analyticsData);
-        
-        // Set categories if fetch was successful
-        if (categoriesResponse.success) {
-          setAllCategories(categoriesResponse.data || []);
-        }
-        
-        // Cache the analytics data for faster subsequent loads
-        try {
-          sessionStorage.setItem('analyticsData', JSON.stringify({
-            data: analyticsData,
-            timestamp: Date.now()
-          }));
-        } catch (error) {
-          console.warn('Failed to cache analytics data:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Update analytics data when React Query data changes
   useEffect(() => {
-    if (user?.id) {
-      // Prioritize real-time data, then prefetched data, then fetch
-      if (realtimeAnalytics) {
-        setLoading(false);
-        return;
-      }
-
-      // For managers, always fetch fresh data to avoid stale prefetched data
-      if (user.role === 'manager' || user.role === 'superadmin') {
-        fetchAnalytics();
-        return;
-      }
-
-      // Use prefetched data if available (instant loading) - only for cashiers
-      if (prefetchedData.transactions.length > 0 && prefetchedData.products.length > 0) {
-        setAnalyticsData({
-          transactions: prefetchedData.transactions,
-          products: prefetchedData.products
-        });
-        setLoading(false);
-        return;
-      }
+    if (transactions.length > 0 && products.length > 0) {
+      const analyticsData = {
+        transactions,
+        products
+      };
       
-      // Check sessionStorage for cached analytics data
+      setAnalyticsData(analyticsData);
+      
+      // Cache the analytics data for faster subsequent loads
       try {
-        const cachedAnalytics = sessionStorage.getItem('analyticsData');
-        if (cachedAnalytics) {
-          const parsed = JSON.parse(cachedAnalytics);
-          const cacheAge = Date.now() - parsed.timestamp;
-          // Use cached data if less than 5 minutes old
-          if (cacheAge < 300000) { // 5 minutes
-            setAnalyticsData(parsed.data);
-            setLoading(false);
-            return;
-          }
-        }
+        sessionStorage.setItem('analyticsData', JSON.stringify({
+          data: analyticsData,
+          timestamp: Date.now()
+        }));
       } catch (error) {
-        console.warn('Failed to load cached analytics:', error);
-      }
-
-      // Only fetch as last resort if no cached data available
-      if (!prefetchLoading.transactions && !prefetchLoading.products) {
-        fetchAnalytics();
+        console.warn('Failed to cache analytics data:', error);
       }
     }
-  }, [user?.id, realtimeAnalytics, prefetchedData, prefetchLoading.transactions, prefetchLoading.products]);
+  }, [transactions, products]);
 
-  // Fetch categories on component mount
+  // Update categories when React Query data changes
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoadingCategories(true);
-        const response = await categoriesAPI.getCategories();
-        if (response.success) {
-          setAllCategories(response.data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
+    if (categories.length > 0) {
+      setAllCategories(categories);
+      setLoadingCategories(false);
+    }
+  }, [categories]);
 
-    fetchCategories();
-  }, []);
+  // Update loading state based on React Query loading states
+  useEffect(() => {
+    const isLoading = transactionsLoading || productsLoading || categoriesLoading;
+    setLoading(isLoading);
+  }, [transactionsLoading, productsLoading, categoriesLoading]);
+
 
   // Show loading only on initial load without any cached data
   const isInitialLoad = (loading && !analytics) || (realtimeLoading && !realtimeAnalytics && !analyticsData);

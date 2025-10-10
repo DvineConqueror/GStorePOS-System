@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { usePos } from '@/context/PosContext';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,35 +19,31 @@ import {
 import { Product } from '@/types';
 import { useRefresh } from '@/context/RefreshContext';
 import { ProductImage } from '@/components/ui/ProductImage';
-import { categoriesAPI } from '@/lib/api';
+import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 
 export function CashierProductCatalog() {
-  const { state, addToCart, fetchProducts } = usePos();
-  const { products } = state;
+  const { state, addToCart } = usePos();
+  const { cart } = state;
+  
+  // React Query hooks
+  const { data: productsData, isLoading: productsLoading } = useProducts({ isActive: true });
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+  
+  // Local state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
-  const [categories, setCategories] = useState<string[]>([]);
   const itemsPerPage = 8;
   const { refreshTrigger } = useRefresh();
 
-  // Fetch categories from products
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await categoriesAPI.getCategories();
-        if (response.success) {
-          setCategories(response.data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-    fetchCategories();
-  }, []);
+  // Extract data from API responses
+  const products = productsData?.data || [];
+  const categories = categoriesData?.data || [];
+  const loading = productsLoading || categoriesLoading;
 
   const isProductInCart = (productId: string): boolean => {
-    return state.cart.some(item => item._id === productId);
+    return cart.some(item => item._id === productId);
   };
 
   // Use categories for filtering
@@ -57,16 +53,18 @@ export function CashierProductCatalog() {
   ];
 
   // Filter products based on search term and selected category
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.barcode?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = selectedCategory === 'All' || 
-                           product.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory && product.status === 'active';
-  });
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.barcode?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = selectedCategory === 'All' || 
+                             product.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory && product.status === 'active';
+    });
+  }, [products, searchTerm, selectedCategory]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -81,8 +79,9 @@ export function CashierProductCatalog() {
 
   // Refresh products when refresh trigger changes
   useEffect(() => {
-    fetchProducts();
-  }, [refreshTrigger]); // Remove fetchProducts from dependencies to prevent infinite loop
+    // React Query will automatically refetch when needed
+    // No manual fetch needed
+  }, [refreshTrigger]);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);

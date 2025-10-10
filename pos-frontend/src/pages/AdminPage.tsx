@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { useUserManagement } from '@/hooks/useUserManagement';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { ProductManagement } from '@/components/admin/ProductManagement';
@@ -17,6 +16,7 @@ import { PosProvider } from '@/context/PosContext';
 import { Users, Package, BarChart3, ShoppingCart, LogOut} from 'lucide-react';
 import { ManagerLogo } from '@/components/ui/BrandLogo';
 import { Button } from '@/components/ui/button';
+import { useUsers } from '@/hooks/useUsers';
 
 const AdminPageContent = () => {
   const { user, signOut } = useAuth();
@@ -24,8 +24,36 @@ const AdminPageContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Custom hooks for different concerns
-  const userManagement = useUserManagement();
+  // React Query hooks
+  const { data: usersData, isLoading: usersLoading } = useUsers();
+  
+  // Local state for user management
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  
+  // Extract data from API response
+  const users = usersData?.data || [];
+  
+  // Filter users based on search term and status
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.username.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+  
+  // Calculate user stats
+  const userStats = {
+    totalUsers: users.length,
+    activeUsers: users.filter(u => u.status === 'active').length,
+    inactiveUsers: users.filter(u => u.status === 'inactive').length,
+    cashierUsers: users.filter(u => u.role === 'cashier').length,
+    managerUsers: users.filter(u => u.role === 'manager').length,
+  };
   
   // Get highlight parameters from URL
   const shouldHighlightPending = searchParams.get('highlight') === 'pending';
@@ -64,18 +92,6 @@ const AdminPageContent = () => {
     setSearchParams(newSearchParams, { replace: true });
   };
 
-  useEffect(() => {
-    if (user?.role === 'manager' || user?.role === 'superadmin') {
-      userManagement.fetchUsers();
-      userManagement.fetchUserStats();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user?.role === 'manager' || user?.role === 'superadmin') {
-      userManagement.fetchUsers();
-    }
-  }, [userManagement.searchTerm, userManagement.statusFilter]);
 
 
   if (!user || (user.role !== 'manager' && user.role !== 'superadmin')) {
@@ -149,17 +165,17 @@ const AdminPageContent = () => {
           {/* User Management Tab */}
           <TabsContent value="users" className="space-y-6">
             <UserManagement
-              users={userManagement.users}
-              userStats={userManagement.userStats}
-              loading={userManagement.loading}
-              searchTerm={userManagement.searchTerm}
-              statusFilter={userManagement.statusFilter}
-              filteredUsers={userManagement.filteredUsers}
+              users={users}
+              userStats={userStats}
+              loading={usersLoading}
+              searchTerm={searchTerm}
+              statusFilter={statusFilter}
+              filteredUsers={filteredUsers}
               currentUserId={user?.id || ''}
-              onSearchChange={userManagement.setSearchTerm}
-              onStatusFilterChange={userManagement.setStatusFilter}
-              onToggleUserStatus={userManagement.toggleUserStatus}
-              onAddUser={userManagement.addUser}
+              onSearchChange={setSearchTerm}
+              onStatusFilterChange={setStatusFilter}
+              onToggleUserStatus={() => {}} // TODO: Implement with React Query mutation
+              onAddUser={() => {}} // TODO: Implement with React Query mutation
               shouldHighlightPending={shouldHighlightPending}
               highlightUserId={highlightUserId}
               onClearHighlight={handleClearHighlight}

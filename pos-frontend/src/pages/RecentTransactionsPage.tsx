@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,9 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { transactionsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
 import { useRoleBasedNavigation } from '@/utils/navigation';
+import { useTransactions } from '@/hooks/useTransactions';
 import { 
   Search, 
   Filter, 
@@ -68,21 +68,70 @@ export default function RecentTransactionsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { backRoute } = useRoleBasedNavigation();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Local state
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [expandedTransactions, setExpandedTransactions] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalTransactions, setTotalTransactions] = useState(0);
   
   const transactionsPerPage = 8; // 4 rows × 2 columns
 
+  // Build API parameters for server-side filtering
+  const apiParams = useCallback(() => {
+    const params: any = {
+      page: currentPage,
+      limit: transactionsPerPage,
+      sort: 'createdAt',
+      order: 'desc'
+    };
+
+    // Add status filter to API call
+    if (statusFilter !== 'all') {
+      params.status = statusFilter;
+    }
+
+    // Add date range filter to API call
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      switch (dateFilter) {
+        case 'today':
+          params.startDate = today.toISOString();
+          params.endDate = now.toISOString();
+          break;
+        case 'week':
+          params.startDate = weekAgo.toISOString();
+          params.endDate = now.toISOString();
+          break;
+        case 'all':
+          // No date filter - get all transactions
+          break;
+      }
+    }
+
+    // Add search term to API call
+    if (debouncedSearchTerm) {
+      params.search = debouncedSearchTerm;
+    }
+
+    return params;
+  }, [currentPage, statusFilter, dateFilter, debouncedSearchTerm]);
+
+  // React Query hook
+  const { data: transactionsData, isLoading: loading, error } = useTransactions(apiParams());
+  
+  // Extract data from API response
+  const transactions = transactionsData?.data || [];
+  const totalPages = transactionsData?.pagination?.pages || 1;
+  const totalTransactions = transactionsData?.pagination?.total || 0;
+
   // Debounce search term
-  useEffect(() => {
+  const debounceSearch = useCallback(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 500); // 500ms delay
@@ -90,71 +139,16 @@ export default function RecentTransactionsPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-      
-      // Build API parameters for server-side filtering
-      const apiParams: any = {
-        page: currentPage,
-        limit: transactionsPerPage,
-        sort: 'createdAt',
-        order: 'desc'
-      };
+  // Effect for debounced search
+  React.useEffect(() => {
+    const cleanup = debounceSearch();
+    return cleanup;
+  }, [debounceSearch]);
 
-      // Add status filter to API call
-      if (statusFilter !== 'all') {
-        apiParams.status = statusFilter;
-      }
-
-      // Add date range filter to API call
-      if (dateFilter !== 'all') {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-        switch (dateFilter) {
-          case 'today':
-            apiParams.startDate = today.toISOString();
-            apiParams.endDate = now.toISOString();
-            break;
-          case 'week':
-            apiParams.startDate = weekAgo.toISOString();
-            apiParams.endDate = now.toISOString();
-            break;
-          case 'all':
-            // No date filter - get all transactions
-            break;
-        }
-      }
-
-      // Add search term to API call
-      if (debouncedSearchTerm) {
-        apiParams.search = debouncedSearchTerm;
-      }
-
-      const response = await transactionsAPI.getTransactions(apiParams);
-
-      if (response.success) {
-        setTransactions(response.data || []);
-        setTotalPages(response.pagination?.pages || 1);
-        setTotalTransactions(response.pagination?.total || 0);
-      }
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    setCurrentPage(1); // Reset to first page when filters change
-    fetchTransactions();
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
   }, [statusFilter, dateFilter, debouncedSearchTerm]);
-
-  useEffect(() => {
-    fetchTransactions();
-  }, [currentPage]);
 
   const handleRefundTransaction = (transactionId: string) => {
     navigate(`/transactions/${transactionId}/refund`);
@@ -239,7 +233,8 @@ export default function RecentTransactionsPage() {
               // Clear any cached transaction data and force refresh
               sessionStorage.removeItem('analyticsData');
               sessionStorage.removeItem('prefetchedData');
-              fetchTransactions();
+              // React Query will automatically refetch when the query key changes
+              window.location.reload();
             }}
             variant="outline"
             className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-50"

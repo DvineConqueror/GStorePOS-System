@@ -35,7 +35,25 @@ import { SessionTerminationHandler } from '@/components/auth/SessionTerminationH
 import { useState, useEffect } from 'react';
 
 const App = () => {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes default stale time
+        gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
+        refetchOnWindowFocus: false, // Don't refetch on window focus
+        retry: (failureCount, error: any) => {
+          // Don't retry on 4xx errors
+          if (error?.response?.status >= 400 && error?.response?.status < 500) {
+            return false;
+          }
+          return failureCount < 3;
+        },
+      },
+      mutations: {
+        retry: false, // Don't retry mutations by default
+      },
+    },
+  });
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   // Show install prompt after a delay
