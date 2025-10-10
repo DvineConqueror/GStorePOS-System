@@ -48,7 +48,7 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
     
     // Only filter by status if explicitly provided
     if (status !== undefined) {
-      filters.status = status as string;
+      filters.status = status as 'active' | 'inactive' | 'deleted';
     } else {
       // Default: exclude deleted products from all queries
       filters.status = { $ne: 'deleted' };
@@ -74,7 +74,7 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
       if (typeof filters.status === 'object' && filters.status.$ne) {
         query.status = filters.status;
       } else {
-        query.status = filters.status;
+        query.status = filters.status as string;
       }
     }
 

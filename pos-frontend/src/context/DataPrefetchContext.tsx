@@ -113,7 +113,7 @@ export function DataPrefetchProvider({ children }: { children: React.ReactNode }
     updateError('products', null);
     
     try {
-      const response = await productsAPI.getProducts({ isActive: true });
+      const response = await productsAPI.getProducts({ status: 'active' });
       
       if (response.success) {
         setData(prev => ({

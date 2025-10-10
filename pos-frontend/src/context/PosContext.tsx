@@ -124,7 +124,7 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProducts = async () => {
     try {
-      const response = await productsAPI.getProducts({ isActive: true });
+      const response = await productsAPI.getProducts({ status: 'active' });
       
       if (response.success) {
         dispatch({ type: 'SET_PRODUCTS', payload: response.data });

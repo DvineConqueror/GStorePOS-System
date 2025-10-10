@@ -168,10 +168,6 @@ export default function RecentTransactionsPage() {
     return items.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const handleViewTransaction = (transactionId: string) => {
-    navigate(`/transactions/${transactionId}`);
-  };
-
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-6">
@@ -362,15 +358,6 @@ export default function RecentTransactionsPage() {
                 {/* Action Buttons */}
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewTransaction(transaction._id)}
-                      className="flex-1 text-xs h-7 bg-white border-green-200 text-green-700 hover:bg-green-50"
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      View
-                    </Button>
                     {(user?.role === 'manager' || user?.role === 'superadmin') && transaction.status === 'completed' && (
                       <Button
                         variant="outline"

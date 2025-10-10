@@ -34,17 +34,15 @@ const inferCategoryFromProductName = (productName: string): string => {
   }
 };
 import { 
-  LineChart, 
-  Line, 
   PieChart, 
   Pie, 
   Cell, 
   ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
-  PolarAngleAxis,
   Tooltip
 } from 'recharts';
+import { WeeklyTrendChart } from '@/components/analytics/WeeklyTrendChart';
+import { SalesAnalyticsChart } from '@/components/analytics/SalesAnalyticsChart';
+import { CategoryBreakdownChart } from '@/components/analytics/CategoryBreakdownChart';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -549,40 +547,10 @@ export function ModernAnalyticsV3() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {((realtimeAnalytics?.salesByCategory && realtimeAnalytics.salesByCategory.length > 0) || analytics.categoryData.length > 0) ? (
-              <div className="h-80 overflow-y-auto space-y-3 pr-2">
-                {(realtimeAnalytics?.salesByCategory || analytics.categoryData).map((category: any, index: number) => (
-                  <div key={category.category} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
-                    <div 
-                      className="w-4 h-4 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600 truncate">{category.category}</span>
-                        <span className="text-sm font-semibold text-gray-900 flex-shrink-0 ml-2">
-                          {formatCurrency(category.amount || category.sales)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className="h-2 rounded-full"
-                          style={{ 
-                            width: `${category.percentage || 0}%`,
-                            backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length]
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <PieChartIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">No category data available</p>
-              </div>
-            )}
+            <CategoryBreakdownChart 
+              data={realtimeAnalytics?.salesByCategory || analytics.categoryData} 
+              loading={loading}
+            />
           </CardContent>
         </Card>
 
@@ -643,30 +611,10 @@ export function ModernAnalyticsV3() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={realtimeAnalytics?.weeklyTrend || analytics.weeklyTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <Line 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke="#16a34a" 
-                  strokeWidth={4}
-                  dot={{ fill: '#16a34a', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: '#16a34a', strokeWidth: 2 }}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: '#1e293b',
-                    border: '1px solid #475569',
-                    borderRadius: '8px',
-                    color: '#f1f5f9'
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Sales']}
-                  labelStyle={{ color: '#f1f5f9' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <WeeklyTrendChart 
+            data={realtimeAnalytics?.weeklyTrend || analytics.weeklyTrend} 
+            loading={loading}
+          />
         </CardContent>
       </Card>
 
