@@ -46,11 +46,25 @@ export const ProductManagement: React.FC = () => {
   const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
   const [newCategory, setNewCategory] = useState('');
 
+  // Reset form state function
+  const resetFormState = () => {
+    setNewProduct({
+      name: '',
+      price: '',
+      category: '',
+      stock: '',
+      unit: 'pcs',
+      image: null,
+      imagePreview: '',
+    });
+  };
+
   // Extract data from API responses
   const products = productsData?.data || [];
   const categories = categoriesData?.data || [];
   const loading = productsLoading || categoriesLoading;
   const error = productsError ? 'Failed to load products' : null;
+
 
   // Calculate product stats
   const productStats = useMemo(() => {
@@ -93,15 +107,7 @@ export const ProductManagement: React.FC = () => {
   const handleAddProduct = async (productData: any) => {
     await createProductMutation.mutateAsync(productData);
     setShowAddProductForm(false);
-    setNewProduct({
-      name: '',
-      price: '',
-      category: '',
-      stock: '',
-      unit: 'pcs',
-      image: null,
-      imagePreview: '',
-    });
+    resetFormState();
   };
 
   const handleEditProduct = (product: any) => {
@@ -123,6 +129,7 @@ export const ProductManagement: React.FC = () => {
       await updateProductMutation.mutateAsync({ id: editingProduct._id, data: productData });
       setShowEditProductForm(false);
       setEditingProduct(null);
+      resetFormState();
     }
   };
 
@@ -212,7 +219,10 @@ export const ProductManagement: React.FC = () => {
       {/* Add Product Form */}
       <ProductForm
         isOpen={showAddProductForm}
-        onClose={() => setShowAddProductForm(false)}
+        onClose={() => {
+          setShowAddProductForm(false);
+          resetFormState();
+        }}
         newProduct={newProduct}
         categories={categories}
         onProductChange={handleNewProductChange}
@@ -227,6 +237,7 @@ export const ProductManagement: React.FC = () => {
         onClose={() => {
           setShowEditProductForm(false);
           setEditingProduct(null);
+          resetFormState();
         }}
         newProduct={newProduct}
         categories={categories}

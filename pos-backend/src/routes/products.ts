@@ -258,6 +258,7 @@ router.post('/', authenticate, requireAdmin, async (req, res): Promise<void> => 
     // Validate category exists
     if (productData.category) {
       const categoryExists = await CategoryService.getCategoryByName(productData.category);
+      
       if (!categoryExists) {
         res.status(400).json({
           success: false,
@@ -277,6 +278,13 @@ router.post('/', authenticate, requireAdmin, async (req, res): Promise<void> => 
         } as ApiResponse);
         return;
       }
+    }
+
+    // Clean up image field - remove if it's an empty object or null
+    if (productData.image && typeof productData.image === 'object' && Object.keys(productData.image).length === 0) {
+      delete productData.image;
+    } else if (productData.image === null || productData.image === undefined) {
+      delete productData.image;
     }
 
     const product = new Product(productData);
@@ -301,6 +309,16 @@ router.post('/', authenticate, requireAdmin, async (req, res): Promise<void> => 
 // @access  Private (Admin only)
 router.post('/with-image', authenticate, requireAdmin, upload.single('image'), async (req, res): Promise<void> => {
   try {
+    console.log('Image upload endpoint debug:', {
+      hasFile: !!req.file,
+      fileInfo: req.file ? {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : null,
+      productDataRaw: req.body.productData
+    });
+    
     const productData = JSON.parse(req.body.productData);
 
     // Validate category exists
@@ -350,6 +368,13 @@ router.post('/with-image', authenticate, requireAdmin, upload.single('image'), a
         } as ApiResponse);
         return;
       }
+    }
+
+    // Clean up image field - remove if it's an empty object or null
+    if (productData.image && typeof productData.image === 'object' && Object.keys(productData.image).length === 0) {
+      delete productData.image;
+    } else if (productData.image === null || productData.image === undefined) {
+      delete productData.image;
     }
 
     const product = new Product(productData);
@@ -405,6 +430,13 @@ router.put('/:id', authenticate, requireAdmin, async (req, res): Promise<void> =
         } as ApiResponse);
         return;
       }
+    }
+
+    // Clean up image field - remove if it's an empty object or null
+    if (productData.image && typeof productData.image === 'object' && Object.keys(productData.image).length === 0) {
+      delete productData.image;
+    } else if (productData.image === null || productData.image === undefined) {
+      delete productData.image;
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -486,7 +518,14 @@ router.put('/:id/with-image', authenticate, requireAdmin, upload.single('image')
     // Upload new image if provided
     if (req.file) {
       try {
+        console.log('Uploading image to GridFS:', {
+          filename: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size
+        });
+        
         const imageId = await ImageService.uploadImage(req.file);
+        console.log('Image uploaded successfully, ID:', imageId);
         productData.image = imageId;
 
         // Delete old image if it exists

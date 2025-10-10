@@ -15,7 +15,7 @@ interface ProductFormProps {
   categories: string[];
   onProductChange: (product: NewProduct) => void;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (productData: any | FormData) => void;
   loading?: boolean;
   isEdit?: boolean;
   editingProduct?: Product | null;
@@ -40,6 +40,39 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     });
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Prepare the product data for submission
+    const productData = {
+      name: newProduct.name,
+      price: parseFloat(newProduct.price),
+      category: newProduct.category,
+      stock: parseInt(newProduct.stock),
+      unit: newProduct.unit,
+    };
+    
+    // If there's an image file, create FormData
+    if (newProduct.image && newProduct.image instanceof File) {
+      console.log('Creating FormData with image:', {
+        imageFile: newProduct.image,
+        imageName: newProduct.image.name,
+        imageSize: newProduct.image.size,
+        imageType: newProduct.image.type,
+        productData
+      });
+      
+      const formData = new FormData();
+      formData.append('image', newProduct.image);
+      formData.append('productData', JSON.stringify(productData));
+      onSubmit(formData);
+    } else {
+      console.log('No image file, sending regular data:', productData);
+      // No image, send regular data
+      onSubmit(productData);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-0">
@@ -48,7 +81,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             {isEdit ? 'Edit Product' : 'Add New Product'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="flex flex-col flex-1">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1">
           <div className="flex-1">
             <div className="px-4 py-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">

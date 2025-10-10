@@ -205,8 +205,9 @@ export function ModernAnalyticsV3() {
       // Calculate sales for each category from transactions
       userTransactions.forEach((t: any) => {
         t.items.forEach((item: any) => {
-          // Use the product's category if available, otherwise infer from name
-          const category = item.category || inferCategoryFromProductName(item.productName);
+          // Find the product to get its actual category
+          const product = products.find((p: any) => p._id === item.productId);
+          const category = product?.category || inferCategoryFromProductName(item.productName);
           const current = categorySales.get(category) || 0;
           categorySales.set(category, current + item.totalPrice);
         });
