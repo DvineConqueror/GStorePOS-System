@@ -21,6 +21,7 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
       status,
       minAmount,
       maxAmount,
+      search,
       sort = 'createdAt',
       order = 'desc'
     } = req.query;
@@ -42,6 +43,16 @@ router.get('/', authenticate, requireCashier, async (req, res): Promise<void> =>
       filters.total = {};
       if (minAmount) filters.total.$gte = parseFloat(minAmount as string);
       if (maxAmount) filters.total.$lte = parseFloat(maxAmount as string);
+    }
+
+    // Search functionality
+    if (search) {
+      const searchRegex = new RegExp(search as string, 'i');
+      filters.$or = [
+        { transactionNumber: searchRegex },
+        { cashierName: searchRegex },
+        { 'items.productName': searchRegex }
+      ];
     }
 
     // If user is cashier (not admin), only show their transactions

@@ -226,29 +226,29 @@ export default function VoidRefundPage() {
         {/* Transaction Details */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <Receipt className="h-5 w-5 text-green-600" />
+            <CardTitle className="flex items-center gap-3 text-gray-700">
+              <Receipt className="h-5 w-5 text-green-700" />
               Transaction Details
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="font-medium">Transaction Number:</span>
+              <span className="font-medium text-gray-700">Transaction Number:</span>
               <span className="font-mono">{transaction.transactionNumber}</span>
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="font-medium">Status:</span>
+              <span className="font-medium text-gray-700">Status:</span>
               {getStatusBadge(transaction.status)}
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="font-medium">Cashier:</span>
+              <span className="font-medium text-gray-700">Cashier:</span>
               <span>{transaction.cashierName}</span>
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="font-medium">Payment Method:</span>
+              <span className="font-medium text-gray-700">Payment Method:</span>
               <div className="flex items-center gap-2">
                 {getPaymentIcon(transaction.paymentMethod)}
                 <span className="capitalize">{transaction.paymentMethod}</span>
@@ -256,17 +256,17 @@ export default function VoidRefundPage() {
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="font-medium">Date:</span>
+              <span className="font-medium text-gray-700">Date:</span>
               <span>{new Date(transaction.createdAt).toLocaleString()}</span>
             </div>
 
             <hr className="my-4" />
 
             <div className="space-y-2">
-              <h4 className="font-medium">Items:</h4>
+              <h4 className="font-medium text-gray-700">Items:</h4>
               {transaction.items.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
-                  <span>{item.productName} x{item.quantity}</span>
+                  <span className="text-gray-700">{item.productName} x{item.quantity}</span>
                   <span>{formatCurrency(item.totalPrice)}</span>
                 </div>
               ))}
@@ -276,23 +276,23 @@ export default function VoidRefundPage() {
 
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>Subtotal:</span>
+                <span className="text-gray-700">Subtotal:</span>
                 <span>{formatCurrency(transaction.subtotal)}</span>
               </div>
               {transaction.tax > 0 && (
                 <div className="flex justify-between">
-                  <span>Tax:</span>
+                  <span className="text-gray-700">Tax:</span>
                   <span>{formatCurrency(transaction.tax)}</span>
                 </div>
               )}
               {transaction.discount > 0 && (
                 <div className="flex justify-between">
-                  <span>Discount:</span>
+                  <span className="text-gray-700">Discount:</span>
                   <span>-{formatCurrency(transaction.discount)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-lg">
-                <span>Total:</span>
+                <span className="text-gray-700">Total:</span>
                 <span>{formatCurrency(transaction.total)}</span>
               </div>
             </div>
@@ -302,8 +302,8 @@ export default function VoidRefundPage() {
         {/* Refund Form */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <RotateCcw className="h-5 w-5 text-orange-600" />
+            <CardTitle className="flex items-center gap-3 text-gray-700">
+              <RotateCcw className="h-5 w-5 text-green-700" />
               Refund Processing
             </CardTitle>
           </CardHeader>
@@ -329,7 +329,7 @@ export default function VoidRefundPage() {
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={4}
-                className="resize-none"
+                className="resize-none text-gray-700 bg-cream-50 border-gray-300"
               />
             </div>
 
@@ -337,15 +337,15 @@ export default function VoidRefundPage() {
               <h4 className="font-medium mb-2">Refund Summary</h4>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span>Transaction Total:</span>
+                  <span className="text-gray-700">Transaction Total:</span>
                   <span>{formatCurrency(transaction.total)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Items to Restore:</span>
+                  <span className="text-gray-700">Items to Restore:</span>
                   <span>{transaction.items.length} items</span>
                 </div>
                 <div className="flex justify-between font-medium">
-                  <span>Refund Amount:</span>
+                  <span className="text-gray-700">Refund Amount:</span>
                   <span>{formatCurrency(transaction.total)}</span>
                 </div>
               </div>

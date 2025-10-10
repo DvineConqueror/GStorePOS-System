@@ -94,7 +94,7 @@ const AdminPageContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cream-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -125,24 +125,24 @@ const AdminPageContent = () => {
         >
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white">
             <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-white text-gray-700 hover:bg-green-50 data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
-              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-              <span className="hidden sm:inline">Cashier Management</span>
-              <span className="sm:hidden">Cashiers</span>
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-gray-700" />
+              <span className="hidden sm:inline text-gray-700">Cashier Management</span>
+              <span className="sm:hidden text-gray-700">Cashiers</span>
             </TabsTrigger>
             <TabsTrigger value="products" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-white text-gray-700 hover:bg-green-50 data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
-              <Package className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-              <span className="hidden sm:inline">Product Management</span>
-              <span className="sm:hidden">Products</span>
+              <Package className="h-3 w-3 sm:h-4 sm:w-4 text-gray-700" />
+              <span className="hidden sm:inline text-gray-700">Product Management</span>
+              <span className="sm:hidden text-gray-700">Products</span>
             </TabsTrigger>
             <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-white text-gray-700 hover:bg-green-50 data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
-              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-              <span className="hidden sm:inline">POS System</span>
-              <span className="sm:hidden">POS</span>
+              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-gray-700" />
+              <span className="hidden sm:inline text-gray-700">POS System</span>
+              <span className="sm:hidden text-gray-700">POS</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-white text-gray-700 hover:bg-green-50 data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
-              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-              <span className="hidden sm:inline">Analytics</span>
-              <span className="sm:hidden">Analytics</span>
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-gray-700" />
+              <span className="hidden sm:inline text-gray-700">Analytics</span>
+              <span className="sm:hidden text-gray-700">Analytics</span>
             </TabsTrigger>
           </TabsList>
 

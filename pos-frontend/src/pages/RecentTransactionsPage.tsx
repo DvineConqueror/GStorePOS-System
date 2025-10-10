@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +22,8 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  Package
+  Package,
+  ChevronLeft
 } from 'lucide-react';
 
 interface Transaction {
@@ -67,9 +68,24 @@ export default function RecentTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [expandedTransactions, setExpandedTransactions] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  
+  const transactionsPerPage = 8; // 4 rows × 2 columns
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchTransactions = async () => {
     try {
@@ -77,7 +93,8 @@ export default function RecentTransactionsPage() {
       
       // Build API parameters for server-side filtering
       const apiParams: any = {
-        limit: 1000, // Get more transactions to ensure we have all data
+        page: currentPage,
+        limit: transactionsPerPage,
         sort: 'createdAt',
         order: 'desc'
       };
@@ -86,8 +103,6 @@ export default function RecentTransactionsPage() {
       if (statusFilter !== 'all') {
         apiParams.status = statusFilter;
       }
-
-      // Payment method filter removed - system only accepts cash
 
       // Add date range filter to API call
       if (dateFilter !== 'all') {
@@ -110,21 +125,17 @@ export default function RecentTransactionsPage() {
         }
       }
 
+      // Add search term to API call
+      if (debouncedSearchTerm) {
+        apiParams.search = debouncedSearchTerm;
+      }
+
       const response = await transactionsAPI.getTransactions(apiParams);
 
       if (response.success) {
-        let filteredTransactions = response.data;
-
-        // Apply client-side search filter (since API doesn't support search)
-        if (searchTerm) {
-          filteredTransactions = filteredTransactions.filter((t: Transaction) =>
-            t.transactionNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.cashierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()))
-          );
-        }
-
-        setTransactions(filteredTransactions);
+        setTransactions(response.data || []);
+        setTotalPages(response.pagination?.pages || 1);
+        setTotalTransactions(response.pagination?.total || 0);
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -134,8 +145,13 @@ export default function RecentTransactionsPage() {
   };
 
   useEffect(() => {
+    setCurrentPage(1); // Reset to first page when filters change
     fetchTransactions();
-  }, [statusFilter, dateFilter, searchTerm]);
+  }, [statusFilter, dateFilter, debouncedSearchTerm]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [currentPage]);
 
   const handleRefundTransaction = (transactionId: string) => {
     navigate(`/transactions/${transactionId}/refund`);
@@ -162,9 +178,31 @@ export default function RecentTransactionsPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-24 bg-slate-100 animate-pulse rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                    <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 rounded"></div>
+                    <div className="h-3 bg-gray-200 rounded"></div>
+                    <div className="h-3 bg-gray-200 rounded"></div>
+                    <div className="h-3 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-7 bg-gray-200 rounded flex-1"></div>
+                    <div className="h-7 w-7 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -195,7 +233,7 @@ export default function RecentTransactionsPage() {
       {/* Filters */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -203,192 +241,199 @@ export default function RecentTransactionsPage() {
                 placeholder="Search transactions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white"
+                className="pl-10 bg-white text-gray-700"
               />
             </div>
 
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="bg-white">
+              <SelectTrigger className="bg-white text-gray-700">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
+                <SelectItem value="all" className="text-gray-700">All Status</SelectItem>
+                <SelectItem value="completed" className="text-gray-700">Completed</SelectItem>
+                <SelectItem value="refunded" className="text-gray-700">Refunded</SelectItem>
               </SelectContent>
             </Select>
 
 
             {/* Date Filter */}
             <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="bg-white">
+              <SelectTrigger className="bg-white text-gray-700">
                 <SelectValue placeholder="Date Range" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="all" className="text-gray-700">All Time</SelectItem>
+                <SelectItem value="today" className="text-gray-700">Today</SelectItem>
+                <SelectItem value="week" className="text-gray-700">This Week</SelectItem>
               </SelectContent>
             </Select>
 
             {/* Results Count */}
             <div className="flex items-center justify-center">
               <span className="text-sm text-gray-600">
-                {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
+                {totalTransactions} transaction{totalTransactions !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Transactions List */}
-      <div className="space-y-3">
+      {/* Transactions Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
         {transactions.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Transactions Found</h3>
-              <p className="text-gray-600">No transactions match your current filters.</p>
-            </CardContent>
-          </Card>
+          <div className="col-span-full">
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Transactions Found</h3>
+                <p className="text-gray-600">No transactions match your current filters.</p>
+              </CardContent>
+            </Card>
+          </div>
         ) : (
           transactions.map((transaction) => (
-            <Card key={transaction._id} className="hover:shadow-md transition-shadow">
+            <Card key={transaction._id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {transaction.transactionNumber}
-                      </h3>
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 text-sm truncate">
+                      {transaction.transactionNumber}
+                    </h3>
+                    <div className="mt-1">
                       {getStatusBadge(transaction.status)}
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div>
-                        <span className="font-medium">Cashier:</span> {transaction.cashierName}
-                      </div>
-                      <div>
-                        <span className="font-medium">Total:</span> {formatCurrency(transaction.total)}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">Payment:</span>
-                        <span className="capitalize">{transaction.paymentMethod}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Date:</span> {new Date(transaction.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-
-                    <div className="mt-2">
-                      <span className="text-sm text-gray-500">
-                        {getTotalQuantity(transaction.items)} item{getTotalQuantity(transaction.items) !== 1 ? 's' : ''} total
-                      </span>
-                    </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleTransactionExpansion(transaction._id)}
+                    className="text-gray-500 hover:text-gray-700 p-1 h-6 w-6"
+                  >
+                    {expandedTransactions.has(transaction._id) ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
 
-                  <div className="flex items-center gap-2 min-w-[120px] justify-end">
-                    {/* Expand Button */}
+                {/* Transaction Details */}
+                <div className="space-y-2 text-xs text-gray-600">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Cashier:</span>
+                    <span className="truncate ml-2">{transaction.cashierName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Total:</span>
+                    <span className="font-semibold text-green-600">{formatCurrency(transaction.total)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Payment:</span>
+                    <span className="capitalize">{transaction.paymentMethod}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Date:</span>
+                    <span>{new Date(transaction.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Items:</span>
+                    <span>{getTotalQuantity(transaction.items)}</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex gap-2">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      onClick={() => toggleTransactionExpansion(transaction._id)}
-                      className="text-gray-500 hover:text-gray-700 p-1"
+                      onClick={() => handleViewTransaction(transaction._id)}
+                      className="flex-1 text-xs h-7 bg-white border-green-200 text-green-700 hover:bg-green-50"
                     >
-                      {expandedTransactions.has(transaction._id) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
                     </Button>
-
-                    {/* Refund Button - Only for managers/superadmins */}
-                    {(user?.role === 'manager' || user?.role === 'superadmin') && transaction.status === 'completed' ? (
+                    {(user?.role === 'manager' || user?.role === 'superadmin') && transaction.status === 'completed' && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleRefundTransaction(transaction._id)}
-                        className="flex items-center gap-2 text-orange-600 bg-[#ececec] border-green-200 hover:bg-white-50"
+                        className="text-xs h-7 bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
                       >
-                        <RotateCcw className="h-4 w-4" />
-                        Refund
+                        <RotateCcw className="h-3 w-3" />
                       </Button>
-                    ) : (
-                      <div className="w-[80px]"></div>
                     )}
                   </div>
                 </div>
 
-                {/* Transaction Details Dropdown */}
+                {/* Expanded Details */}
                 {expandedTransactions.has(transaction._id) && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="space-y-3">
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="space-y-2">
                       {/* Transaction Time */}
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="h-4 w-4" />
-                        <span className="font-medium">Time:</span>
+                      <div className="flex items-center gap-1 text-xs text-gray-600">
+                        <Clock className="h-3 w-3" />
                         <span>{new Date(transaction.createdAt).toLocaleString()}</span>
                       </div>
 
-                      {/* Items Details */}
-                      <div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                          <Package className="h-4 w-4" />
+                      {/* Items Summary */}
+                      <div className="text-xs">
+                        <div className="flex items-center gap-1 text-gray-600 mb-1">
+                          <Package className="h-3 w-3" />
                           <span className="font-medium">Items:</span>
                         </div>
-                        <div className="space-y-2">
-                          {transaction.items.map((item, index) => (
-                            <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded text-sm">
-                              <div>
-                                <span className="font-medium">{item.productName}</span>
-                                <span className="text-gray-500 ml-2">× {item.quantity}</span>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-medium">{formatCurrency(item.totalPrice)}</div>
-                                <div className="text-gray-500 text-xs">
-                                  {formatCurrency(item.unitPrice)} each
-                                </div>
-                              </div>
+                        <div className="space-y-1 max-h-20 overflow-y-auto text-gray-600">
+                          {transaction.items.slice(0, 3).map((item, index) => (
+                            <div key={index} className="flex justify-between bg-gray-50 p-1 rounded text-xs">
+                              <span className="truncate">{item.productName}</span>
+                              <span className="ml-1">×{item.quantity}</span>
                             </div>
                           ))}
+                          {transaction.items.length > 3 && (
+                            <div className="text-gray-500 text-xs text-center">
+                              +{transaction.items.length - 3} more
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Refund Information */}
-                      {transaction.status === 'refunded' && transaction.notes && (
-                        <div className="bg-orange-50 p-3 rounded border border-orange-200">
-                          <div className="flex items-center gap-2 text-sm text-orange-800">
-                            <RotateCcw className="h-4 w-4" />
-                            <span className="font-medium">Refund Reason:</span>
-                          </div>
-                          <p className="text-sm text-orange-700 mt-1">{transaction.notes}</p>
-                        </div>
-                      )}
-
                       {/* Transaction Summary */}
-                      <div className="bg-gray-50 p-3 rounded">
-                        <div className="flex justify-between text-sm">
+                      <div className="bg-gray-50 p-2 rounded text-xs text-gray-600">
+                        <div className="flex justify-between">
                           <span>Subtotal:</span>
-                          <span>{formatCurrency(transaction.subtotal)}</span>
+                          <span className="text-green-600">{formatCurrency(transaction.subtotal)}</span>
                         </div>
                         {transaction.tax > 0 && (
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between">
                             <span>Tax:</span>
                             <span>{formatCurrency(transaction.tax)}</span>
                           </div>
                         )}
                         {transaction.discount > 0 && (
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between">
                             <span>Discount:</span>
                             <span>-{formatCurrency(transaction.discount)}</span>
                           </div>
                         )}
-                        <div className="flex justify-between text-sm font-medium border-t border-gray-300 pt-2 mt-2">
+                        <div className="flex justify-between font-medium border-t border-gray-300 pt-1 mt-1">
                           <span>Total:</span>
-                          <span>{formatCurrency(transaction.total)}</span>
+                          <span className="text-green-600">{formatCurrency(transaction.total)}</span>
                         </div>
                       </div>
+
+                      {/* Refund Information */}
+                      {transaction.status === 'refunded' && transaction.notes && (
+                        <div className="bg-orange-50 p-2 rounded border border-orange-200 text-xs">
+                          <div className="flex items-center gap-1 text-orange-800 mb-1">
+                            <RotateCcw className="h-3 w-3" />
+                            <span className="font-medium">Refund Reason:</span>
+                          </div>
+                          <p className="text-orange-700">{transaction.notes}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -397,6 +442,53 @@ export default function RecentTransactionsPage() {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+          <div className="text-sm text-gray-600">
+            Showing {((currentPage - 1) * transactionsPerPage) + 1} to {Math.min(currentPage * transactionsPerPage, totalTransactions)} of {totalTransactions} transactions
+          </div>
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="bg-white border-green-300 text-green-700 hover:bg-green-50"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const page = i + 1;
+                return (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {page}
+                  </Button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="bg-white border-green-300 text-green-700 hover:bg-green-50"
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

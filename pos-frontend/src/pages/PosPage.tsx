@@ -16,7 +16,7 @@ function PosPageContent() {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-cream-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
