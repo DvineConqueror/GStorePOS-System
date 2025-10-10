@@ -11,7 +11,7 @@ const Index = () => {
     if (!loading && user) {
       // Redirect based on user role
       if (user.role === 'manager') {
-        navigate('/admin/dashboard');
+        navigate('/dashboard');
       } else {
         navigate('/pos');
       }

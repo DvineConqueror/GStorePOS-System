@@ -93,11 +93,16 @@ export const ProductManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Product Statistics */}
+      <ProductStats stats={productStats} loading={loading} />
+
+      {/* Product Management */}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>Product Management</CardTitle>
+            <div className="flex items-center gap-4">
+              <CardTitle>Product Management</CardTitle>
+            </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button 
                 onClick={() => setShowAddCategoryDialog(true)} 
@@ -116,29 +121,28 @@ export const ProductManagement: React.FC = () => {
               </Button>
             </div>
           </div>
+          
+          {/* Search and Filter Controls */}
+          <div className="mt-4">
+            <ProductFilters
+              filters={filters}
+              categories={categories}
+              onSearchChange={handleSearchChange}
+              onCategoryFilterChange={handleCategoryFilterChange}
+              onStatusFilterChange={handleStatusFilterChange}
+            />
+          </div>
         </CardHeader>
+        <CardContent>
+          <ProductList
+            products={products}
+            loading={loading}
+            onToggleStatus={toggleProductStatus}
+            onEdit={handleEditProduct}
+            onDelete={deleteProduct}
+          />
+        </CardContent>
       </Card>
-
-      {/* Product Statistics */}
-      <ProductStats stats={productStats} loading={loading} />
-
-      {/* Filters */}
-      <ProductFilters
-        filters={filters}
-        categories={categories}
-        onSearchChange={handleSearchChange}
-        onCategoryFilterChange={handleCategoryFilterChange}
-        onStatusFilterChange={handleStatusFilterChange}
-      />
-
-      {/* Product List */}
-      <ProductList
-        products={products}
-        loading={loading}
-        onToggleStatus={toggleProductStatus}
-        onEdit={handleEditProduct}
-        onDelete={deleteProduct}
-      />
 
       {/* Add Product Form */}
       <ProductForm

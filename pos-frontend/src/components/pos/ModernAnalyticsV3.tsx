@@ -4,7 +4,7 @@ import { useDataPrefetch } from '@/context/DataPrefetchContext';
 import { useRealtimeAnalytics } from '@/hooks/useRealtimeAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { transactionsAPI, productsAPI } from '@/lib/api';
+import { transactionsAPI, productsAPI, categoriesAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
 
 // Category inference function (matching backend logic)
@@ -93,6 +93,8 @@ export function ModernAnalyticsV3() {
   const { data: prefetchedData, isLoading: prefetchLoading } = useDataPrefetch();
   const { analytics: realtimeAnalytics, loading: realtimeLoading, error: realtimeError, isConnected } = useRealtimeAnalytics();
   const [analyticsData, setAnalyticsData] = useState<RawAnalyticsData | null>(null);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const analytics = useMemo(() => {
@@ -164,12 +166,6 @@ export function ModernAnalyticsV3() {
         ? ((todaySales - yesterdaySales) / yesterdaySales) * 100 
         : todaySales > 0 ? 100 : 0;
 
-      console.log('Calculated growth percentages:', { 
-        salesGrowth: Number(salesGrowth.toFixed(1)), 
-        avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
-        todaySalesGrowth: Number(todaySalesGrowth.toFixed(1))
-      });
-
       // Additional analytics data
       // Top performer
       const cashierPerformance = new Map();
@@ -184,11 +180,19 @@ export function ModernAnalyticsV3() {
       const topPerformer = Array.from(cashierPerformance.entries())
         .sort(([,a], [,b]) => b.sales - a.sales)[0];
 
-      // Category analysis
+      // Category analysis - use fetched categories and include all categories
       const categorySales = new Map();
+      
+      // Initialize all categories with 0 sales
+      allCategories.forEach(category => {
+        categorySales.set(category, 0);
+      });
+      
+      // Calculate sales for each category from transactions
       userTransactions.forEach((t: any) => {
         t.items.forEach((item: any) => {
-          const category = inferCategoryFromProductName(item.productName);
+          // Use the product's category if available, otherwise infer from name
+          const category = item.category || inferCategoryFromProductName(item.productName);
           const current = categorySales.get(category) || 0;
           categorySales.set(category, current + item.totalPrice);
         });
@@ -268,7 +272,33 @@ export function ModernAnalyticsV3() {
     }
     
     return null;
-  }, [analyticsData, realtimeAnalytics, user]);
+  }, [analyticsData, realtimeAnalytics, user, allCategories]);
+
+  // Clear all cached data function
+  const clearAllCaches = () => {
+    try {
+      // Clear session storage
+      sessionStorage.removeItem('analyticsData');
+      
+      // Clear any other analytics-related caches
+      sessionStorage.removeItem('prefetchedAnalytics');
+      sessionStorage.removeItem('realtimeAnalytics');
+      
+      // Reset component state
+      setAnalyticsData(null);
+      setAllCategories([]);
+      
+      console.log('All analytics caches cleared');
+    } catch (error) {
+      console.error('Error clearing caches:', error);
+    }
+  };
+
+  // Add a function to force refresh data
+  const forceRefreshData = async () => {
+    clearAllCaches();
+    await fetchAnalytics();
+  };
 
   const fetchAnalytics = async () => {
     // Always fetch data asynchronously, even if real-time data is available
@@ -277,13 +307,14 @@ export function ModernAnalyticsV3() {
       setLoading(true);
       
       // Fetch data in parallel for better performance
-      const [transactionsResponse, productsResponse] = await Promise.all([
+      const [transactionsResponse, productsResponse, categoriesResponse] = await Promise.all([
         transactionsAPI.getTransactions({
           limit: 1000, // Get more transactions for better analytics
           sort: 'createdAt',
           order: 'desc'
         }),
-        productsAPI.getProducts()
+        productsAPI.getProducts(),
+        categoriesAPI.getCategories()
       ]);
       
       if (transactionsResponse.success && productsResponse.success) {
@@ -293,6 +324,11 @@ export function ModernAnalyticsV3() {
         };
         
         setAnalyticsData(analyticsData);
+        
+        // Set categories if fetch was successful
+        if (categoriesResponse.success) {
+          setAllCategories(categoriesResponse.data || []);
+        }
         
         // Cache the analytics data for faster subsequent loads
         try {
@@ -319,7 +355,13 @@ export function ModernAnalyticsV3() {
         return;
       }
 
-      // Use prefetched data if available (instant loading)
+      // For managers, always fetch fresh data to avoid stale prefetched data
+      if (user.role === 'manager' || user.role === 'superadmin') {
+        fetchAnalytics();
+        return;
+      }
+
+      // Use prefetched data if available (instant loading) - only for cashiers
       if (prefetchedData.transactions.length > 0 && prefetchedData.products.length > 0) {
         setAnalyticsData({
           transactions: prefetchedData.transactions,
@@ -352,6 +394,25 @@ export function ModernAnalyticsV3() {
       }
     }
   }, [user?.id, realtimeAnalytics, prefetchedData, prefetchLoading.transactions, prefetchLoading.products]);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const response = await categoriesAPI.getCategories();
+        if (response.success) {
+          setAllCategories(response.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Show loading only on initial load without any cached data
   const isInitialLoad = (loading && !analytics) || (realtimeLoading && !realtimeAnalytics && !analyticsData);
@@ -550,17 +611,17 @@ export function ModernAnalyticsV3() {
           </CardHeader>
           <CardContent>
             {((realtimeAnalytics?.salesByCategory && realtimeAnalytics.salesByCategory.length > 0) || analytics.categoryData.length > 0) ? (
-              <div className="space-y-3">
-                {(realtimeAnalytics?.salesByCategory || analytics.categoryData).slice(0, 4).map((category: any, index: number) => (
-                  <div key={category.category} className="flex items-center gap-3">
+              <div className="h-80 overflow-y-auto space-y-3 pr-2">
+                {(realtimeAnalytics?.salesByCategory || analytics.categoryData).map((category: any, index: number) => (
+                  <div key={category.category} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
                     <div 
-                      className="w-4 h-4 rounded-full"
+                      className="w-4 h-4 rounded-full flex-shrink-0"
                       style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">{category.category}</span>
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-sm font-medium text-gray-600 truncate">{category.category}</span>
+                        <span className="text-sm font-semibold text-gray-900 flex-shrink-0 ml-2">
                           {formatCurrency(category.amount || category.sales)}
                         </span>
                       </div>
@@ -568,7 +629,7 @@ export function ModernAnalyticsV3() {
                         <div 
                           className="h-2 rounded-full"
                           style={{ 
-                            width: `${category.percentage}%`,
+                            width: `${category.percentage || 0}%`,
                             backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length]
                           }}
                         />
@@ -599,22 +660,22 @@ export function ModernAnalyticsV3() {
           </CardHeader>
           <CardContent>
             {analytics.recentTransactions.length > 0 ? (
-              <div className="space-y-4">
+              <div className="h-80 overflow-y-auto space-y-3 pr-2">
                 {analytics.recentTransactions.map((transaction, index) => (
-                  <div key={transaction.id} className={`flex items-center gap-4 p-4 rounded-2xl ${
+                  <div key={transaction.id} className={`flex items-center gap-4 p-3 rounded-xl ${
                     index % 2 === 0 ? "bg-white" : "bg-gray-50"
                   }`}>
-                    <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
-                      <span className="text-green-600 font-bold text-lg">
+                    <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-600 font-bold text-sm">
                         {index + 1}
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 text-lg">{transaction.items} items</h4>
-                      <p className="text-sm text-gray-600">{transaction.cashierName} • {transaction.time}</p>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 text-sm truncate">{transaction.items} items</h4>
+                      <p className="text-xs text-gray-600 truncate">{transaction.cashierName} • {transaction.time}</p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xl font-bold text-gray-900">
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-lg font-bold text-gray-900">
                         {formatCurrency(transaction.total)}
                       </div>
                     </div>

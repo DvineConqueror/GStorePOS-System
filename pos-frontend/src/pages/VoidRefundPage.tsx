@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { transactionsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
+import { useRoleBasedNavigation } from '@/utils/navigation';
 import { 
   ArrowLeft, 
   Receipt, 
@@ -73,6 +74,7 @@ export default function VoidRefundPage() {
   const { user } = useAuth();
   const { transactionId } = useParams();
   const navigate = useNavigate();
+  const { backRoute } = useRoleBasedNavigation();
   const { toast } = useToast();
   
   const [transaction, setTransaction] = useState<Transaction | null>(null);
@@ -98,7 +100,7 @@ export default function VoidRefundPage() {
           description: "Transaction not found",
           variant: "destructive"
         });
-        navigate('/admin/analytics');
+        navigate(backRoute);
       }
     } catch (error) {
       console.error('Error fetching transaction:', error);
@@ -136,7 +138,7 @@ export default function VoidRefundPage() {
           title: "Success",
           description: "Transaction refunded successfully",
         });
-        navigate('/admin/analytics');
+        navigate(backRoute);
       } else {
         toast({
           title: "Error",
@@ -210,7 +212,7 @@ export default function VoidRefundPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/admin/analytics')}
+          onClick={() => navigate(backRoute)}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -354,7 +356,7 @@ export default function VoidRefundPage() {
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                onClick={() => navigate('/admin/analytics')}
+                onClick={() => navigate(backRoute)}
                 className="flex-1"
                 disabled={processing}
               >

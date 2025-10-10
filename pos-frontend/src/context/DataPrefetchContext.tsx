@@ -32,6 +32,7 @@ interface DataPrefetchContextType {
   };
   refreshData: (keys?: Array<keyof PrefetchedData>) => Promise<void>;
   prefetchAll: () => Promise<void>;
+  clearAllCaches: () => void;
 }
 
 // Initialize with sessionStorage cache for persistence across page switches
@@ -320,6 +321,40 @@ export function DataPrefetchProvider({ children }: { children: React.ReactNode }
     };
   }, [user, refreshData, data.lastUpdated]);
 
+  // Clear all caches function
+  const clearAllCaches = useCallback(() => {
+    try {
+      // Clear session storage
+      sessionStorage.removeItem('prefetchedData');
+      sessionStorage.removeItem('analyticsData');
+      sessionStorage.removeItem('prefetchedAnalytics');
+      sessionStorage.removeItem('realtimeAnalytics');
+      
+      // Reset state to initial values
+      setData({
+        products: [],
+        transactions: [],
+        analytics: null,
+        pendingCount: 0,
+        lastUpdated: {
+          products: null,
+          transactions: null,
+          analytics: null,
+          pendingCount: null,
+        },
+      });
+      
+      // Force immediate refresh for managers/superadmins
+      if (user?.role === 'manager' || user?.role === 'superadmin') {
+        refreshData(['transactions', 'products', 'analytics']);
+      }
+      
+      console.log('All prefetch caches cleared');
+    } catch (error) {
+      console.error('Error clearing prefetch caches:', error);
+    }
+  }, [user?.role, refreshData]);
+
   return (
     <DataPrefetchContext.Provider
       value={{
@@ -328,6 +363,7 @@ export function DataPrefetchProvider({ children }: { children: React.ReactNode }
         errors,
         refreshData,
         prefetchAll,
+        clearAllCaches,
       }}
     >
       {children}

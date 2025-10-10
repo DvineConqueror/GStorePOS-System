@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { transactionsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
+import { useRoleBasedNavigation } from '@/utils/navigation';
 import { 
   Search, 
   Filter, 
@@ -23,7 +24,8 @@ import {
   ChevronRight,
   Clock,
   Package,
-  ChevronLeft
+  ChevronLeft,
+  RefreshCw
 } from 'lucide-react';
 
 interface Transaction {
@@ -65,6 +67,7 @@ const getStatusBadge = (status: string) => {
 export default function RecentTransactionsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { backRoute } = useRoleBasedNavigation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -217,7 +220,7 @@ export default function RecentTransactionsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(backRoute)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -228,12 +231,29 @@ export default function RecentTransactionsPage() {
             <p className="text-gray-600">View and manage transaction history</p>
           </div>
         </div>
+        
+        {/* Refresh Button for Managers */}
+        {(user?.role === 'manager' || user?.role === 'superadmin') && (
+          <Button
+            onClick={() => {
+              // Clear any cached transaction data and force refresh
+              sessionStorage.removeItem('analyticsData');
+              sessionStorage.removeItem('prefetchedData');
+              fetchTransactions();
+            }}
+            variant="outline"
+            className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-50"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh Data
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 justify-between">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

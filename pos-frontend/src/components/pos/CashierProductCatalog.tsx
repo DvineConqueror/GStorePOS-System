@@ -2,7 +2,7 @@ import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect } from 'react';
 import { usePos } from '@/context/PosContext';
-import { Card } from '@/components/ui/card';
+import { Card, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/utils/format';
 import { Button } from '@/components/ui/button';
@@ -92,9 +92,8 @@ export function CashierProductCatalog() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Product Catalog</h2>
-          <p className="text-gray-600">Select products to add to cart</p>
+        <div className="flex items-center gap-4">
+          <CardTitle>Cashier Management</CardTitle>
         </div>
       </div>
 
