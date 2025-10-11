@@ -28,7 +28,7 @@ export class SocketConnectionService {
     const room = this.io.sockets.adapter.rooms.get(`role-${role}`);
     const memberCount = room?.size || 0;
     
-    console.log(`📡 EMITTING TO ROLE: role-${role} (${memberCount} members) - Event: ${event}`, {
+    console.log(` EMITTING TO ROLE: role-${role} (${memberCount} members) - Event: ${event}`, {
       role,
       event,
       memberCount,
@@ -58,6 +58,18 @@ export class SocketConnectionService {
       console.error('Socket.IO not initialized');
       return;
     }
+
+    // Get room info for debugging
+    const room = this.io.sockets.adapter.rooms.get(`user-${userId}`);
+    const memberCount = room?.size || 0;
+    
+    console.log(` EMITTING TO USER: user-${userId} (${memberCount} members) - Event: ${event}`, {
+      userId,
+      event,
+      memberCount,
+      hasData: !!data,
+      data: data
+    });
 
     this.io.to(`user-${userId}`).emit(event, data);
   }

@@ -26,14 +26,22 @@ export class ServerConfig {
    */
   static configureSocketIO(io: SocketIOServer): void {
     io.on('connection', (socket) => {
+      console.log(`Socket.IO: Client connected - Socket ID: ${socket.id}`);
+      
       // Join user to their role-based room for targeted notifications
       socket.on('join-role-room', (role: string) => {
         socket.join(`role-${role}`);
+        console.log(`Socket.IO: Socket ${socket.id} joined role room: role-${role}`);
       });
 
       // Join user to their user-specific room for session termination events
       socket.on('join-user-room', (userId: string) => {
         socket.join(`user-${userId}`);
+        console.log(`Socket.IO: Socket ${socket.id} joined user room: user-${userId}`);
+      });
+      
+      socket.on('disconnect', () => {
+        console.log(`Socket.IO: Client disconnected - Socket ID: ${socket.id}`);
       });
     });
   }

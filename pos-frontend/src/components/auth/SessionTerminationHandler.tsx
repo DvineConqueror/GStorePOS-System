@@ -23,12 +23,13 @@ interface SessionTerminationHandlerProps {
 export function SessionTerminationHandler({ className }: SessionTerminationHandlerProps) {
   const [terminationData, setTerminationData] = React.useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [countdown, setCountdown] = React.useState(3);
+  const [countdown, setCountdown] = React.useState(10);
   const { signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleSessionTermination = (event: CustomEvent) => {
+      console.log('SessionTerminationHandler: Received session termination event', event.detail);
       setTerminationData(event.detail);
       setIsDialogOpen(true);
       setCountdown(3);
@@ -134,7 +135,7 @@ export function SessionTerminationHandler({ className }: SessionTerminationHandl
         
         <div className="flex flex-col flex-1">
           <div className="flex-1">
-            <div className="px-4 py-4 space-y-4">
+            <div className="px-4 py-4 space-y-3">
               {/* Main Message */}
               <p className="text-sm text-gray-600 leading-relaxed">
                 {getTerminationMessage()}

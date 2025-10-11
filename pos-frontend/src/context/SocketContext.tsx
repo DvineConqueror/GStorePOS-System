@@ -39,14 +39,17 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     newSocket.on('connect', () => {
       setIsConnected(true);
+      console.log('SocketContext: Connected to WebSocket server');
       
       // Join role-based room for targeted notifications (for admins)
       if (user.role === 'superadmin' || user.role === 'manager') {
         newSocket.emit('join-role-room', user.role);
+        console.log(`SocketContext: Joined role room: role-${user.role}`);
       }
       
       // Join user-specific room for session termination events (for all users)
       newSocket.emit('join-user-room', user.id);
+      console.log(`SocketContext: Joined user room: user-${user.id}`);
     });
 
     newSocket.on('disconnect', () => {
@@ -99,6 +102,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     // Listen for session termination (forced logout due to concurrent login)
     newSocket.on('session_terminated', (data) => {
+      console.log('SocketContext: Received session_terminated event', data);
       // Show user notification about session termination
       window.dispatchEvent(new CustomEvent('sessionTerminated', { detail: data }));
       
