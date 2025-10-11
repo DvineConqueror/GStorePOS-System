@@ -58,6 +58,22 @@ api.interceptors.response.use(
               Cookies.set('auth_token', response.data.data.accessToken, { expires: 7 });
               Cookies.set('refresh_token', response.data.data.refreshToken, { expires: 7 });
               
+              // Extract sessionId from new token
+              try {
+                const payload = JSON.parse(atob(response.data.data.accessToken.split('.')[1]));
+                const sessionId = payload.sessionId;
+                if (sessionId) {
+                  Cookies.set('session_id', sessionId, { 
+                    expires: 7,
+                    path: '/',
+                    secure: false,
+                    sameSite: 'lax'
+                  });
+                }
+              } catch (tokenError) {
+                console.error('Error extracting sessionId from refreshed token:', tokenError);
+              }
+              
               // Retry the original request with new token
               originalRequest.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
               return api(originalRequest);

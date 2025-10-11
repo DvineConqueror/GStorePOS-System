@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,7 +80,7 @@ export default function RecentTransactionsPage() {
   const transactionsPerPage = 8; // 4 rows × 2 columns
 
   // Build API parameters for server-side filtering
-  const apiParams = useCallback(() => {
+  const apiParams = useMemo(() => {
     const params: any = {
       page: currentPage,
       limit: transactionsPerPage,
@@ -123,7 +123,7 @@ export default function RecentTransactionsPage() {
   }, [currentPage, statusFilter, dateFilter, debouncedSearchTerm]);
 
   // React Query hook
-  const { data: transactionsData, isLoading: loading, error } = useTransactions(apiParams());
+  const { data: transactionsData, isLoading: loading, error } = useTransactions(apiParams);
   
   // Extract data from API response
   const transactions = transactionsData?.data || [];

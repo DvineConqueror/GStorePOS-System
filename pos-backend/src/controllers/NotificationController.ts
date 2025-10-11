@@ -109,6 +109,56 @@ export class NotificationController {
   }
 
   /**
+   * Get pending approval count for notifications
+   */
+  static async getPendingCount(req: Request, res: Response): Promise<void> {
+    try {
+      const count = await User.countDocuments({
+        isApproved: false,
+        status: 'active'
+      });
+      
+      res.json({
+        success: true,
+        data: { count },
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Get pending count error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while getting pending approval count.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Get pending users for notifications
+   */
+  static async getPendingUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const limit = parseInt(req.query.limit as string) || 5;
+      const users = await User.find({
+        isApproved: false,
+        status: 'active'
+      })
+      .select('username email firstName lastName role createdAt')
+      .sort({ createdAt: -1 })
+      .limit(limit);
+      
+      res.json({
+        success: true,
+        data: users,
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Get pending users error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while getting pending users.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
    * Get low stock alerts
    */
   static async getLowStockAlerts(req: Request, res: Response): Promise<void> {

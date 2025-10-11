@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { transactionsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
 import { WeeklyTrendChart } from '@/components/analytics/WeeklyTrendChart';
+import { CategoryBreakdownChart } from '@/components/analytics/CategoryBreakdownChart';
+import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 
 // Category inference function (matching backend logic)
 const inferCategoryFromProductName = (productName: string): string => {
@@ -86,6 +89,14 @@ const CATEGORY_COLORS = ['#107146', '#16a34a', '#22c55e', '#4ade80', '#86efac', 
 export function ModernCashierAnalyticsV3() {
   const { user } = useAuth();
   const [analyticsData, setAnalyticsData] = useState<RawAnalyticsData | null>(null);
+  
+  // React Query hooks for products and categories
+  const { data: productsData } = useProducts();
+  const { data: categoriesData } = useCategories();
+  
+  // Extract data from API responses
+  const products = productsData?.data || [];
+  const categories = categoriesData?.data || [];
   const [loading, setLoading] = useState(true);
 
   const analytics = useMemo(() => {
@@ -175,7 +186,7 @@ export function ModernCashierAnalyticsV3() {
       });
     }
 
-    // Recent transactions (last 5)
+    // Recent transactions (last 5) with item details
     const recentTransactions = userTransactions
       .sort((a: any, b: any) => new Date(b.createdAt || b.timestamp).getTime() - new Date(a.createdAt || a.timestamp).getTime())
       .slice(0, 5)
@@ -183,6 +194,11 @@ export function ModernCashierAnalyticsV3() {
         id: t.id,
         total: t.total,
         items: t.items.reduce((sum: number, item: any) => sum + item.quantity, 0),
+        itemDetails: t.items.map((item: any) => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.totalPrice
+        })),
         time: new Date(t.createdAt || t.timestamp).toLocaleTimeString('en-US', { 
           hour: '2-digit', 
           minute: '2-digit' 
@@ -200,20 +216,30 @@ export function ModernCashierAnalyticsV3() {
       .map(([hour, sales]) => ({ hour: `${hour}:00`, sales }))
       .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
-    // Top categories using backend inference
+    // Top categories using backend categories (like manager analytics)
     const categorySales = new Map();
+    
+    // Initialize all categories with 0 sales
+    categories.forEach(category => {
+      categorySales.set(category, 0);
+    });
+    
+    // Calculate sales for each category from transactions
     userTransactions.forEach((t: any) => {
       t.items.forEach((item: any) => {
-        const category = inferCategoryFromProductName(item.productName);
+        // Find the product to get its actual category
+        const product = products.find((p: any) => p._id === item.productId);
+        const category = product?.category || inferCategoryFromProductName(item.productName);
         const current = categorySales.get(category) || 0;
         categorySales.set(category, current + item.totalPrice);
       });
     });
+    
     const topCategories = Array.from(categorySales.entries())
       .map(([category, sales]) => ({
         category,
         sales,
-        percentage: (sales / totalSales) * 100
+        percentage: totalSales > 0 ? (sales / totalSales) * 100 : 0
       }))
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 4);
@@ -242,7 +268,7 @@ export function ModernCashierAnalyticsV3() {
       topCategories,
       efficiency
     };
-  }, [analyticsData, user]);
+  }, [analyticsData, user, products, categories]);
 
   const fetchAnalytics = async () => {
     try {
@@ -398,24 +424,43 @@ export function ModernCashierAnalyticsV3() {
           </CardHeader>
           <CardContent>
             {analytics.recentTransactions.length > 0 ? (
-              <div className="space-y-4">
+              <div className="h-80 overflow-y-auto space-y-3 pr-2">
                 {analytics.recentTransactions.map((transaction, index) => (
-                  <div key={transaction.id} className={`flex items-center gap-4 p-4 rounded-2xl ${
+                  <div key={transaction.id} className={`flex flex-col gap-3 p-4 rounded-xl ${
                     index % 2 === 0 ? "bg-white" : "bg-gray-50"
                   }`}>
-                    <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
-                      <span className="text-green-600 font-bold text-lg">
-                        {index + 1}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 text-lg">{transaction.items} items</h4>
-                      <p className="text-sm text-gray-600">{transaction.time}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xl font-bold text-gray-900">
-                        {formatCurrency(transaction.total)}
+                    {/* Transaction Header */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <span className="text-green-600 font-bold text-sm">
+                          {index + 1}
+                        </span>
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm truncate">{transaction.items} items</h4>
+                        <p className="text-xs text-gray-600 truncate">{transaction.time}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-lg font-bold text-gray-900">
+                          {formatCurrency(transaction.total)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Item Details */}
+                    <div className="ml-13 space-y-1">
+                      {transaction.itemDetails.slice(0, 3).map((item: any, itemIndex: number) => (
+                        <div key={itemIndex} className="flex justify-between items-center text-xs bg-gray-50 p-2 rounded">
+                          <span className="truncate flex-1">{item.name}</span>
+                          <span className="ml-2 text-gray-600">×{item.quantity}</span>
+                          <span className="ml-2 font-medium text-gray-900">{formatCurrency(item.price)}</span>
+                        </div>
+                      ))}
+                      {transaction.itemDetails.length > 3 && (
+                        <div className="text-xs text-gray-500 text-center py-1">
+                          +{transaction.itemDetails.length - 3} more items
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -441,40 +486,10 @@ export function ModernCashierAnalyticsV3() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {analytics.topCategories.length > 0 ? (
-              <div className="space-y-3">
-                {analytics.topCategories.map((category, index) => (
-                  <div key={category.category} className="flex items-center gap-3">
-                    <div 
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">{category.category}</span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {formatCurrency(category.sales)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className="h-2 rounded-full"
-                          style={{ 
-                            width: `${category.percentage}%`,
-                            backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length]
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Target className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">No category data available</p>
-              </div>
-            )}
+            <CategoryBreakdownChart 
+              data={analytics.topCategories} 
+              loading={loading}
+            />
           </CardContent>
         </Card>
 

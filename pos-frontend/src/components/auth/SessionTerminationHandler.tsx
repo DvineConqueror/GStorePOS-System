@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
+import { authAPI } from '../../lib/api';
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,20 @@ export function SessionTerminationHandler({ className }: SessionTerminationHandl
     setIsDialogOpen(false);
     
     try {
+      // Try to call logout API with session ID if available
+      const sessionId = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('session_id='))
+        ?.split('=')[1];
+      
+      if (sessionId) {
+        try {
+          await authAPI.logout(sessionId);
+        } catch (error) {
+          console.log('Logout API call failed, continuing with local cleanup');
+        }
+      }
+      
       // Clear local storage/session storage
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');

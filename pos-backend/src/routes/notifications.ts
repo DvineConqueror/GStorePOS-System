@@ -14,6 +14,16 @@ router.get('/all', authenticate, requireManager, NotificationController.getAllNo
 // @access  Private (Manager/Superadmin only)
 router.get('/pending-approvals', authenticate, requireManager, NotificationController.getPendingApprovals);
 
+// @desc    Get pending approval count for notifications
+// @route   GET /api/v1/notifications/pending-count
+// @access  Private (Manager/Superadmin only)
+router.get('/pending-count', authenticate, requireManager, NotificationController.getPendingCount);
+
+// @desc    Get pending users for notifications
+// @route   GET /api/v1/notifications/pending-users
+// @access  Private (Manager/Superadmin only)
+router.get('/pending-users', authenticate, requireManager, NotificationController.getPendingUsers);
+
 // @desc    Get low stock alerts
 // @route   GET /api/v1/notifications/low-stock
 // @access  Private (Manager/Superadmin only)
