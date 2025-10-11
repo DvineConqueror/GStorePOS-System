@@ -4,8 +4,6 @@ import { NotificationQueueService } from './notification/NotificationQueueServic
 import { User } from '../models/User';
 import { Product } from '../models/Product';
 
-// Force TypeScript refresh - Updated for AuthLoginController
-
 interface UserRegistrationData {
   username: string;
   firstName: string;
@@ -50,7 +48,7 @@ interface SecurityData {
   affectedUser?: string;
 }
 
-class NotificationService {
+export class NotificationService {
   /**
    * Send email notification if enabled in settings
    */
@@ -71,12 +69,7 @@ class NotificationService {
     targetRoles: string[] = ['manager', 'superadmin'],
     data?: any
   ): Promise<boolean> {
-    return NotificationDeliveryService.sendSystemAlert(
-      title, 
-      message, 
-      targetRoles, 
-      data
-    );
+    return NotificationDeliveryService.sendSystemAlert(title, message, targetRoles, data);
   }
 
   /**
@@ -88,12 +81,7 @@ class NotificationService {
     message: string,
     data?: any
   ): Promise<boolean> {
-    return NotificationDeliveryService.sendUserNotification(
-      userId, 
-      type, 
-      message, 
-      data
-    );
+    return NotificationDeliveryService.sendUserNotification(userId, type, message, data);
   }
 
   /**
@@ -104,11 +92,7 @@ class NotificationService {
     message: string,
     data?: any
   ): Promise<boolean> {
-    return NotificationDeliveryService.sendBroadcastNotification(
-      type, 
-      message, 
-      data
-    );
+    return NotificationDeliveryService.sendBroadcastNotification(type, message, data);
   }
 
   /**
@@ -120,38 +104,27 @@ class NotificationService {
     message: string,
     data?: any
   ): Promise<boolean> {
-    return NotificationDeliveryService.sendRoleNotification(
-      roles, 
-      type, 
-      message, 
-      data
-    );
+    return NotificationDeliveryService.sendRoleNotification(roles, type, message, data);
   }
 
   /**
    * Queue user registration notification
    */
-  async queueUserRegistrationNotification(
-    userData: UserRegistrationData
-  ): Promise<string> {
+  async queueUserRegistrationNotification(userData: UserRegistrationData): Promise<string> {
     return NotificationQueueService.queueUserRegistrationNotification(userData);
   }
 
   /**
    * Queue low stock notification
    */
-  async queueLowStockNotification(
-    productData: ProductData
-  ): Promise<string> {
+  async queueLowStockNotification(productData: ProductData): Promise<string> {
     return NotificationQueueService.queueLowStockNotification(productData);
   }
 
   /**
    * Queue out of stock notification
    */
-  async queueOutOfStockNotification(
-    productData: OutOfStockProductData
-  ): Promise<string> {
+  async queueOutOfStockNotification(productData: OutOfStockProductData): Promise<string> {
     return NotificationQueueService.queueOutOfStockNotification(productData);
   }
 
@@ -166,14 +139,7 @@ class NotificationService {
     priority: 'low' | 'medium' | 'high' | 'critical' = 'medium',
     scheduledAt?: Date
   ): Promise<string> {
-    return NotificationQueueService.queueNotification(
-      type, 
-      target, 
-      template, 
-      data, 
-      priority, 
-      scheduledAt
-    );
+    return NotificationQueueService.queueNotification(type, target, template, data, priority, scheduledAt);
   }
 
   /**
@@ -200,9 +166,7 @@ class NotificationService {
   /**
    * Notify managers about new user registration
    */
-  async notifyNewUserRegistration(
-    userData: UserRegistrationData
-  ): Promise<void> {
+  async notifyNewUserRegistration(userData: UserRegistrationData): Promise<void> {
     try {
       // Queue notification for managers and superadmins
       await this.queueUserRegistrationNotification(userData);
@@ -274,9 +238,7 @@ class NotificationService {
   /**
    * Notify about high-value transactions
    */
-  async notifyHighValueTransaction(
-    transactionData: TransactionData
-  ): Promise<void> {
+  async notifyHighValueTransaction(transactionData: TransactionData): Promise<void> {
     try {
       const template = NotificationTemplateService.generateTransactionAlertTemplate(transactionData);
       
@@ -297,9 +259,7 @@ class NotificationService {
   /**
    * Notify about system maintenance
    */
-  async notifySystemMaintenance(
-    maintenanceData: MaintenanceData
-  ): Promise<void> {
+  async notifySystemMaintenance(maintenanceData: MaintenanceData): Promise<void> {
     try {
       const template = NotificationTemplateService.generateMaintenanceTemplate(maintenanceData);
       
@@ -334,9 +294,9 @@ class NotificationService {
       );
 
       console.log(`Security alert notification sent: ${securityData.type}`);
-    } catch (error) {
+      } catch (error) {
       console.error('Error sending security alert notification:', error);
-    }
+      }
   }
 }
 

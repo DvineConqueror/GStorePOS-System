@@ -4,7 +4,7 @@ import { EmailConfigService } from '../../services/email/EmailConfigService';
 import { SocketService } from '../../services/SocketService';
 import { ImageService } from '../../services/ImageService';
 import { AnalyticsCacheService } from '../../services/AnalyticsCacheService';
-import NotificationService from '../../services/NotificationService';
+import { NotificationService } from '../../services/NotificationService';
 
 export class ServiceInitializer {
   /**
@@ -23,7 +23,7 @@ export class ServiceInitializer {
       AnalyticsCacheService.initialize();
       
       // Initialize notification service low stock checker
-      (NotificationService.constructor as any).initializeLowStockChecker();
+      // Note: Low stock checker will be implemented separately if needed
       
       // Start password reset token cleanup (every hour)
       setInterval(async () => {

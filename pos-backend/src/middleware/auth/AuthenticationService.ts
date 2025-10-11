@@ -62,7 +62,7 @@ export class AuthenticationService {
       }
 
       // Validate user status
-      if (!this.validateUserStatus(user, res)) {
+      if (!AuthenticationService.validateUserStatus(user, res)) {
         return;
       }
 

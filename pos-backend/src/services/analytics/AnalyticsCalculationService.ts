@@ -1,35 +1,172 @@
 import { Transaction } from '../../models/Transaction';
 import { Product } from '../../models/Product';
+import { User } from '../../models/User';
 
 export class AnalyticsCalculationService {
   /**
-   * Calculate dashboard analytics
+   * Calculate dashboard analytics for a specific period
    */
-  static async calculateDashboardAnalytics(period: number = 30) {
-    const startDate = new Date(Date.now() - period * 24 * 60 * 60 * 1000);
+  static async calculateDashboardAnalytics(days: number) {
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const endDate = new Date();
 
-    // Get top products
-    const topProducts = await Transaction.getTopProducts(startDate, endDate, 5);
+    // Get previous period for comparison
+    const prevStartDate = new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000);
+    const prevEndDate = new Date(startDate.getTime());
 
-    // Get sales by cashier
-    const salesByCashier = await Transaction.getSalesByCashier(startDate, endDate);
+    const [currentData, previousData, salesByDay, topProducts, salesByCashier, userStats] = await Promise.all([
+      // Current period data
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: '$total' },
+            totalTransactions: { $sum: 1 },
+            averageTransactionValue: { $avg: '$total' }
+          }
+        }
+      ]),
+      // Previous period data for comparison
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: prevStartDate, $lte: prevEndDate },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: '$total' },
+            totalTransactions: { $sum: 1 },
+            averageTransactionValue: { $avg: '$total' }
+          }
+        }
+      ]),
+      // Sales by day
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' },
+              day: { $dayOfMonth: '$createdAt' }
+            },
+            sales: { $sum: '$total' },
+            transactions: { $sum: 1 }
+          }
+        },
+        {
+          $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 }
+        }
+      ]),
+      // Top products
+      Transaction.getTopProducts(startDate, endDate, 5),
+      // Sales by cashier
+      Transaction.getSalesByCashier(startDate, endDate),
+      // User statistics
+      User.aggregate([
+        {
+          $group: {
+            _id: '$role',
+            count: { $sum: 1 },
+            activeCount: {
+              $sum: { $cond: ['$isActive', 1, 0] }
+            }
+          }
+        }
+      ])
+    ]);
 
-    // Get low stock products
-    const lowStockProducts = await Product.findLowStock();
+    const current = currentData[0] || { totalSales: 0, totalTransactions: 0, averageTransactionValue: 0 };
+    const previous = previousData[0] || { totalSales: 0, totalTransactions: 0, averageTransactionValue: 0 };
 
-    // Get out of stock products
-    const outOfStockProducts = await Product.findOutOfStock();
+    // Calculate today's data for today's growth
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const [todayData, yesterdayData] = await Promise.all([
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: today },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: '$total' },
+            totalTransactions: { $sum: 1 }
+          }
+        }
+      ]),
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: yesterday, $lt: today },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: '$total' },
+            totalTransactions: { $sum: 1 }
+          }
+        }
+      ])
+    ]);
+
+    const todayStats = todayData[0] || { totalSales: 0, totalTransactions: 0 };
+    const yesterdayStats = yesterdayData[0] || { totalSales: 0, totalTransactions: 0 };
+
+    // Calculate percentage changes with fallback logic for new installations
+    const salesGrowth = previous.totalSales > 0 
+      ? ((current.totalSales - previous.totalSales) / previous.totalSales) * 100 
+      : current.totalSales > 0 ? 100 : 0; // If no previous data but current sales exist, show 100% growth
+    
+    const transactionGrowth = previous.totalTransactions > 0 
+      ? ((current.totalTransactions - previous.totalTransactions) / previous.totalTransactions) * 100 
+      : current.totalTransactions > 0 ? 100 : 0; // If no previous data but current transactions exist, show 100% growth
+    
+    const avgTransactionGrowth = previous.averageTransactionValue > 0 
+      ? ((current.averageTransactionValue - previous.averageTransactionValue) / previous.averageTransactionValue) * 100 
+      : current.averageTransactionValue > 0 ? 100 : 0; // If no previous data but current avg exists, show 100% growth
+
+    const todaySalesGrowth = yesterdayStats.totalSales > 0 
+      ? ((todayStats.totalSales - yesterdayStats.totalSales) / yesterdayStats.totalSales) * 100 
+      : todayStats.totalSales > 0 ? 100 : 0; // If no yesterday data but today sales exist, show 100% growth
 
     return {
-      period: `${period} days`,
+      period: `${days} days`,
+      sales: current,
+      salesByDay,
       topProducts,
       salesByCashier,
-      inventory: {
-        lowStock: lowStockProducts.length,
-        outOfStock: outOfStockProducts.length,
-        lowStockProducts: lowStockProducts.slice(0, 5),
-        outOfStockProducts: outOfStockProducts.slice(0, 5)
+      users: userStats,
+      daily: {
+        sales: todayStats
+      },
+      growth: {
+        salesGrowth: Number(salesGrowth.toFixed(1)),
+        transactionGrowth: Number(transactionGrowth.toFixed(1)),
+        avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
+        todaySalesGrowth: Number(todaySalesGrowth.toFixed(1))
       }
     };
   }
@@ -37,73 +174,134 @@ export class AnalyticsCalculationService {
   /**
    * Calculate sales analytics
    */
-  static async calculateSalesAnalytics(filters: {
-    startDate?: Date;
-    endDate?: Date;
-    groupBy?: 'day' | 'week' | 'month';
-  }) {
-    const { 
-      startDate, 
-      endDate, 
-      groupBy = 'day'
-    } = filters;
+  static async calculateSalesAnalytics() {
+    const start = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const end = new Date();
 
-    const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const end = endDate || new Date();
+    const [salesData, paymentMethodData] = await Promise.all([
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' },
+              day: { $dayOfMonth: '$createdAt' }
+            },
+            sales: { $sum: '$total' },
+            transactions: { $sum: 1 },
+            averageTransactionValue: { $avg: '$total' }
+          }
+        },
+        {
+          $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 }
+        }
+      ]),
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            status: 'completed'
+          }
+        },
+        {
+          $group: {
+            _id: '$paymentMethod',
+            sales: { $sum: '$total' },
+            transactions: { $sum: 1 }
+          }
+        }
+      ])
+    ]);
 
     return {
       period: { start, end },
-      groupBy
+      salesData,
+      paymentMethodData
     };
   }
 
   /**
    * Calculate product analytics
    */
-  static async calculateProductAnalytics(filters: {
-    startDate?: Date;
-    endDate?: Date;
-    limit?: number;
-  }) {
-    const { 
-      startDate, 
-      endDate, 
-      limit = 20 
-    } = filters;
+  static async calculateProductAnalytics() {
+    const start = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const end = new Date();
 
-    const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const end = endDate || new Date();
-
-    // Get top selling products
-    const topProducts = await Transaction.getTopProducts(start, end, limit);
+    const [topProducts, categoryPerformance, inventoryValue] = await Promise.all([
+      Transaction.getTopProducts(start, end, 20),
+      Transaction.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            status: 'completed'
+          }
+        },
+        {
+          $unwind: '$items'
+        },
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'items.productId',
+            foreignField: '_id',
+            as: 'product'
+          }
+        },
+        {
+          $unwind: '$product'
+        },
+        {
+          $group: {
+            _id: '$product.category',
+            sales: { $sum: '$items.totalPrice' },
+            quantitySold: { $sum: '$items.quantity' },
+            transactions: { $addToSet: '$_id' }
+          }
+        },
+        {
+          $project: {
+            category: '$_id',
+            sales: 1,
+            quantitySold: 1,
+            transactionCount: { $size: '$transactions' }
+          }
+        },
+        {
+          $sort: { sales: -1 }
+        }
+      ]),
+      Product.aggregate([
+        {
+          $match: { status: 'active' }
+        },
+        {
+          $group: {
+            _id: null,
+            totalValue: { $sum: { $multiply: ['$stock', '$price'] } },
+            totalCost: { $sum: { $multiply: ['$stock', '$cost'] } },
+            totalItems: { $sum: 1 },
+            totalStock: { $sum: '$stock' }
+          }
+        }
+      ])
+    ]);
 
     return {
       period: { start, end },
-      topProducts
-    };
-  }
-
-  /**
-   * Calculate cashier performance analytics
-   */
-  static async calculateCashierAnalytics(filters: {
-    startDate?: Date;
-    endDate?: Date;
-  }) {
-    const { 
-      startDate, 
-      endDate 
-    } = filters;
-
-    const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const end = endDate || new Date();
-
-    // Get cashier performance
-    const cashierPerformance = await Transaction.getSalesByCashier(start, end);
-
-    return {
-      period: { start, end },
-      performance: cashierPerformance
+      topProducts,
+      categoryPerformance,
+      inventory: inventoryValue[0] || {
+        totalValue: 0,
+        totalCost: 0,
+        totalItems: 0,
+        totalStock: 0
+      }
     };
   }
 
@@ -111,63 +309,61 @@ export class AnalyticsCalculationService {
    * Calculate inventory analytics
    */
   static async calculateInventoryAnalytics() {
-    // Get low stock products
-    const lowStockProducts = await Product.findLowStock();
-
-    // Get out of stock products
-    const outOfStockProducts = await Product.findOutOfStock();
+    const [inventoryStatus, categoryDistribution, lowStockProducts, outOfStockProducts] = await Promise.all([
+      Product.aggregate([
+        {
+          $match: { status: 'active' }
+        },
+        {
+          $group: {
+            _id: null,
+            totalProducts: { $sum: 1 },
+            totalStock: { $sum: '$stock' },
+            totalValue: { $sum: { $multiply: ['$stock', '$price'] } },
+            lowStockCount: {
+              $sum: {
+                $cond: [{ $lte: ['$stock', '$minStock'] }, 1, 0]
+              }
+            },
+            outOfStockCount: {
+              $sum: {
+                $cond: [{ $eq: ['$stock', 0] }, 1, 0]
+              }
+            }
+          }
+        }
+      ]),
+      Product.aggregate([
+        {
+          $match: { status: 'active' }
+        },
+        {
+          $group: {
+            _id: '$category',
+            count: { $sum: 1 },
+            totalStock: { $sum: '$stock' },
+            totalValue: { $sum: { $multiply: ['$stock', '$price'] } }
+          }
+        },
+        {
+          $sort: { count: -1 }
+        }
+      ]),
+      Product.findLowStock(),
+      Product.findOutOfStock()
+    ]);
 
     return {
+      status: inventoryStatus[0] || {
+        totalProducts: 0,
+        totalStock: 0,
+        totalValue: 0,
+        lowStockCount: 0,
+        outOfStockCount: 0
+      },
+      categoryDistribution,
       lowStockProducts,
       outOfStockProducts
     };
-  }
-
-  /**
-   * Format sales data for charts
-   */
-  static formatSalesDataForCharts(salesData: any[], groupBy: string) {
-    return salesData.map(item => ({
-      period: this.formatPeriodLabel(item._id, groupBy),
-      sales: item.sales,
-      transactions: item.transactions,
-      averageTransactionValue: item.averageTransactionValue
-    }));
-  }
-
-  /**
-   * Format period label based on groupBy
-   */
-  private static formatPeriodLabel(periodId: any, groupBy: string): string {
-    switch (groupBy) {
-      case 'day':
-        return `${periodId.year}-${String(periodId.month).padStart(2, '0')}-${String(periodId.day).padStart(2, '0')}`;
-      case 'week':
-        return `Week ${periodId.week}, ${periodId.year}`;
-      case 'month':
-        return `${periodId.year}-${String(periodId.month).padStart(2, '0')}`;
-      default:
-        return 'Unknown';
-    }
-  }
-
-  /**
-   * Calculate growth rate
-   */
-  static calculateGrowthRate(current: number, previous: number): number {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return ((current - previous) / previous) * 100;
-  }
-
-  /**
-   * Calculate percentage distribution
-   */
-  static calculatePercentageDistribution(data: any[], totalKey: string = 'sales'): any[] {
-    const total = data.reduce((sum, item) => sum + (item[totalKey] || 0), 0);
-    
-    return data.map(item => ({
-      ...item,
-      percentage: total > 0 ? ((item[totalKey] || 0) / total) * 100 : 0
-    }));
   }
 }

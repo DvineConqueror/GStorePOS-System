@@ -112,7 +112,7 @@ productSchema.index({
   status: 1, 
   category: 1, 
   name: 1 
-}); // For filtered product listings
+}); // For filtered product listings (includes name for sorting)
 
 productSchema.index({ 
   status: 1, 
@@ -150,12 +150,7 @@ productSchema.index({
   cost: 1 
 }); // For profit margin analysis
 
-// Sorting and pagination optimization
-productSchema.index({ 
-  status: 1, 
-  name: 1 
-}); // For alphabetical sorting of active products
-
+// Sorting and pagination optimization (removed duplicate name index)
 productSchema.index({ 
   status: 1, 
   createdAt: -1 

@@ -19,7 +19,7 @@ const PORT = process.env.PORT;
 /**
  * Configure Express application
  */
-function configureApp(): void {
+async function configureApp(): Promise<void> {
   // Security configuration
   SecurityConfig.configure(app);
   SecurityConfig.configureRateLimit(app);
@@ -37,7 +37,7 @@ function configureApp(): void {
   HealthCheckService.configureHealthCheck(app);
 
   // Routes configuration
-  ServerConfig.configureRoutes(app);
+  await ServerConfig.configureRoutes(app);
 
   // Error handling middleware
   ServerConfig.configureErrorHandling(app);
@@ -52,7 +52,7 @@ async function startServer(): Promise<void> {
     await connectDB();
     
     // Configure Express app
-    configureApp();
+    await configureApp();
 
     // Create HTTP server and Socket.IO instance
     const { server, io } = ServerConfig.createServer(app);

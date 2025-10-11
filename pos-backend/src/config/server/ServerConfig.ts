@@ -49,30 +49,35 @@ export class ServerConfig {
   /**
    * Configure routes
    */
-  static configureRoutes(app: express.Application): void {
-    // Import routes
-    const authRoutes = require('../../routes/auth');
-    const productRoutes = require('../../routes/products');
-    const transactionRoutes = require('../../routes/transactions');
-    const userRoutes = require('../../routes/users');
-    const analyticsRoutes = require('../../routes/analytics');
-    const superadminRoutes = require('../../routes/superadmin');
-    const databaseRoutes = require('../../routes/database');
-    const notificationRoutes = require('../../routes/notifications');
-    const imageRoutes = require('../../routes/images');
-    const systemSettingsRoutes = require('../../routes/systemSettings');
+  static async configureRoutes(app: express.Application): Promise<void> {
+    try {
+      // Import routes using dynamic imports to handle ES modules
+      const { default: authRoutes } = await import('../../routes/auth');
+      const { default: productRoutes } = await import('../../routes/products');
+      const { default: transactionRoutes } = await import('../../routes/transactions');
+      const { default: userRoutes } = await import('../../routes/users');
+      const { default: analyticsRoutes } = await import('../../routes/analytics');
+      const { default: superadminRoutes } = await import('../../routes/superadmin');
+      const { default: databaseRoutes } = await import('../../routes/database');
+      const { default: notificationRoutes } = await import('../../routes/notifications');
+      const { default: imageRoutes } = await import('../../routes/images');
+      const { default: systemSettingsRoutes } = await import('../../routes/systemSettings');
 
-    // API routes
-    app.use('/api/v1/auth', authRoutes);
-    app.use('/api/v1/products', productRoutes);
-    app.use('/api/v1/transactions', transactionRoutes);
-    app.use('/api/v1/users', userRoutes);
-    app.use('/api/v1/analytics', analyticsRoutes);
-    app.use('/api/v1/superadmin', superadminRoutes);
-    app.use('/api/v1/database', databaseRoutes);
-    app.use('/api/v1/notifications', notificationRoutes);
-    app.use('/api/v1/images', imageRoutes);
-    app.use('/api/v1/system-settings', systemSettingsRoutes);
+      // API routes
+      app.use('/api/v1/auth', authRoutes);
+      app.use('/api/v1/products', productRoutes);
+      app.use('/api/v1/transactions', transactionRoutes);
+      app.use('/api/v1/users', userRoutes);
+      app.use('/api/v1/analytics', analyticsRoutes);
+      app.use('/api/v1/superadmin', superadminRoutes);
+      app.use('/api/v1/database', databaseRoutes);
+      app.use('/api/v1/notifications', notificationRoutes);
+      app.use('/api/v1/images', imageRoutes);
+      app.use('/api/v1/system-settings', systemSettingsRoutes);
+    } catch (error) {
+      console.error('Error configuring routes:', error);
+      throw error;
+    }
   }
 
   /**
