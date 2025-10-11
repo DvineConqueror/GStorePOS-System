@@ -74,18 +74,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const sessionId = payload.sessionId;
           
           if (sessionId) {
-            console.log('REFRESH DEBUG: Extracted sessionId from token:', sessionId);
             Cookies.set('session_id', sessionId, { 
               expires: 7,
               path: '/',
               secure: false,
               sameSite: 'lax'
             });
-          } else {
-            console.log('REFRESH DEBUG: No sessionId found in token payload');
           }
         } catch (tokenError) {
-          console.error('REFRESH DEBUG: Error parsing token:', tokenError);
+          console.error('Error parsing token:', tokenError);
         }
         
         const response = await authAPI.getProfile();
@@ -136,18 +133,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const response = await authAPI.login(emailOrUsername, password);
       
-      // Store debug info in localStorage so it persists across navigation
-      localStorage.setItem('LOGIN_DEBUG', JSON.stringify({
-        success: response.success,
-        hasData: !!response.data,
-        hasSession: !!response.data?.session,
-        sessionId: response.data?.session?.sessionId,
-        timestamp: new Date().toISOString()
-      }));
-      
-      console.log('LOGIN DEBUG: Full response:', response);
-      console.log('LOGIN DEBUG: response.success:', response.success);
-      console.log('LOGIN DEBUG: response.data:', response.data);
       
       if (response.success) {
         // Store the access token in cookies
@@ -155,21 +140,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Store refresh token separately
         Cookies.set('refresh_token', response.data.refreshToken, { expires: 30 }); // 30 days
         // Store session ID for proper logout
-        console.log('LOGIN DEBUG: response.data:', response.data);
-        console.log('LOGIN DEBUG: response.data.session:', response.data.session);
-        
         if (response.data.session?.sessionId) {
-          console.log('LOGIN DEBUG: Storing sessionId in cookies:', response.data.session.sessionId);
           Cookies.set('session_id', response.data.session.sessionId, { 
             expires: 7,
             path: '/',
             secure: false, // Set to false for localhost development
             sameSite: 'lax'
           }); // 7 days
-          console.log('LOGIN DEBUG: Cookie set, verifying:', Cookies.get('session_id'));
-          console.log('LOGIN DEBUG: All cookies after setting:', document.cookie);
-        } else {
-          console.log('LOGIN DEBUG: No sessionId found in response:', response.data);
         }
         setUser(response.data.user);
         return { success: true };
@@ -299,33 +276,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setAuthLoading(true);
       
-      // Debug all cookies
-      console.log('LOGOUT DEBUG: All cookies:', document.cookie);
-      
       // Get session ID for proper logout
       const sessionId = Cookies.get('session_id');
-      console.log('LOGOUT DEBUG: Retrieved sessionId from cookies:', sessionId);
-      
-      // Also try to get it manually
-      const manualSessionId = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('session_id='))
-        ?.split('=')[1];
-      console.log('LOGOUT DEBUG: Manual sessionId retrieval:', manualSessionId);
-      
-      // Store debug info in localStorage
-      localStorage.setItem('LOGOUT_DEBUG', JSON.stringify({
-        allCookies: document.cookie,
-        sessionIdFromCookies: sessionId,
-        manualSessionId: manualSessionId,
-        timestamp: new Date().toISOString()
-      }));
       
       if (sessionId) {
-        console.log('LOGOUT DEBUG: Calling logout API with sessionId:', sessionId);
         await authAPI.logout(sessionId);
       } else {
-        console.log('LOGOUT DEBUG: No sessionId found, calling logout without sessionId');
         await authAPI.logout();
       }
       
