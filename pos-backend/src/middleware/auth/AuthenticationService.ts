@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../../models/User';
 import { AuthService } from '../../services/auth/AuthService';
+import { SessionService } from '../../services/auth/SessionService';
 import { UserCacheService } from './UserCacheService';
 import { IUser } from '../../types';
 
@@ -66,7 +67,7 @@ export class AuthenticationService {
       }
 
       // Update session activity
-      AuthService.updateSessionActivity(decoded.sessionId);
+      SessionService.updateSessionActivity(decoded.sessionId);
 
       req.user = user;
       next();

@@ -1,11 +1,5 @@
 import { Request, Response } from 'express';
 import { User } from '../../models/User';
-import { LoginService } from '../../services/auth/LoginService';
-import { AuthService } from '../../services/auth/AuthService';
-import { PasswordResetService } from '../../services/auth/PasswordResetService';
-import { EmailService } from '../../services/email/EmailService';
-import SystemSettingsService from '../../services/SystemSettingsService';
-import NotificationService from '../../services/NotificationService';
 import { ApiResponse } from '../../types';
 
 export class AuthSetupController {

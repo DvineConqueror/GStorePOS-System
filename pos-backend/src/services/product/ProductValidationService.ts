@@ -119,7 +119,7 @@ export class ProductValidationService {
       throw new Error('Product not found');
     }
     
-    if (!product.isActive) {
+    if (product.status !== 'active') {
       throw new Error('Product is not active');
     }
   }

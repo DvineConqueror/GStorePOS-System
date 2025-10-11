@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticate, authorize } from '../middleware/auth';
-import { DatabaseIndexService } from '../services/DatabaseIndexService';
+import { DatabaseController } from '../controllers/DatabaseController';
 
 const router = express.Router();
 
@@ -9,154 +9,48 @@ const router = express.Router();
  * @desc    Get database index information
  * @access  Superadmin only
  */
-router.get('/indexes', authenticate, authorize('superadmin'), async (req, res) => {
-  try {
-    const indexInfo = await DatabaseIndexService.getIndexInfo();
-    
-    res.json({
-      success: true,
-      data: indexInfo
-    });
-  } catch (error) {
-    console.error('Error getting index info:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get index information'
-    });
-  }
-});
+router.get('/indexes', authenticate, authorize('superadmin'), DatabaseController.getIndexInfo);
 
 /**
  * @route   GET /api/database/stats
  * @desc    Get database statistics and index usage
  * @access  Superadmin only
  */
-router.get('/stats', authenticate, authorize('superadmin'), async (req, res) => {
-  try {
-    const stats = await DatabaseIndexService.getIndexStats();
-    
-    res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error('Error getting database stats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get database statistics'
-    });
-  }
-});
+router.get('/stats', authenticate, authorize('superadmin'), DatabaseController.getIndexStats);
 
 /**
  * @route   GET /api/database/explain
  * @desc    Get query execution plans for common queries
  * @access  Superadmin only
  */
-router.get('/explain', authenticate, authorize('superadmin'), async (req, res) => {
-  try {
-    const explanations = await DatabaseIndexService.explainCommonQueries();
-    
-    res.json({
-      success: true,
-      data: explanations
-    });
-  } catch (error) {
-    console.error('Error explaining queries:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to explain queries'
-    });
-  }
-});
+router.get('/explain', authenticate, authorize('superadmin'), DatabaseController.explainCommonQueries);
 
 /**
  * @route   POST /api/database/ensure-indexes
  * @desc    Ensure all indexes are created
  * @access  Superadmin only
  */
-router.post('/ensure-indexes', authenticate, authorize('superadmin'), async (req, res) => {
-  try {
-    await DatabaseIndexService.ensureIndexes();
-    
-    res.json({
-      success: true,
-      message: 'All indexes ensured successfully'
-    });
-  } catch (error) {
-    console.error('Error ensuring indexes:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to ensure indexes'
-    });
-  }
-});
+router.post('/ensure-indexes', authenticate, authorize('superadmin'), DatabaseController.ensureIndexes);
 
 /**
  * @route   POST /api/database/optimize
  * @desc    Optimize database performance
  * @access  Superadmin only
  */
-router.post('/optimize', authenticate, authorize('superadmin'), async (req, res) => {
-  try {
-    const results = await DatabaseIndexService.optimizeDatabase();
-    
-    res.json({
-      success: true,
-      message: 'Database optimization completed',
-      data: results
-    });
-  } catch (error) {
-    console.error('Error optimizing database:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to optimize database'
-    });
-  }
-});
+router.post('/optimize', authenticate, authorize('superadmin'), DatabaseController.optimizeDatabase);
 
 /**
  * @route   GET /api/database/slow-queries
  * @desc    Get slow query analysis
  * @access  Superadmin only
  */
-router.get('/slow-queries', authenticate, authorize('superadmin'), async (req, res) => {
-  try {
-    const slowQueries = await DatabaseIndexService.getSlowQueries();
-    
-    res.json({
-      success: true,
-      data: slowQueries
-    });
-  } catch (error) {
-    console.error('Error getting slow queries:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get slow query analysis'
-    });
-  }
-});
+router.get('/slow-queries', authenticate, authorize('superadmin'), DatabaseController.getSlowQueries);
 
 /**
  * @route   GET /api/database/health
  * @desc    Get database health check
  * @access  Manager and above
  */
-router.get('/health', authenticate, authorize('superadmin', 'manager'), async (req, res) => {
-  try {
-    const health = await DatabaseIndexService.healthCheck();
-    
-    res.json({
-      success: true,
-      data: health
-    });
-  } catch (error) {
-    console.error('Error in database health check:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to perform health check'
-    });
-  }
-});
+router.get('/health', authenticate, authorize('superadmin', 'manager'), DatabaseController.healthCheck);
 
 export default router;

@@ -5,6 +5,7 @@ import { hasPermission } from '../../constants/permissions';
 import NotificationService from '../../services/NotificationService';
 
 export class SuperadminApprovalController {
+  private static notificationService = new NotificationService();
   /**
    * Approve or reject a user
    */
@@ -58,7 +59,7 @@ export class SuperadminApprovalController {
         try {
           const approver = await User.findById(req.user!._id);
           if (approver) {
-            await NotificationService.sendEmailNotification(
+            await this.notificationService.sendEmailNotification(
               user.email,
               'Account Approved - Grocery Store POS',
               `Your ${user.role} account has been approved by ${approver.firstName} ${approver.lastName}. You can now log in to the system.`

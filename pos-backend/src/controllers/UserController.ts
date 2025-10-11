@@ -154,24 +154,16 @@ export class UserController {
       const userId = req.params.id;
       const currentUserId = req.user?._id;
 
-      const result = await UserManagementService.toggleUserStatus(userId, currentUserId);
-
-      if (!result.success) {
-        res.status(result.statusCode || 400).json({
-          success: false,
-          message: result.message,
-        } as ApiResponse);
-        return;
-      }
+      const user = await UserManagementService.toggleUserStatus(userId, currentUserId);
 
       // Send email notification if user is activated (approved)
-      if (result.data?.user?.status === 'active' && result.data?.user?.isApproved) {
+      if (user.status === 'active' && user.isApproved) {
         try {
-          const user = await User.findById(userId);
           const approver = await User.findById(currentUserId);
           
-          if (user && approver) {
-            await NotificationService.sendEmailNotification(
+          if (approver) {
+            const notificationService = new NotificationService();
+            await notificationService.sendEmailNotification(
               user.email,
               'Account Approved - Grocery Store POS',
               `Your ${user.role} account has been approved by ${approver.firstName} ${approver.lastName}. You can now log in to the system.`
@@ -185,8 +177,8 @@ export class UserController {
 
       res.json({
         success: true,
-        message: result.message,
-        data: result.data,
+        message: `User ${user.status === 'active' ? 'activated' : 'deactivated'} successfully.`,
+        data: user,
       } as ApiResponse);
     } catch (error) {
       console.error('Toggle user status error:', error);
@@ -194,6 +186,11 @@ export class UserController {
         res.status(404).json({
           success: false,
           message: 'User not found.',
+        } as ApiResponse);
+      } else if (error instanceof Error && error.message.includes('cannot deactivate')) {
+        res.status(400).json({
+          success: false,
+          message: error.message,
         } as ApiResponse);
       } else {
         res.status(500).json({

@@ -57,3 +57,4 @@ export class EmailService {
   static async testConnection(): Promise<boolean> {
     return EmailConfigService.testConnection();
   }
+}

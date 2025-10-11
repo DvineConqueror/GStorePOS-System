@@ -112,10 +112,12 @@ export class AnalyticsReportService {
   static async getCashierAnalytics(filters: {
     startDate?: Date;
     endDate?: Date;
+    cashierId?: string;
   }) {
     const { 
       startDate, 
-      endDate 
+      endDate,
+      cashierId
     } = filters;
 
     const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -129,6 +131,7 @@ export class AnalyticsReportService {
 
     return {
       period: { start, end },
+      cashierId,
       performance: calculatedAnalytics.performance,
       activity: cashierActivity
     };

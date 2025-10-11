@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../../services/auth/AuthService';
 import { LoginService } from '../../services/auth/LoginService';
-import { PasswordResetService } from '../../services/auth/PasswordResetService';
-import { EmailService } from '../../services/email/EmailService';
 import { ApiResponse } from '../../types';
 
 export class AuthSessionController {

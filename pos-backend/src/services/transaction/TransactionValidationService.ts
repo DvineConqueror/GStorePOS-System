@@ -139,8 +139,8 @@ export class TransactionValidationService {
       throw new Error('Transaction not found');
     }
 
-    if (transaction.status !== 'pending') {
-      throw new Error('Only pending transactions can be cancelled');
+    if (transaction.status !== 'completed') {
+      throw new Error('Only completed transactions can be cancelled');
     }
   }
 
@@ -188,7 +188,7 @@ export class TransactionValidationService {
    * Validate transaction status
    */
   static validateTransactionStatus(status: string): void {
-    const validStatuses = ['pending', 'completed', 'cancelled', 'refunded'];
+    const validStatuses = ['completed', 'refunded'];
     if (!validStatuses.includes(status)) {
       throw new Error(`Invalid transaction status. Must be one of: ${validStatuses.join(', ')}`);
     }

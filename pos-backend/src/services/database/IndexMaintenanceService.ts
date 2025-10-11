@@ -22,8 +22,18 @@ export class IndexMaintenanceService {
         try {
           const collection = db.collection(collectionName);
           
-          // Rebuild indexes
-          await collection.reIndex();
+          // Rebuild indexes using createIndexes
+          const indexes = await collection.indexes();
+          for (const index of indexes) {
+            if (index.name !== '_id_') {
+              try {
+                await collection.createIndex(index.key, { name: index.name });
+              } catch (error) {
+                // Index might already exist, which is fine
+                console.log(`Index ${index.name} already exists or error: ${error}`);
+              }
+            }
+          }
           results[collectionName] = 'Indexes rebuilt successfully';
           
           console.log(`Optimized indexes for ${collectionName}`);

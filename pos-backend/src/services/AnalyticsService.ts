@@ -36,6 +36,7 @@ export class AnalyticsService {
   static async getCashierAnalytics(filters: {
     startDate?: Date;
     endDate?: Date;
+    cashierId?: string;
   }) {
     return AnalyticsReportService.getCashierAnalytics(filters);
   }

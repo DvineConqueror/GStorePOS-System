@@ -1,5 +1,6 @@
 import { GridFSBucket, ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
+import { ImageStorageService } from './ImageStorageService';
 
 // Define the file type interface
 interface UploadedFile {
@@ -71,7 +72,7 @@ export class ImageUploadService {
     try {
       // Delete old image
       if (oldImageId) {
-        await this.deleteImage(oldImageId);
+        await ImageStorageService.deleteImage(oldImageId);
       }
       
       // Upload new image

@@ -114,7 +114,7 @@ export class NotificationQueueService {
             success = await NotificationDeliveryService.sendUserNotification(
               notification.target.value as string,
               notification.type,
-              notification.message,
+              notification.template.message,
               notification.data
             );
             break;
@@ -123,7 +123,7 @@ export class NotificationQueueService {
             success = await NotificationDeliveryService.sendRoleNotification(
               notification.target.value as string[],
               notification.type,
-              notification.message,
+              notification.template.message,
               notification.data
             );
             break;
@@ -131,7 +131,7 @@ export class NotificationQueueService {
           case 'broadcast':
             success = await NotificationDeliveryService.sendBroadcastNotification(
               notification.type,
-              notification.message,
+              notification.template.message,
               notification.data
             );
             break;

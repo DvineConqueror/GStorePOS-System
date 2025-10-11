@@ -36,7 +36,7 @@ export class EmailConfigService {
     }
 
     try {
-      this.transporter = nodemailer.createTransporter(emailConfig);
+      this.transporter = nodemailer.createTransport(emailConfig);
       console.log('EMAIL TRANSPORTER: Created successfully');
     } catch (error) {
       console.error('EMAIL TRANSPORTER ERROR:', error);

@@ -52,12 +52,14 @@ export class NotificationDeliveryService {
       }
 
       // Send via WebSocket to users with target roles
-      await SocketService.broadcastToRoles(targetRoles, 'system_alert', {
-        title,
-        message,
-        data,
-        timestamp: new Date().toISOString()
-      });
+      for (const role of targetRoles) {
+        SocketService.emitToRole(role, 'system_alert', {
+          title,
+          message,
+          data,
+          timestamp: new Date().toISOString()
+        });
+      }
 
       console.log(`System alert sent to roles: ${targetRoles.join(', ')}`);
       return true;
@@ -101,7 +103,7 @@ export class NotificationDeliveryService {
     data?: any
   ): Promise<boolean> {
     try {
-      await SocketService.broadcast('notification', {
+      SocketService.emitToAll('notification', {
         type,
         message,
         data,
@@ -126,12 +128,14 @@ export class NotificationDeliveryService {
     data?: any
   ): Promise<boolean> {
     try {
-      await SocketService.broadcastToRoles(roles, 'notification', {
-        type,
-        message,
-        data,
-        timestamp: new Date().toISOString()
-      });
+      for (const role of roles) {
+        SocketService.emitToRole(role, 'notification', {
+          type,
+          message,
+          data,
+          timestamp: new Date().toISOString()
+        });
+      }
 
       console.log(`Role notification sent to: ${roles.join(', ')}`);
       return true;

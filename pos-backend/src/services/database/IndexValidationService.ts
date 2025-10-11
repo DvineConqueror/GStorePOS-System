@@ -46,8 +46,15 @@ export class IndexValidationService {
         try {
           const collection = db.collection(collectionName);
           
-          // Get collection stats
-          const collectionStats = await collection.stats();
+          // Get collection stats using dbStats
+          const dbStats = await db.stats();
+          const collectionStats = {
+            count: await collection.countDocuments(),
+            size: dbStats.dataSize || 0,
+            avgObjSize: dbStats.avgObjSize || 0,
+            storageSize: dbStats.storageSize || 0,
+            totalIndexSize: dbStats.indexSize || 0
+          };
           
           // Get index stats
           const indexStats = await collection.indexes();

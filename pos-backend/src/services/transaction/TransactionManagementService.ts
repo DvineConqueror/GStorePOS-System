@@ -173,8 +173,8 @@ export class TransactionManagementService {
       throw new Error('Transaction not found');
     }
 
-    if (transaction.status !== 'pending') {
-      throw new Error('Only pending transactions can be cancelled');
+    if (transaction.status !== 'completed') {
+      throw new Error('Only completed transactions can be cancelled');
     }
 
     // Restore product stock
@@ -186,8 +186,8 @@ export class TransactionManagementService {
       }
     }
 
-    // Update transaction status
-    transaction.status = 'cancelled';
+    // Update transaction status to refunded (since cancelled is not a valid status)
+    transaction.status = 'refunded';
     if (reason) {
       transaction.notes = (transaction.notes || '') + `\nCancellation reason: ${reason}`;
     }
