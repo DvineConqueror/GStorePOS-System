@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { transactionsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
+import { WeeklyTrendChart } from '@/components/analytics/WeeklyTrendChart';
 
 // Category inference function (matching backend logic)
 const inferCategoryFromProductName = (productName: string): string => {
@@ -30,8 +31,6 @@ const inferCategoryFromProductName = (productName: string): string => {
   }
 };
 import { 
-  LineChart, 
-  Line, 
   PieChart, 
   Pie, 
   Cell, 
@@ -535,30 +534,10 @@ export function ModernCashierAnalyticsV3() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics.weeklyTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <Line 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke="#16a34a" 
-                  strokeWidth={4}
-                  dot={{ fill: '#16a34a', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: '#16a34a', strokeWidth: 2 }}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #16a34a',
-                    borderRadius: '8px',
-                    color: '#1f2937'
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Sales']}
-                  labelStyle={{ color: '#1f2937' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <WeeklyTrendChart 
+            data={analytics.weeklyTrend} 
+            loading={loading}
+          />
         </CardContent>
       </Card>
     </div>

@@ -40,13 +40,13 @@ export function SocketProvider({ children }: SocketProviderProps) {
     newSocket.on('connect', () => {
       setIsConnected(true);
       
-      // Join role-based room for targeted notifications (only for admins)
+      // Join role-based room for targeted notifications (for admins)
       if (user.role === 'superadmin' || user.role === 'manager') {
         newSocket.emit('join-role-room', user.role);
-      } else {
-        // For cashiers, join user-specific room for session termination events
-        newSocket.emit('join-user-room', user.id);
       }
+      
+      // Join user-specific room for session termination events (for all users)
+      newSocket.emit('join-user-room', user.id);
     });
 
     newSocket.on('disconnect', () => {

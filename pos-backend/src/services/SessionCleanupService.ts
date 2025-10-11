@@ -5,8 +5,9 @@
  * to prevent memory leaks and maintain system performance.
  */
 
-import { AuthService } from './AuthService';
+import { AuthService } from './auth/AuthService';
 
+// Session cleanup service for expired sessions
 export class SessionCleanupService {
   private static cleanupInterval: NodeJS.Timeout | null = null;
   private static isRunning = false;

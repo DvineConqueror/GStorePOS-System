@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
-import { UserService } from '../services/UserService';
+import { UserQueryService } from '../services/user/UserQueryService';
+import { UserManagementService } from '../services/user/UserManagementService';
+import { UserStatsService } from '../services/user/UserStatsService';
 import { User } from '../models/User';
 import { ApiResponse } from '../types';
 import NotificationService from '../services/NotificationService';
@@ -20,7 +22,7 @@ export class UserController {
         order = 'desc'
       } = req.query;
 
-      const result = await UserService.getUsers({
+      const result = await UserQueryService.getUsers({
         page: parseInt(page as string),
         limit: parseInt(limit as string),
         role: role as string,
@@ -50,7 +52,7 @@ export class UserController {
    */
   static async getUserStats(req: Request, res: Response): Promise<void> {
     try {
-      const stats = await UserService.getUserStats();
+      const stats = await UserStatsService.getUserStats();
 
       res.json({
         success: true,
@@ -71,7 +73,7 @@ export class UserController {
    */
   static async getUserById(req: Request, res: Response): Promise<void> {
     try {
-      const user = await UserService.getUserById(req.params.id);
+      const user = await UserQueryService.getUserById(req.params.id);
 
       res.json({
         success: true,
@@ -102,7 +104,7 @@ export class UserController {
       const { username, email, role, firstName, lastName, isActive } = req.body;
       const userId = req.params.id;
 
-      const user = await UserService.updateUser(userId, {
+      const user = await UserManagementService.updateUser(userId, {
         username,
         email,
         role,
@@ -152,7 +154,7 @@ export class UserController {
       const userId = req.params.id;
       const currentUserId = req.user?._id;
 
-      const result = await UserService.toggleUserStatus(userId, currentUserId);
+      const result = await UserManagementService.toggleUserStatus(userId, currentUserId);
 
       if (!result.success) {
         res.status(result.statusCode || 400).json({
@@ -217,7 +219,7 @@ export class UserController {
         return;
       }
 
-      await UserService.resetPassword(req.params.id, newPassword);
+      await UserManagementService.resetPassword(req.params.id, newPassword);
 
       res.json({
         success: true,

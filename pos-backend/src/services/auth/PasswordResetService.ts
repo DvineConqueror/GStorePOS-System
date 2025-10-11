@@ -1,7 +1,9 @@
 import crypto from 'crypto';
-import { User } from '../models/User';
-import { PasswordResetToken } from '../models/PasswordResetToken';
-import { IUser, IPasswordResetToken } from '../types';
+import { User } from '../../models/User';
+import { PasswordResetToken } from '../../models/PasswordResetToken';
+import { EmailService } from '../email/EmailService';
+import { PasswordResetEmailTemplate } from '../email/PasswordResetEmailTemplate';
+import { IUser, IPasswordResetToken } from '../../types';
 
 export class PasswordResetService {
   private static readonly TOKEN_EXPIRY_MINUTES = 15;
@@ -15,7 +17,7 @@ export class PasswordResetService {
   }
 
   /**
-   * Create a password reset token for a user
+   * Create a password reset token for a user and send email via SMTP
    */
   static async createResetToken(
     email: string,
@@ -26,11 +28,10 @@ export class PasswordResetService {
       // Find user by email
       const user = await User.findOne({ 
         email: email.toLowerCase(),
-        status: 'active' // Only allow active users to reset password
+        status: 'active'
       });
 
       if (!user) {
-        // Don't reveal if email exists or not for security
         return {
           success: true,
           message: 'If an account with that email exists, a password reset link has been sent.',
@@ -58,19 +59,50 @@ export class PasswordResetService {
 
       await resetToken.save();
 
-      // Note: Email sending is now handled by EmailJS on the frontend
-      // The backend only generates and stores the token
-      console.log('PASSWORD RESET TOKEN CREATED:', {
+      // Send password reset email via SMTP
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      
+      const emailSent = await EmailService.sendEmail({
+        to: user.email,
+        subject: 'SmartGrocery Password Reset',
+        html: PasswordResetEmailTemplate.generatePasswordResetEmail({
+          user: {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+          },
+          resetToken: token,
+          clientUrl: clientUrl,
+        }),
+        text: PasswordResetEmailTemplate.generatePasswordResetEmailText({
+          user: {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+          },
+          resetToken: token,
+          clientUrl: clientUrl,
+        }),
+      });
+
+      if (!emailSent) {
+        console.error('Failed to send password reset email for user:', user.email);
+        return {
+          success: false,
+          message: 'Failed to send password reset email. Please try again later.',
+        };
+      }
+
+      console.log('PASSWORD RESET EMAIL SENT:', {
         userId: user._id,
         email: user.email,
-        token: token.substring(0, 8) + '...', // Log partial token for debugging
+        token: token.substring(0, 8) + '...',
         expiresAt: expiresAt
       });
 
       return {
         success: true,
         message: 'If an account with that email exists, a password reset link has been sent.',
-        token: token, // Always return token since frontend uses EmailJS
       };
     } catch (error) {
       console.error('Error creating password reset token:', error);
@@ -100,7 +132,6 @@ export class PasswordResetService {
         };
       }
 
-      // Get user details since userId is just a string reference
       const user = await User.findById(resetToken.userId);
       if (!user) {
         return {
@@ -132,7 +163,6 @@ export class PasswordResetService {
     newPassword: string
   ): Promise<{ success: boolean; message: string; user?: IUser }> {
     try {
-      // Verify the reset token
       const tokenVerification = await this.verifyResetToken(token);
       
       if (!tokenVerification.success || !tokenVerification.user || !tokenVerification.resetToken) {
@@ -180,7 +210,7 @@ export class PasswordResetService {
   }
 
   /**
-   * Clean up expired tokens (should be called periodically)
+   * Clean up expired tokens
    */
   static async cleanupExpiredTokens(): Promise<number> {
     try {
@@ -189,42 +219,6 @@ export class PasswordResetService {
     } catch (error) {
       console.error('Error cleaning up expired tokens:', error);
       return 0;
-    }
-  }
-
-  /**
-   * Get reset token statistics
-   */
-  static async getTokenStats(): Promise<{
-    totalTokens: number;
-    activeTokens: number;
-    expiredTokens: number;
-    usedTokens: number;
-  }> {
-    try {
-      const now = new Date();
-      
-      const [total, active, expired, used] = await Promise.all([
-        PasswordResetToken.countDocuments(),
-        PasswordResetToken.countDocuments({ used: false, expiresAt: { $gt: now } }),
-        PasswordResetToken.countDocuments({ expiresAt: { $lt: now } }),
-        PasswordResetToken.countDocuments({ used: true }),
-      ]);
-
-      return {
-        totalTokens: total,
-        activeTokens: active,
-        expiredTokens: expired,
-        usedTokens: used,
-      };
-    } catch (error) {
-      console.error('Error getting token stats:', error);
-      return {
-        totalTokens: 0,
-        activeTokens: 0,
-        expiredTokens: 0,
-        usedTokens: 0,
-      };
     }
   }
 
@@ -245,21 +239,6 @@ export class PasswordResetService {
     } catch (error) {
       console.error('Error checking recent reset attempts:', error);
       return false;
-    }
-  }
-
-  /**
-   * Get user's recent reset attempts
-   */
-  static async getUserResetHistory(userId: string, limit: number = 10): Promise<IPasswordResetToken[]> {
-    try {
-      return await PasswordResetToken.find({ userId })
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .select('-token'); // Don't return the actual token for security
-    } catch (error) {
-      console.error('Error getting user reset history:', error);
-      return [];
     }
   }
 }

@@ -1,5 +1,6 @@
-import { GridFSBucket, ObjectId } from 'mongodb';
-import mongoose from 'mongoose';
+import { ImageUploadService } from './image/ImageUploadService';
+import { ImageProcessingService } from './image/ImageProcessingService';
+import { ImageStorageService } from './image/ImageStorageService';
 import { ApiResponse } from '../types';
 
 // Define the file type interface
@@ -11,190 +12,135 @@ interface UploadedFile {
 }
 
 export class ImageService {
-  private static bucket: GridFSBucket;
-
-  /**
-   * Initialize GridFS bucket
-   */
-  static initializeBucket(): void {
-    if (!mongoose.connection.db) {
-      throw new Error('Database connection not established');
-    }
-    this.bucket = new GridFSBucket(mongoose.connection.db, {
-      bucketName: 'productImages'
-    });
-  }
-
   /**
    * Upload image to GridFS
    */
   static async uploadImage(file: UploadedFile): Promise<string> {
-    if (!this.bucket) {
-      this.initializeBucket();
-    }
+    return ImageUploadService.uploadImage(file);
+  }
 
-    return new Promise((resolve, reject) => {
-      const uploadStream = this.bucket.openUploadStream(file.originalname, {
-        metadata: {
-          originalName: file.originalname,
-          mimetype: file.mimetype,
-          size: file.size,
-          uploadedAt: new Date()
-        }
-      });
+  /**
+   * Upload multiple images
+   */
+  static async uploadMultipleImages(files: UploadedFile[]): Promise<string[]> {
+    return ImageUploadService.uploadMultipleImages(files);
+  }
 
-      uploadStream.on('error', (error) => {
-        console.error('GridFS upload error:', error);
-        reject(new Error('Failed to upload image'));
-      });
-
-      uploadStream.on('finish', () => {
-        resolve(uploadStream.id.toString());
-      });
-
-      uploadStream.end(file.buffer);
-    });
+  /**
+   * Replace existing image
+   */
+  static async replaceImage(oldImageId: string, newFile: UploadedFile): Promise<string> {
+    return ImageUploadService.replaceImage(oldImageId, newFile);
   }
 
   /**
    * Get image stream by ID
    */
-  static async getImageStream(imageId: string) {
-    if (!this.bucket) {
-      this.initializeBucket();
-    }
-
-    try {
-      const objectId = new ObjectId(imageId);
-      const downloadStream = this.bucket.openDownloadStream(objectId);
-      return downloadStream;
-    } catch (error) {
-      console.error('GridFS download error:', error);
-      throw new Error('Image not found');
-    }
+  static getImageStream(imageId: string) {
+    return ImageProcessingService.getImageStream(imageId);
   }
 
   /**
-   * Get image metadata by ID
+   * Get image metadata
    */
-  static async getImageMetadata(imageId: string) {
-    if (!this.bucket) {
-      this.initializeBucket();
-    }
-
-    try {
-      const objectId = new ObjectId(imageId);
-      const files = await this.bucket.find({ _id: objectId }).toArray();
-      
-      if (files.length === 0) {
-        throw new Error('Image not found');
-      }
-
-      return files[0];
-    } catch (error) {
-      console.error('GridFS metadata error:', error);
-      throw new Error('Image not found');
-    }
-  }
-
-  /**
-   * Delete image by ID
-   */
-  static async deleteImage(imageId: string): Promise<void> {
-    if (!this.bucket) {
-      this.initializeBucket();
-    }
-
-    try {
-      const objectId = new ObjectId(imageId);
-      await this.bucket.delete(objectId);
-    } catch (error) {
-      console.error('GridFS delete error:', error);
-      throw new Error('Failed to delete image');
-    }
+  static async getImageMetadata(imageId: string): Promise<any> {
+    return ImageProcessingService.getImageMetadata(imageId);
   }
 
   /**
    * Check if image exists
    */
   static async imageExists(imageId: string): Promise<boolean> {
-    if (!this.bucket) {
-      this.initializeBucket();
-    }
-
-    try {
-      const objectId = new ObjectId(imageId);
-      const files = await this.bucket.find({ _id: objectId }).toArray();
-      return files.length > 0;
-    } catch (error) {
-      return false;
-    }
+    return ImageProcessingService.imageExists(imageId);
   }
 
   /**
-   * Get all images (for admin purposes)
+   * Get image info (size, type, etc.)
    */
-  static async getAllImages() {
-    if (!this.bucket) {
-      this.initializeBucket();
-    }
-
-    try {
-      const files = await this.bucket.find({}).toArray();
-      return files.map(file => ({
-        id: file._id.toString(),
-        filename: file.filename,
-        uploadDate: file.uploadDate,
-        length: file.length,
-        contentType: file.metadata?.mimetype || 'unknown'
-      }));
-    } catch (error) {
-      console.error('GridFS list error:', error);
-      throw new Error('Failed to retrieve images');
-    }
+  static async getImageInfo(imageId: string): Promise<{
+    id: string;
+    filename: string;
+    contentType: string;
+    size: number;
+    uploadDate: Date;
+    metadata?: any;
+  }> {
+    return ImageProcessingService.getImageInfo(imageId);
   }
 
   /**
-   * Clean up orphaned images (images not referenced by any product)
+   * Validate image file
    */
-  static async cleanupOrphanedImages(): Promise<number> {
-    if (!this.bucket) {
-      this.initializeBucket();
-    }
+  static validateImageFile(file: UploadedFile): { valid: boolean; error?: string } {
+    return ImageProcessingService.validateImageFile(file);
+  }
 
-    try {
-      const { Product } = await import('../models/Product');
-      
-      // Get all image IDs referenced by products
-      const products = await Product.find({ image: { $exists: true, $ne: null } });
-      const referencedImageIds = products
-        .map(product => product.image)
-        .filter(imageId => imageId)
-        .map(imageId => new ObjectId(imageId));
+  /**
+   * Generate image URL for frontend
+   */
+  static generateImageUrl(imageId: string, baseUrl?: string): string {
+    return ImageProcessingService.generateImageUrl(imageId, baseUrl);
+  }
 
-      // Get all images in GridFS
-      const allImages = await this.bucket.find({}).toArray();
-      
-      // Find orphaned images
-      const orphanedImages = allImages.filter(image => 
-        !referencedImageIds.some(refId => refId.equals(image._id))
-      );
+  /**
+   * Delete image by ID
+   */
+  static async deleteImage(imageId: string): Promise<boolean> {
+    return ImageStorageService.deleteImage(imageId);
+  }
 
-      // Delete orphaned images
-      let deletedCount = 0;
-      for (const image of orphanedImages) {
-        try {
-          await this.bucket.delete(image._id);
-          deletedCount++;
-        } catch (error) {
-          console.error(`Failed to delete orphaned image ${image._id}:`, error);
-        }
-      }
+  /**
+   * Delete multiple images
+   */
+  static async deleteMultipleImages(imageIds: string[]): Promise<{
+    success: string[];
+    failed: string[];
+  }> {
+    return ImageStorageService.deleteMultipleImages(imageIds);
+  }
 
-      return deletedCount;
-    } catch (error) {
-      console.error('GridFS cleanup error:', error);
-      throw new Error('Failed to cleanup orphaned images');
-    }
+  /**
+   * Clean up orphaned images
+   */
+  static async cleanupOrphanedImages(): Promise<{
+    deletedCount: number;
+    orphanedImages: string[];
+  }> {
+    return ImageStorageService.cleanupOrphanedImages();
+  }
+
+  /**
+   * Get storage statistics
+   */
+  static async getStorageStats(): Promise<{
+    totalImages: number;
+    totalSize: number;
+    averageSize: number;
+    oldestImage?: Date;
+    newestImage?: Date;
+  }> {
+    return ImageStorageService.getStorageStats();
+  }
+
+  /**
+   * List all images with pagination
+   */
+  static async listImages(page: number = 1, limit: number = 20): Promise<{
+    images: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
+    return ImageStorageService.listImages(page, limit);
+  }
+
+  /**
+   * Search images by metadata
+   */
+  static async searchImages(query: string): Promise<any[]> {
+    return ImageStorageService.searchImages(query);
   }
 }

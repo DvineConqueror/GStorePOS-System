@@ -4,6 +4,7 @@ import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
 import { AdminQuickActionsCard } from '@/components/admin/AdminQuickActionsCard';
 import { useUsers } from '@/hooks/useUsers';
 import { useAnalyticsDashboard } from '@/hooks/useAnalytics';
+import NotificationAlert from '@/components/notifications/NotificationAlert';
 
 export function AdminDashboard() {
   // React Query hooks
@@ -82,6 +83,9 @@ export function AdminDashboard() {
 
       {/* Quick Actions */}
       <AdminQuickActionsCard />
+      
+      {/* Notification Alert */}
+      <NotificationAlert />
     </div>
   );
 }

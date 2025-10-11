@@ -1,8 +1,54 @@
-import { EmailService } from './EmailService';
-import { SocketService } from './SocketService';
-import SystemSettingsService from './SystemSettingsService';
+import { NotificationDeliveryService } from './notification/NotificationDeliveryService';
+import { NotificationTemplateService } from './notification/NotificationTemplateService';
+import { NotificationQueueService } from './notification/NotificationQueueService';
 import { User } from '../models/User';
 import { Product } from '../models/Product';
+
+// Force TypeScript refresh - Updated for AuthLoginController
+
+interface UserRegistrationData {
+  username: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  email: string;
+}
+
+interface ProductData {
+  name: string;
+  sku: string;
+  currentStock: number;
+  minStock: number;
+  category: string;
+}
+
+interface OutOfStockProductData {
+  name: string;
+  sku: string;
+  category: string;
+}
+
+interface TransactionData {
+  transactionNumber: string;
+  total: number;
+  cashierName: string;
+  paymentMethod: string;
+  itemCount: number;
+}
+
+interface MaintenanceData {
+  type: string;
+  scheduledDate: Date;
+  duration: string;
+  description: string;
+}
+
+interface SecurityData {
+  type: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  affectedUser?: string;
+}
 
 class NotificationService {
   /**
@@ -13,27 +59,7 @@ class NotificationService {
     subject: string,
     message: string
   ): Promise<boolean> {
-    try {
-      const settings = await SystemSettingsService.getSettings();
-      
-      if (!settings.emailNotifications) {
-        console.log('Email notifications disabled in settings');
-        return false;
-      }
-
-      await EmailService.sendEmail({
-        to: to,
-        subject: subject,
-        html: message,
-        text: message
-      });
-      
-      console.log(`Email notification sent to: ${to}`);
-      return true;
-    } catch (error) {
-      console.error('Failed to send email notification:', error);
-      return false;
-    }
+    return NotificationDeliveryService.sendEmailNotification(to, subject, message);
   }
 
   /**
@@ -45,169 +71,273 @@ class NotificationService {
     targetRoles: string[] = ['manager', 'superadmin'],
     data?: any
   ): Promise<boolean> {
+    return NotificationDeliveryService.sendSystemAlert(
+      title, 
+      message, 
+      targetRoles, 
+      data
+    );
+  }
+
+  /**
+   * Send real-time notification to specific user
+   */
+  async sendUserNotification(
+    userId: string,
+    type: string,
+    message: string,
+    data?: any
+  ): Promise<boolean> {
+    return NotificationDeliveryService.sendUserNotification(
+      userId, 
+      type, 
+      message, 
+      data
+    );
+  }
+
+  /**
+   * Send broadcast notification to all users
+   */
+  async sendBroadcastNotification(
+    type: string,
+    message: string,
+    data?: any
+  ): Promise<boolean> {
+    return NotificationDeliveryService.sendBroadcastNotification(
+      type, 
+      message, 
+      data
+    );
+  }
+
+  /**
+   * Send notification to users by role
+   */
+  async sendRoleNotification(
+    roles: string[],
+    type: string,
+    message: string,
+    data?: any
+  ): Promise<boolean> {
+    return NotificationDeliveryService.sendRoleNotification(
+      roles, 
+      type, 
+      message, 
+      data
+    );
+  }
+
+  /**
+   * Queue user registration notification
+   */
+  async queueUserRegistrationNotification(
+    userData: UserRegistrationData
+  ): Promise<string> {
+    return NotificationQueueService.queueUserRegistrationNotification(userData);
+  }
+
+  /**
+   * Queue low stock notification
+   */
+  async queueLowStockNotification(
+    productData: ProductData
+  ): Promise<string> {
+    return NotificationQueueService.queueLowStockNotification(productData);
+  }
+
+  /**
+   * Queue out of stock notification
+   */
+  async queueOutOfStockNotification(
+    productData: OutOfStockProductData
+  ): Promise<string> {
+    return NotificationQueueService.queueOutOfStockNotification(productData);
+  }
+
+  /**
+   * Queue notification
+   */
+  async queueNotification(
+    type: string,
+    target: { type: 'user' | 'role' | 'broadcast'; value: string | string[] },
+    template: { subject: string; message: string; emailMessage?: string },
+    data?: any,
+    priority: 'low' | 'medium' | 'high' | 'critical' = 'medium',
+    scheduledAt?: Date
+  ): Promise<string> {
+    return NotificationQueueService.queueNotification(
+      type, 
+      target, 
+      template, 
+      data, 
+      priority, 
+      scheduledAt
+    );
+  }
+
+  /**
+   * Get queue status
+   */
+  getQueueStatus(): {
+    total: number;
+    pending: number;
+    processing: number;
+    completed: number;
+    failed: number;
+    isProcessing: boolean;
+  } {
+    return NotificationQueueService.getQueueStatus();
+  }
+
+  /**
+   * Clear completed notifications
+   */
+  clearCompletedNotifications(): number {
+    return NotificationQueueService.clearCompletedNotifications();
+  }
+
+  /**
+   * Notify managers about new user registration
+   */
+  async notifyNewUserRegistration(
+    userData: UserRegistrationData
+  ): Promise<void> {
     try {
-      const settings = await SystemSettingsService.getSettings();
-      
-      if (!settings.systemAlerts) {
-        console.log('System alerts disabled in settings');
-        return false;
+      // Queue notification for managers and superadmins
+      await this.queueUserRegistrationNotification(userData);
+
+      // Also send immediate email notification
+      const template = NotificationTemplateService.generateUserRegistrationTemplate(userData);
+      await this.sendEmailNotification(
+        'admin@grocerystore.com', // This should be configurable
+        template.subject,
+        template.emailMessage
+      );
+
+      console.log(`New user registration notification sent for: ${userData.username}`);
+    } catch (error) {
+      console.error('Error sending new user registration notification:', error);
+    }
+  }
+
+  /**
+   * Notify about low stock products
+   */
+  async notifyLowStock(productId: string): Promise<void> {
+    try {
+      const product = await Product.findById(productId);
+      if (!product) {
+        console.error('Product not found for low stock notification:', productId);
+        return;
       }
 
-      const notification = {
-        type: 'system_alert',
-        title,
-        message,
-        data,
-        timestamp: new Date().toISOString(),
+      const productData: ProductData = {
+        name: product.name,
+        sku: product.sku,
+        currentStock: product.stock,
+        minStock: product.minStock,
+        category: product.category
       };
 
-      // Send to specified roles via WebSocket
-      for (const role of targetRoles) {
-        SocketService.emitToRole(role, 'system_alert', notification);
-      }
-
-      console.log(`System alert sent to roles: ${targetRoles.join(', ')}`);
-      return true;
+      await this.queueLowStockNotification(productData);
+      console.log(`Low stock notification sent for product: ${product.name}`);
     } catch (error) {
-      console.error('Failed to send system alert:', error);
-      return false;
+      console.error('Error sending low stock notification:', error);
     }
   }
 
   /**
-   * Check for low stock products and send alerts if enabled
+   * Notify about out of stock products
    */
-  async checkAndSendLowStockAlerts(): Promise<boolean> {
+  async notifyOutOfStock(productId: string): Promise<void> {
     try {
-      const settings = await SystemSettingsService.getSettings();
+      const product = await Product.findById(productId);
+      if (!product) {
+        console.error('Product not found for out of stock notification:', productId);
+        return;
+      }
+
+      const productData: OutOfStockProductData = {
+        name: product.name,
+        sku: product.sku,
+        category: product.category
+      };
+
+      await this.queueOutOfStockNotification(productData);
+      console.log(`Out of stock notification sent for product: ${product.name}`);
+    } catch (error) {
+      console.error('Error sending out of stock notification:', error);
+    }
+  }
+
+  /**
+   * Notify about high-value transactions
+   */
+  async notifyHighValueTransaction(
+    transactionData: TransactionData
+  ): Promise<void> {
+    try {
+      const template = NotificationTemplateService.generateTransactionAlertTemplate(transactionData);
       
-      if (!settings.lowStockAlerts) {
-        console.log('Low stock alerts disabled in settings');
-        return false;
-      }
-
-      // Find products with low stock (stock <= minStock)
-      const lowStockProducts = await Product.find({
-        $expr: { $lte: ['$stock', '$minStock'] },
-        status: 'active'
-      }).select('name stock minStock sku');
-
-      if (lowStockProducts.length === 0) {
-        return true; // No low stock products
-      }
-
-      // Get all managers and superadmins for notification
-      const adminUsers = await User.find({
-        role: { $in: ['manager', 'superadmin'] },
-        status: 'active',
-        isApproved: true
-      }).select('email firstName lastName');
-
-      const productList = lowStockProducts.map(p => 
-        `• ${p.name} (SKU: ${p.sku}) - Stock: ${p.stock}/${p.minStock}`
-      ).join('\n');
-
-      const message = `The following products are running low on stock:\n\n${productList}\n\nPlease restock these items soon.`;
-
-      // Send system alert
-      await this.sendSystemAlert(
-        'Low Stock Alert',
-        message,
-        ['manager', 'superadmin'],
-        { products: lowStockProducts }
+      await this.queueNotification(
+        'high_value_transaction',
+        { type: 'role', value: ['manager', 'superadmin'] },
+        template,
+        transactionData,
+        'high'
       );
 
-      // Send email notifications to admins
-      if (settings.emailNotifications && adminUsers.length > 0) {
-        for (const admin of adminUsers) {
-          await this.sendEmailNotification(
-            admin.email,
-            'Low Stock Alert - Grocery Store POS',
-            message
-          );
-        }
-      }
-
-      // Emit real-time socket notification to managers and superadmins
-      const { SocketService } = await import('./SocketService');
-      SocketService.emitLowStockAlert({
-        products: lowStockProducts,
-        count: lowStockProducts.length,
-        alertType: lowStockProducts.length > 10 ? 'critical' : 'warning',
-        timestamp: new Date()
-      });
-
-      console.log(`Low stock alerts sent for ${lowStockProducts.length} products`);
-      return true;
+      console.log(`High value transaction notification sent: ${transactionData.transactionNumber}`);
     } catch (error) {
-      console.error('Failed to check and send low stock alerts:', error);
-      return false;
+      console.error('Error sending high value transaction notification:', error);
     }
   }
 
   /**
-   * Send user registration notification
+   * Notify about system maintenance
    */
-  async sendUserRegistrationNotification(userData: any): Promise<boolean> {
+  async notifySystemMaintenance(
+    maintenanceData: MaintenanceData
+  ): Promise<void> {
     try {
-      const settings = await SystemSettingsService.getSettings();
+      const template = NotificationTemplateService.generateMaintenanceTemplate(maintenanceData);
       
-      if (!settings.systemAlerts) {
-        return false;
-      }
-
-      const message = `New ${userData.role} registration: ${userData.firstName} ${userData.lastName} (${userData.email})`;
-
-      await this.sendSystemAlert(
-        'New User Registration',
-        message,
-        ['manager', 'superadmin'],
-        { user: userData }
+      await this.queueNotification(
+        'system_maintenance',
+        { type: 'broadcast', value: [] },
+        template,
+        maintenanceData,
+        'high',
+        maintenanceData.scheduledDate
       );
 
-      // Send email notification to admins
-      if (settings.emailNotifications) {
-        const adminUsers = await User.find({
-          role: { $in: ['manager', 'superadmin'] },
-          status: 'active',
-          isApproved: true
-        }).select('email');
-
-        if (adminUsers.length > 0) {
-          for (const admin of adminUsers) {
-            await this.sendEmailNotification(
-              admin.email,
-              'New User Registration - Grocery Store POS',
-              message
-            );
-          }
-        }
-      }
-
-      return true;
+      console.log(`System maintenance notification scheduled: ${maintenanceData.type}`);
     } catch (error) {
-      console.error('Failed to send user registration notification:', error);
-      return false;
+      console.error('Error scheduling system maintenance notification:', error);
     }
   }
 
   /**
-   * Initialize periodic low stock checking
+   * Notify about security alerts
    */
-  static initializeLowStockChecker(): void {
-    const notificationService = new NotificationService();
-    
-    // Check for low stock every 6 hours
-    setInterval(async () => {
-      try {
-        await notificationService.checkAndSendLowStockAlerts();
-      } catch (error) {
-        console.error('Error in low stock checker:', error);
-      }
-    }, 6 * 60 * 60 * 1000); // 6 hours
+  async notifySecurityAlert(securityData: SecurityData): Promise<void> {
+    try {
+      const template = NotificationTemplateService.generateSecurityAlertTemplate(securityData);
+      
+      await this.queueNotification(
+        'security_alert',
+        { type: 'role', value: ['manager', 'superadmin'] },
+        template,
+        securityData,
+        securityData.severity
+      );
 
-    console.log('Low stock checker initialized (runs every 6 hours)');
+      console.log(`Security alert notification sent: ${securityData.type}`);
+    } catch (error) {
+      console.error('Error sending security alert notification:', error);
+    }
   }
 }
 
-export default new NotificationService();
+export default NotificationService;
