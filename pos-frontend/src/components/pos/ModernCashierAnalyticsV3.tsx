@@ -277,8 +277,7 @@ export function ModernCashierAnalyticsV3() {
         sales,
         percentage: totalSales > 0 ? (sales / totalSales) * 100 : 0
       }))
-      .sort((a, b) => b.sales - a.sales)
-      .slice(0, 4);
+      .sort((a, b) => b.sales - a.sales);
 
     // Efficiency metrics
     const totalHours = 24; // Assuming 24-hour operation

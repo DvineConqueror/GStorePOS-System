@@ -1,13 +1,15 @@
 import React from 'react';
 import {
   Chart as ChartJS,
-  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 interface CategoryData {
   category: string;
@@ -31,30 +33,47 @@ export function CategoryBreakdownChart({ data, loading = false }: CategoryBreakd
     }).format(value);
   };
 
-  // Chart colors
-  const colors = [
-    '#16a34a', // Green
-    '#3b82f6', // Blue
-    '#f59e0b', // Amber
-    '#ef4444', // Red
-    '#8b5cf6', // Purple
-    '#06b6d4', // Cyan
-    '#84cc16', // Lime
-    '#f97316', // Orange
-    '#ec4899', // Pink
-    '#6366f1', // Indigo
-  ];
+  // Sort data by sales descending and take top 5
+  const sortedData = [...data].sort((a, b) => b.sales - a.sales);
+  const top5 = sortedData.slice(0, 5);
+  const others = sortedData.slice(5);
+  
+  // Calculate "Others" total if there are more than 5 categories
+  const processedData = [...top5];
+  if (others.length > 0) {
+    const othersTotal = others.reduce((sum, item) => sum + item.sales, 0);
+    const totalSales = sortedData.reduce((sum, item) => sum + item.sales, 0);
+    processedData.push({
+      category: 'Others',
+      sales: othersTotal,
+      percentage: (othersTotal / totalSales) * 100,
+    });
+  }
+
+  // Chart colors - gradient greens for top categories, gray for Others
+  const colors = processedData.map((item, index) => {
+    if (item.category === 'Others') {
+      return 'rgba(156, 163, 175, 0.8)'; // Gray for Others
+    }
+    const intensity = 1 - (index * 0.15);
+    return `rgba(22, 163, 74, ${Math.max(0.6, intensity)})`;
+  });
 
   const chartData = {
-    labels: data.map(item => item.category),
+    labels: processedData.map(item => item.category),
     datasets: [
       {
-        data: data.map(item => item.sales),
-        backgroundColor: colors.slice(0, data.length),
-        borderColor: '#ffffff',
-        borderWidth: 2,
-        hoverBorderWidth: 3,
-        hoverOffset: 4,
+        label: 'Sales',
+        data: processedData.map(item => item.sales),
+        backgroundColor: colors,
+        borderColor: colors.map(color => {
+          if (color.includes('156, 163, 175')) return 'rgba(156, 163, 175, 1)';
+          return color.replace(/[\d.]+\)$/g, '1)');
+        }),
+        borderWidth: 1,
+        borderRadius: 8,
+        barPercentage: 0.7,
+        categoryPercentage: 0.8,
       },
     ],
   };
@@ -64,37 +83,7 @@ export function CategoryBreakdownChart({ data, loading = false }: CategoryBreakd
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom' as const,
-        labels: {
-          padding: 20,
-          usePointStyle: true,
-          font: {
-            size: 12,
-            weight: '500' as const,
-          },
-          generateLabels: (chart: any) => {
-            const data = chart.data;
-            if (data.labels.length && data.datasets.length) {
-              return data.labels.map((label: string, i: number) => {
-                const dataset = data.datasets[0];
-                const value = dataset.data[i];
-                const percentage = data.labels.length > 0 ? 
-                  ((value / dataset.data.reduce((a: number, b: number) => a + b, 0)) * 100).toFixed(1) : 0;
-                
-                return {
-                  text: `${label} (${percentage}%)`,
-                  fillStyle: dataset.backgroundColor[i],
-                  strokeStyle: dataset.borderColor,
-                  lineWidth: dataset.borderWidth,
-                  pointStyle: 'circle',
-                  hidden: false,
-                  index: i,
-                };
-              });
-            }
-            return [];
-          },
-        },
+        display: false,
       },
       tooltip: {
         backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -103,7 +92,7 @@ export function CategoryBreakdownChart({ data, loading = false }: CategoryBreakd
         borderColor: '#475569',
         borderWidth: 1,
         cornerRadius: 8,
-        displayColors: true,
+        displayColors: false,
         titleFont: {
           size: 14,
           weight: 'bold' as const,
@@ -113,21 +102,63 @@ export function CategoryBreakdownChart({ data, loading = false }: CategoryBreakd
         },
         padding: 12,
         callbacks: {
-          title: (context: any) => {
-            return `${context[0].label}`;
+          title: (context) => {
+            return context[0].label;
           },
-          label: (context: any) => {
-            const percentage = data[context.dataIndex].percentage;
-            return `Sales: ${formatCurrency(context.parsed)} (${percentage.toFixed(1)}%)`;
+          label: (context) => {
+            const index = context.dataIndex;
+            const percentage = processedData[index].percentage;
+            return `Sales: ${formatCurrency(context.parsed.y)} (${percentage.toFixed(1)}%)`;
           },
         },
       },
     },
-    cutout: '60%',
-    elements: {
-      arc: {
-        borderWidth: 2,
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#1f2937',
+          font: {
+            size: 11,
+            weight: 600,
+          },
+          maxRotation: 45,
+          minRotation: 0,
+        },
+        border: {
+          display: false,
+        },
       },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(100, 116, 139, 0.1)',
+          drawBorder: false,
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            size: 11,
+            weight: 500,
+          },
+          callback: function(value) {
+            const numValue = Number(value);
+            if (numValue === 0) return '₱0';
+            if (numValue < 1000) return `₱${numValue.toFixed(0)}`;
+            if (numValue < 1000000) return `₱${(numValue / 1000).toFixed(1)}k`;
+            return `₱${(numValue / 1000000).toFixed(1)}M`;
+          },
+        },
+        border: {
+          display: false,
+        },
+      },
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index' as const,
     },
   };
 
@@ -157,7 +188,7 @@ export function CategoryBreakdownChart({ data, loading = false }: CategoryBreakd
 
   return (
     <div className="h-80 w-full">
-      <Doughnut data={chartData} options={options} />
+      <Bar data={chartData} options={options} />
     </div>
   );
 }
