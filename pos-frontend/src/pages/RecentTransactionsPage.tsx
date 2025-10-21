@@ -292,7 +292,7 @@ export default function RecentTransactionsPage() {
       </Card>
 
       {/* Transactions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
         {transactions.length === 0 ? (
           <div className="col-span-full">
             <Card>
