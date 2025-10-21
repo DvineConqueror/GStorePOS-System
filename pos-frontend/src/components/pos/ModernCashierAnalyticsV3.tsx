@@ -46,7 +46,6 @@ import {
   BarChart3,
   Star,
   Award,
-  Zap,
   TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
@@ -65,11 +64,6 @@ interface CashierAnalyticsData {
   recentTransactions: Array<{ id: string; total: number; items: number; time: string }>;
   hourlyPerformance: Array<{ hour: string; sales: number }>;
   topCategories: Array<{ category: string; sales: number; percentage: number }>;
-  efficiency: {
-    salesPerHour: number;
-    transactionsPerHour: number;
-    avgItemsPerTransaction: number;
-  };
 }
 
 const CATEGORY_COLORS = ['#107146', '#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'];
@@ -279,14 +273,6 @@ export function ModernCashierAnalyticsV3() {
       }))
       .sort((a, b) => b.sales - a.sales);
 
-    // Efficiency metrics
-    const totalHours = 24; // Assuming 24-hour operation
-    const efficiency = {
-      salesPerHour: totalSales / totalHours,
-      transactionsPerHour: totalTransactions / totalHours,
-      avgItemsPerTransaction: totalTransactions > 0 ? itemsSold / totalTransactions : 0
-    };
-
     return {
       totalSales,
       todaySales,
@@ -303,8 +289,7 @@ export function ModernCashierAnalyticsV3() {
       monthlyCumulativeData,
       recentTransactions,
       hourlyPerformance,
-      topCategories,
-      efficiency
+      topCategories
     };
   }, [analyticsData, user, products, categories]);
 
@@ -501,7 +486,7 @@ export function ModernCashierAnalyticsV3() {
       </div>
 
       {/* Performance Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Transactions */}
         <Card>
           <CardHeader className="pb-4">
@@ -581,41 +566,6 @@ export function ModernCashierAnalyticsV3() {
               data={analytics.topCategories} 
               loading={loading}
             />
-          </CardContent>
-        </Card>
-
-        {/* Performance Metrics */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3">
-              <Zap className="h-5 w-5 text-green-600" />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Efficiency</h3>
-                <p className="text-sm text-gray-600">Performance metrics</p>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-gray-50 rounded-xl">
-                <div className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(analytics.efficiency.salesPerHour)}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">Sales/hr</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-xl">
-                <div className="text-2xl font-bold text-gray-900">
-                  {analytics.efficiency.transactionsPerHour.toFixed(1)}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">Txns/hr</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-xl">
-                <div className="text-2xl font-bold text-gray-900">
-                  {analytics.efficiency.avgItemsPerTransaction.toFixed(1)}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">Items/txn</div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
