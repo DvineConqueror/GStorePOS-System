@@ -163,7 +163,7 @@ export class PasswordResetEmailTemplate {
           </div>
           
           <div class="footer">
-            <p class="footer-brand">SmartGrocery POS System</p>
+            <p class="footer-brand">SmartGrocery System</p>
             <p class="footer-text">This email was sent from our secure password reset service.</p>
             <p class="footer-text">If you have any questions, please contact our support team.</p>
           </div>

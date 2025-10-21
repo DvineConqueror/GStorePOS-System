@@ -127,32 +127,176 @@ export class LoginService {
     try {
       const subject = 'Security Alert: New Login Detected';
       const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #dc2626;">Security Alert: New Login Detected</h2>
-          <p>Hello ${user.username},</p>
-          <p>We detected a new login to your account from another device. For security reasons, your previous session has been terminated.</p>
-          
-          <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 16px 0;">
-            <h3 style="color: #92400e; margin: 0 0 8px 0;">New Login Details:</h3>
-            <p style="margin: 4px 0;"><strong>IP Address:</strong> ${deviceInfo?.ip || 'Unknown'}</p>
-            <p style="margin: 4px 0;"><strong>Device:</strong> ${deviceInfo?.userAgent || 'Unknown'}</p>
-            <p style="margin: 4px 0;"><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Security Alert - SmartGrocery</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+              line-height: 1.6;
+              color: #000000;
+              background-color: #ececec;
+              padding: 20px;
+            }
+            .email-container {
+              max-width: 600px;
+              margin: 0 auto;
+              background-color: #fafaf9;
+              border-radius: 16px;
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+              overflow: hidden;
+            }
+            .header {
+              text-align: center;
+              padding: 32px 32px 24px;
+            }
+            .brand-text {
+              font-size: 24px;
+              font-weight: 700;
+              color: #16a34a;
+              text-align: center;
+              margin-bottom: 16px;
+            }
+            .title {
+              font-size: 24px;
+              font-weight: 700;
+              color: #000000;
+              margin-bottom: 8px;
+            }
+            .subtitle {
+              color: #6b7280;
+              font-size: 14px;
+              line-height: 1.5;
+            }
+            .content {
+              padding: 0 32px 32px;
+            }
+            .greeting {
+              font-size: 16px;
+              color: #000000;
+              margin-bottom: 16px;
+            }
+            .instruction {
+              color: #6b7280;
+              margin-bottom: 16px;
+              line-height: 1.5;
+            }
+            .info-box {
+              background-color: #f0fdf4;
+              border: 1px solid #16a34a;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 20px 0;
+            }
+            .info-box-title {
+              font-weight: 600;
+              color: #15803d;
+              margin-bottom: 12px;
+              font-size: 15px;
+            }
+            .info-item {
+              margin: 8px 0;
+              color: #374151;
+              font-size: 14px;
+            }
+            .info-item strong {
+              color: #000000;
+              display: inline-block;
+              min-width: 100px;
+            }
+            .warning {
+              background-color: #fef3c7;
+              border: 1px solid #f59e0b;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 20px 0;
+            }
+            .warning-title {
+              font-weight: 600;
+              color: #92400e;
+              margin-bottom: 8px;
+            }
+            .warning-list {
+              margin: 0;
+              padding-left: 20px;
+              font-size: 14px;
+              line-height: 1.5;
+              color: #92400e;
+            }
+            .success-note {
+              background-color: #f0fdf4;
+              border-left: 4px solid #16a34a;
+              padding: 12px 16px;
+              margin: 20px 0;
+              color: #15803d;
+              font-size: 14px;
+              border-radius: 4px;
+            }
+            .footer {
+              text-align: center;
+              padding: 24px 32px;
+              border-top: 1px solid #e5e7eb;
+              background-color: #fafaf9;
+            }
+            .footer-brand {
+              font-weight: 600;
+              color: #000000;
+              margin-bottom: 8px;
+            }
+            .footer-text {
+              color: #6b7280;
+              font-size: 14px;
+              margin-bottom: 8px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="header">
+              <div class="brand-text">SmartGrocery</div>
+              <h1 class="title">Security Alert</h1>
+              <p class="subtitle">New login detected on your account</p>
+            </div>
+            
+            <div class="content">
+              <p class="greeting">Hello ${user.username},</p>
+              
+              <p class="instruction">We detected a new login to your account from another device. For security reasons, your previous session has been automatically terminated.</p>
+              
+              <div class="info-box">
+                <div class="info-box-title">New Login Details</div>
+                <div class="info-item"><strong>IP Address:</strong> ${deviceInfo?.ip || 'Unknown'}</div>
+                <div class="info-item"><strong>Device:</strong> ${deviceInfo?.userAgent || 'Unknown'}</div>
+                <div class="info-item"><strong>Time:</strong> ${new Date().toLocaleString()}</div>
+              </div>
+              
+              <div class="warning">
+                <div class="warning-title">⚠️ If this was not you, please take action immediately:</div>
+                <ul class="warning-list">
+                  <li>Change your password immediately</li>
+                  <li>Contact your system administrator</li>
+                  <li>Review your recent account activity</li>
+                  <li>Check for any unauthorized transactions</li>
+                </ul>
+              </div>
+              
+              <div class="success-note">
+                ✓ If this was you logging in from a new device, you can safely ignore this message.
+              </div>
+            </div>
+            
+            <div class="footer">
+              <p class="footer-brand">SmartGrocery System</p>
+              <p class="footer-text">This is an automated security notification to protect your account.</p>
+              <p class="footer-text">If you have any questions, please contact your system administrator.</p>
+            </div>
           </div>
-          
-          <p>If this was not you, please:</p>
-          <ul>
-            <li>Change your password immediately</li>
-            <li>Contact your system administrator</li>
-            <li>Review your account activity</li>
-          </ul>
-          
-          <p>If this was you, you can safely ignore this message.</p>
-          
-          <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
-          <p style="color: #6b7280; font-size: 14px;">
-            This is an automated security notification from your POS system.
-          </p>
-        </div>
+        </body>
+        </html>
       `;
 
       await NotificationDeliveryService.sendEmailNotification(
@@ -185,31 +329,180 @@ export class LoginService {
 
       const subject = 'Security Alert: Concurrent Login Detected';
       const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #dc2626;">Security Alert: Concurrent Login Detected</h2>
-          <p>A concurrent login has been detected and handled automatically.</p>
-          
-          <div style="background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; margin: 16px 0;">
-            <h3 style="color: #374151; margin: 0 0 8px 0;">Affected User:</h3>
-            <p style="margin: 4px 0;"><strong>Username:</strong> ${user.username}</p>
-            <p style="margin: 4px 0;"><strong>Email:</strong> ${user.email}</p>
-            <p style="margin: 4px 0;"><strong>Role:</strong> ${user.role}</p>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Security Alert - SmartGrocery</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+              line-height: 1.6;
+              color: #000000;
+              background-color: #ececec;
+              padding: 20px;
+            }
+            .email-container {
+              max-width: 600px;
+              margin: 0 auto;
+              background-color: #fafaf9;
+              border-radius: 16px;
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+              overflow: hidden;
+            }
+            .header {
+              text-align: center;
+              padding: 32px 32px 24px;
+            }
+            .brand-text {
+              font-size: 24px;
+              font-weight: 700;
+              color: #16a34a;
+              text-align: center;
+              margin-bottom: 16px;
+            }
+            .title {
+              font-size: 24px;
+              font-weight: 700;
+              color: #000000;
+              margin-bottom: 8px;
+            }
+            .subtitle {
+              color: #6b7280;
+              font-size: 14px;
+              line-height: 1.5;
+            }
+            .content {
+              padding: 0 32px 32px;
+            }
+            .greeting {
+              font-size: 16px;
+              color: #000000;
+              margin-bottom: 16px;
+            }
+            .instruction {
+              color: #6b7280;
+              margin-bottom: 16px;
+              line-height: 1.5;
+            }
+            .user-box {
+              background-color: #f3f4f6;
+              border: 1px solid #d1d5db;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 20px 0;
+            }
+            .user-box-title {
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 12px;
+              font-size: 15px;
+            }
+            .user-item {
+              margin: 8px 0;
+              color: #374151;
+              font-size: 14px;
+            }
+            .user-item strong {
+              color: #000000;
+              display: inline-block;
+              min-width: 100px;
+            }
+            .info-box {
+              background-color: #f0fdf4;
+              border: 1px solid #16a34a;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 20px 0;
+            }
+            .info-box-title {
+              font-weight: 600;
+              color: #15803d;
+              margin-bottom: 12px;
+              font-size: 15px;
+            }
+            .info-item {
+              margin: 8px 0;
+              color: #374151;
+              font-size: 14px;
+            }
+            .info-item strong {
+              color: #000000;
+              display: inline-block;
+              min-width: 100px;
+            }
+            .action-taken {
+              background-color: #ecfdf5;
+              border-left: 4px solid #16a34a;
+              padding: 12px 16px;
+              margin: 20px 0;
+              color: #15803d;
+              font-size: 14px;
+              border-radius: 4px;
+              font-weight: 500;
+            }
+            .footer {
+              text-align: center;
+              padding: 24px 32px;
+              border-top: 1px solid #e5e7eb;
+              background-color: #fafaf9;
+            }
+            .footer-brand {
+              font-weight: 600;
+              color: #000000;
+              margin-bottom: 8px;
+            }
+            .footer-text {
+              color: #6b7280;
+              font-size: 14px;
+              margin-bottom: 8px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="header">
+              <div class="brand-text">SmartGrocery</div>
+              <h1 class="title">Security Alert</h1>
+              <p class="subtitle">Concurrent login detected and handled</p>
+            </div>
+            
+            <div class="content">
+              <p class="greeting">Hello Administrator,</p>
+              
+              <p class="instruction">A concurrent login has been detected and handled automatically by the system. The user's previous session has been terminated for security reasons.</p>
+              
+              <div class="user-box">
+                <div class="user-box-title">Affected User</div>
+                <div class="user-item"><strong>Username:</strong> ${user.username}</div>
+                <div class="user-item"><strong>Email:</strong> ${user.email}</div>
+                <div class="user-item"><strong>Role:</strong> ${user.role}</div>
+              </div>
+              
+              <div class="info-box">
+                <div class="info-box-title">New Login Details</div>
+                <div class="info-item"><strong>IP Address:</strong> ${deviceInfo?.ip || 'Unknown'}</div>
+                <div class="info-item"><strong>Device:</strong> ${deviceInfo?.userAgent || 'Unknown'}</div>
+                <div class="info-item"><strong>Time:</strong> ${new Date().toLocaleString()}</div>
+              </div>
+              
+              <div class="action-taken">
+                ✓ Action Taken: All existing sessions for this user have been automatically terminated.
+              </div>
+              
+              <p class="instruction">The affected user has been notified via email. No further action is required unless you suspect unauthorized access.</p>
+            </div>
+            
+            <div class="footer">
+              <p class="footer-brand">SmartGrocery System</p>
+              <p class="footer-text">This is an automated security notification from the system.</p>
+              <p class="footer-text">For security concerns, please review system logs and contact IT support if needed.</p>
+            </div>
           </div>
-          
-          <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 16px 0;">
-            <h3 style="color: #92400e; margin: 0 0 8px 0;">New Login Details:</h3>
-            <p style="margin: 4px 0;"><strong>IP Address:</strong> ${deviceInfo?.ip || 'Unknown'}</p>
-            <p style="margin: 4px 0;"><strong>Device:</strong> ${deviceInfo?.userAgent || 'Unknown'}</p>
-            <p style="margin: 4px 0;"><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-          </div>
-          
-          <p><strong>Action Taken:</strong> All existing sessions for this user have been terminated.</p>
-          
-          <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
-          <p style="color: #6b7280; font-size: 14px;">
-            This is an automated security notification from your POS system.
-          </p>
-        </div>
+        </body>
+        </html>
       `;
 
       // Send to all superadmins
