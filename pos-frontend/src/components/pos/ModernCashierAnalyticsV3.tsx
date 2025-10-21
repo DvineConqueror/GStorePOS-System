@@ -33,16 +33,7 @@ const inferCategoryFromProductName = (productName: string): string => {
     return 'General';
   }
 };
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
-  PolarAngleAxis,
-  Tooltip
-} from 'recharts';
+import { Line } from 'react-chartjs-2';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -55,11 +46,8 @@ import {
   BarChart3,
   Star,
   Award,
-  ArrowUpRight,
-  ArrowDownRight,
   Zap,
-  TrendingUp as TrendingUpIcon,
-  Minus
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
 interface RawAnalyticsData {
@@ -186,6 +174,54 @@ export function ModernCashierAnalyticsV3() {
       });
     }
 
+    // Monthly cumulative sales (current month)
+    const currentDate = new Date();
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    
+    // Get all transactions for the current month
+    const monthTransactions = userTransactions.filter((t: any) => {
+      const txDate = new Date(t.createdAt || t.timestamp);
+      return txDate >= firstDayOfMonth && txDate <= currentDate;
+    });
+    
+    const monthTotalSales = monthTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+    
+    // Calculate cumulative daily sales
+    const monthlyCumulativeData = [];
+    let cumulativeSales = 0;
+    
+    for (let day = 1; day <= currentDate.getDate(); day++) {
+      const dayTransactions = monthTransactions.filter((t: any) => {
+        const txDate = new Date(t.createdAt || t.timestamp);
+        return txDate.getDate() === day;
+      });
+      const daySales = dayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+      cumulativeSales += daySales;
+      
+      monthlyCumulativeData.push({
+        day: day.toString(),
+        sales: cumulativeSales,
+        dailySales: daySales
+      });
+    }
+
+    // Calculate previous month's sales for comparison
+    const firstDayOfPrevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const lastDayOfPrevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+    
+    const prevMonthTransactions = transactions.filter((t: any) => {
+      const txDate = new Date(t.createdAt || t.timestamp);
+      return t.status === 'completed' && 
+             t.cashierId === user.id &&
+             txDate >= firstDayOfPrevMonth && 
+             txDate <= lastDayOfPrevMonth;
+    });
+    
+    const prevMonthTotalSales = prevMonthTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+    const monthGrowth = prevMonthTotalSales > 0 
+      ? ((monthTotalSales - prevMonthTotalSales) / prevMonthTotalSales) * 100 
+      : monthTotalSales > 0 ? 100 : 0;
+
     // Recent transactions (last 5) with item details
     const recentTransactions = userTransactions
       .sort((a: any, b: any) => new Date(b.createdAt || b.timestamp).getTime() - new Date(a.createdAt || a.timestamp).getTime())
@@ -259,10 +295,13 @@ export function ModernCashierAnalyticsV3() {
       itemsSold,
       totalTransactions,
       todayTransactions: todayTransactions.length,
+      monthTotalSales,
       salesGrowth: Number(salesGrowth.toFixed(1)),
       avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
       todaySalesGrowth: Number(todaySalesGrowth.toFixed(1)),
+      monthGrowth: Number(monthGrowth.toFixed(1)),
       weeklyTrend: weeklyData,
+      monthlyCumulativeData,
       recentTransactions,
       hourlyPerformance,
       topCategories,
@@ -337,31 +376,20 @@ export function ModernCashierAnalyticsV3() {
     value, 
     subtitle, 
     icon: Icon, 
-    color, 
-    trend 
+    color
   }: { 
     title: string; 
     value: string; 
     subtitle: string; 
     icon: any; 
-    color: string; 
-    trend?: number;
+    color: string;
   }) => {
-    const TrendIcon = trend && trend > 0 ? ArrowUpRight : trend && trend < 0 ? ArrowDownRight : Minus;
-    const trendColor = trend && trend > 0 ? 'text-green-500' : trend && trend < 0 ? 'text-red-500' : 'text-gray-400';
-    
     return (
       <Card className="relative overflow-hidden">
         <div className={`absolute top-0 right-0 w-32 h-32 ${color} opacity-10 rounded-full -translate-y-16 translate-x-16`} />
         <CardContent className="p-6 relative">
           <div className="flex items-center justify-between mb-4">
             <Icon className="h-6 w-6 text-green-600" />
-            {trend !== undefined && (
-              <div className={`flex items-center gap-1 ${trendColor}`}>
-                <TrendIcon className="h-4 w-4" />
-                <span className="text-sm font-medium">{Math.abs(trend).toFixed(1)}%</span>
-              </div>
-            )}
           </div>
           <div className="space-y-1">
             <h3 className="text-sm font-medium text-gray-700">{title}</h3>
@@ -373,12 +401,6 @@ export function ModernCashierAnalyticsV3() {
     );
   };
 
-  const radialData = [
-    { name: 'Sales', value: 75, fill: '#16a34a' },
-    { name: 'Transactions', value: 60, fill: '#22c55e' },
-    { name: 'Efficiency', value: 85, fill: '#4ade80' }
-  ];
-
   return (
     <div className="space-y-8">
       {/* Main Stats Row */}
@@ -389,7 +411,6 @@ export function ModernCashierAnalyticsV3() {
           subtitle={`${analytics.totalTransactions} transactions`}
           icon={DollarSign}
           color="bg-green-100"
-          trend={analytics.salesGrowth}
         />
         <StatCard
           title="Today's Sales"
@@ -397,16 +418,87 @@ export function ModernCashierAnalyticsV3() {
           subtitle={`${analytics.todayTransactions} transactions today`}
           icon={Calendar}
           color="bg-green-100"
-          trend={analytics.todaySalesGrowth}
         />
-        <StatCard
-          title="Avg Transaction"
-          value={formatCurrency(analytics.avgTransaction)}
-          subtitle="Per transaction"
-          icon={Target}
-          color="bg-green-100"
-          trend={analytics.avgTransactionGrowth}
-        />
+        
+        {/* This Month's Sales - Cumulative Chart */}
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 opacity-30 rounded-full -translate-y-16 translate-x-16" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-center justify-between mb-4">
+              <Target className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">This Month's Sales</h3>
+                <div className="text-3xl font-bold text-gray-900">
+                  {formatCurrency(analytics.monthTotalSales || 0)}
+                </div>
+                <p className="text-sm text-gray-600">
+                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+              
+              {/* Cumulative Line Chart */}
+              <div className="h-24 w-full">
+                <Line 
+                  data={{
+                    labels: analytics.monthlyCumulativeData?.map((item: any) => item.day) || [],
+                    datasets: [{
+                      label: 'Cumulative Sales',
+                      data: analytics.monthlyCumulativeData?.map((item: any) => item.sales) || [],
+                      borderColor: '#16a34a',
+                      backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                      borderWidth: 2,
+                      fill: true,
+                      tension: 0.4,
+                      pointRadius: 0,
+                      pointHoverRadius: 6,
+                      pointHoverBackgroundColor: '#16a34a',
+                      pointHoverBorderColor: '#ffffff',
+                      pointHoverBorderWidth: 2,
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#f1f5f9',
+                        borderColor: '#475569',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        padding: 10,
+                        callbacks: {
+                          title: (context: any) => `Day ${context[0].label}`,
+                          label: (context: any) => `₱${context.parsed.y.toLocaleString()}`
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        display: false,
+                        grid: { display: false }
+                      },
+                      y: {
+                        display: false,
+                        beginAtZero: true,
+                        grid: { display: false }
+                      }
+                    },
+                    interaction: {
+                      intersect: false,
+                      mode: 'index' as const
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Performance Overview */}
@@ -505,32 +597,24 @@ export function ModernCashierAnalyticsV3() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="80%" data={radialData}>
-                  <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-                  <RadialBar dataKey="value" cornerRadius={8} fill="#16a34a" />
-                </RadialBarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-gray-50 rounded-xl">
+                <div className="text-2xl font-bold text-gray-900">
                   {formatCurrency(analytics.efficiency.salesPerHour)}
                 </div>
-                <div className="text-xs text-gray-600">Sales/hr</div>
+                <div className="text-sm text-gray-600 mt-1">Sales/hr</div>
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">
+              <div className="text-center p-4 bg-gray-50 rounded-xl">
+                <div className="text-2xl font-bold text-gray-900">
                   {analytics.efficiency.transactionsPerHour.toFixed(1)}
                 </div>
-                <div className="text-xs text-gray-600">Txns/hr</div>
+                <div className="text-sm text-gray-600 mt-1">Txns/hr</div>
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">
+              <div className="text-center p-4 bg-gray-50 rounded-xl">
+                <div className="text-2xl font-bold text-gray-900">
                   {analytics.efficiency.avgItemsPerTransaction.toFixed(1)}
                 </div>
-                <div className="text-xs text-gray-600">Items/txn</div>
+                <div className="text-sm text-gray-600 mt-1">Items/txn</div>
               </div>
             </div>
           </CardContent>

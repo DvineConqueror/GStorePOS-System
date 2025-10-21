@@ -9,6 +9,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 
+// Fallback Data for the categories breakdown
 // Category inference function (matching backend logic)
 const inferCategoryFromProductName = (productName: string): string => {
   const name = productName.toLowerCase();
@@ -33,16 +34,10 @@ const inferCategoryFromProductName = (productName: string): string => {
     return 'General';
   }
 };
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer,
-  Tooltip
-} from 'recharts';
 import { WeeklyTrendChart } from '@/components/analytics/WeeklyTrendChart';
 import { SalesAnalyticsChart } from '@/components/analytics/SalesAnalyticsChart';
 import { CategoryBreakdownChart } from '@/components/analytics/CategoryBreakdownChart';
+import { Line } from 'react-chartjs-2';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -57,11 +52,8 @@ import {
   PieChart as PieChartIcon,
   Zap,
   Star,
-  ArrowUpRight,
-  ArrowDownRight,
   Calendar,
-  TrendingUp as TrendingUpIcon,
-  Minus
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
 interface RawAnalyticsData {
@@ -227,6 +219,56 @@ export function ModernAnalyticsV3() {
         });
       }
 
+      // Monthly cumulative sales (current month)
+      const currentDate = new Date();
+      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      // Get all transactions for the current month
+      const monthTransactions = userTransactions.filter((t: any) => {
+        const txDate = new Date(t.createdAt || t.timestamp);
+        return txDate >= firstDayOfMonth && txDate <= currentDate;
+      });
+      
+      const monthTotalSales = monthTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+      
+      // Calculate cumulative daily sales
+      const monthlyCumulativeData = [];
+      let cumulativeSales = 0;
+      
+      for (let day = 1; day <= currentDate.getDate(); day++) {
+        const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        const dayTransactions = monthTransactions.filter((t: any) => {
+          const txDate = new Date(t.createdAt || t.timestamp);
+          return txDate.getDate() === day;
+        });
+        const daySales = dayTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+        cumulativeSales += daySales;
+        
+        monthlyCumulativeData.push({
+          day: day.toString(),
+          sales: cumulativeSales,
+          dailySales: daySales
+        });
+      }
+
+      // Calculate previous month's sales for comparison
+      const firstDayOfPrevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      const lastDayOfPrevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+      
+      const prevMonthTransactions = transactions.filter((t: any) => {
+        const txDate = new Date(t.createdAt || t.timestamp);
+        return t.status === 'completed' && 
+               (user?.role === 'manager' || user?.role === 'superadmin' || t.cashierId === user?.id) &&
+               txDate >= firstDayOfPrevMonth && 
+               txDate <= lastDayOfPrevMonth;
+      });
+      
+      const prevMonthTotalSales = prevMonthTransactions.reduce((sum: number, t: any) => sum + t.total, 0);
+      const monthGrowth = prevMonthTotalSales > 0 
+        ? ((monthTotalSales - prevMonthTotalSales) / prevMonthTotalSales) * 100 
+        : monthTotalSales > 0 ? 100 : 0;
+
       // Recent transactions
       const recentTransactions = userTransactions
         .sort((a: any, b: any) => new Date(b.createdAt || b.timestamp).getTime() - new Date(a.createdAt || a.timestamp).getTime())
@@ -245,9 +287,11 @@ export function ModernAnalyticsV3() {
         avgTransaction,
         todaySales,
         todayTransactions: todayTransactions.length,
+        monthTotalSales,
         salesGrowth: Number(salesGrowth.toFixed(1)),
         avgTransactionGrowth: Number(avgTransactionGrowth.toFixed(1)),
         todaySalesGrowth: Number(todaySalesGrowth.toFixed(1)),
+        monthGrowth: Number(monthGrowth.toFixed(1)),
         topPerformer: topPerformer ? { name: topPerformer[0], ...topPerformer[1] } : null,
         categoryData: Array.from(categorySales.entries())
           .map(([category, sales]) => ({
@@ -258,6 +302,7 @@ export function ModernAnalyticsV3() {
           .sort((a, b) => b.sales - a.sales)
           .slice(0, 6),
         weeklyTrend: weeklyData,
+        monthlyCumulativeData,
         recentTransactions
       } as any;
     }
@@ -398,31 +443,20 @@ export function ModernAnalyticsV3() {
     value, 
     subtitle, 
     icon: Icon, 
-    color, 
-    trend 
+    color
   }: { 
     title: string; 
     value: string; 
     subtitle: string; 
     icon: any; 
-    color: string; 
-    trend?: number;
+    color: string;
   }) => {
-    const TrendIcon = trend && trend > 0 ? ArrowUpRight : trend && trend < 0 ? ArrowDownRight : Minus;
-    const trendColor = trend && trend > 0 ? 'text-green-400' : trend && trend < 0 ? 'text-red-400' : 'text-slate-400';
-    
     return (
       <Card className="relative overflow-hidden">
         <div className={`absolute top-0 right-0 w-32 h-32 ${color} opacity-10 rounded-full -translate-y-16 translate-x-16`} />
         <CardContent className="p-6 relative">
           <div className="flex items-center justify-between mb-4">
             <Icon className="h-6 w-6 text-green-600" />
-            {trend !== undefined && (
-              <div className={`flex items-center gap-1 ${trendColor}`}>
-                <TrendIcon className="h-4 w-4" />
-                <span className="text-sm font-medium">{Math.abs(trend).toFixed(1)}%</span>
-              </div>
-            )}
           </div>
           <div className="space-y-1">
             <h3 className="text-sm font-medium text-gray-600">{title}</h3>
@@ -433,12 +467,6 @@ export function ModernAnalyticsV3() {
       </Card>
     );
   };
-
-  const radialData = [
-    { name: 'Sales', value: 75, fill: '#16a34a' },
-    { name: 'Transactions', value: 60, fill: '#22c55e' },
-    { name: 'Efficiency', value: 85, fill: '#4ade80' }
-  ];
 
   return (
     <div className="space-y-8">
@@ -460,7 +488,6 @@ export function ModernAnalyticsV3() {
           subtitle={`${analytics.totalTransactions} transactions`}
           icon={DollarSign}
           color="bg-green-700"
-          trend={analytics.salesGrowth}
         />
         <StatCard
           title="Today's Sales"
@@ -468,16 +495,87 @@ export function ModernAnalyticsV3() {
           subtitle={`${analytics.todayTransactions} transactions today`}
           icon={Calendar}
           color="bg-green-700"
-          trend={analytics.todaySalesGrowth}
         />
-        <StatCard
-          title="Avg Transaction"
-          value={realtimeAnalytics?.formattedMetrics?.averageTransactionValue?.formatted || formatCurrency(analytics.avgTransaction)}
-          subtitle="Per transaction"
-          icon={Target}
-          color="bg-green-700"
-          trend={analytics.avgTransactionGrowth}
-        />
+        
+        {/* This Month's Sales - Cumulative Chart */}
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-700 opacity-10 rounded-full -translate-y-16 translate-x-16" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-center justify-between mb-4">
+              <Target className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-medium text-gray-600">This Month's Sales</h3>
+                <div className="text-3xl font-bold text-gray-900">
+                  {formatCurrency(analytics.monthTotalSales || 0)}
+                </div>
+                <p className="text-sm text-gray-500">
+                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+              
+              {/* Cumulative Line Chart */}
+              <div className="h-24 w-full">
+                <Line 
+                  data={{
+                    labels: analytics.monthlyCumulativeData?.map((item: any) => item.day) || [],
+                    datasets: [{
+                      label: 'Cumulative Sales',
+                      data: analytics.monthlyCumulativeData?.map((item: any) => item.sales) || [],
+                      borderColor: '#16a34a',
+                      backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                      borderWidth: 2,
+                      fill: true,
+                      tension: 0.4,
+                      pointRadius: 0,
+                      pointHoverRadius: 6,
+                      pointHoverBackgroundColor: '#16a34a',
+                      pointHoverBorderColor: '#ffffff',
+                      pointHoverBorderWidth: 2,
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#f1f5f9',
+                        borderColor: '#475569',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        padding: 10,
+                        callbacks: {
+                          title: (context: any) => `Day ${context[0].label}`,
+                          label: (context: any) => `₱${context.parsed.y.toLocaleString()}`
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        display: false,
+                        grid: { display: false }
+                      },
+                      y: {
+                        display: false,
+                        beginAtZero: true,
+                        grid: { display: false }
+                      }
+                    },
+                    interaction: {
+                      intersect: false,
+                      mode: 'index' as const
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Performance Overview */}
