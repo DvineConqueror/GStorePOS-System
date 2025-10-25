@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, EyeOff, Edit, Trash2, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, Edit, Trash2, Package, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Product } from '@/types/product';
 
 interface ProductListProps {
@@ -11,6 +11,9 @@ interface ProductListProps {
   onToggleStatus: (productId: string, currentStatus: 'active' | 'inactive' | 'deleted') => void;
   onEdit?: (product: Product) => void;
   onDelete?: (productId: string) => void;
+  highlightProductId?: string | null;
+  highlightAllLowStock?: boolean;
+  onClearHighlight?: () => void;
 }
 
 const ITEMS_PER_PAGE = 8; // 4 cards per row, 2 rows
@@ -21,12 +24,84 @@ export const ProductList: React.FC<ProductListProps> = ({
   onToggleStatus,
   onEdit,
   onDelete,
+  highlightProductId,
+  highlightAllLowStock = false,
+  onClearHighlight,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const highlightedProductRef = useRef<HTMLDivElement>(null);
+  const firstLowStockRef = useRef<HTMLDivElement>(null);
   const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentProducts = products.slice(startIndex, endIndex);
+
+  // Identify low stock products (memoized to avoid unnecessary re-renders)
+  const lowStockProducts = useMemo(() => 
+    products.filter(p => p.stock <= (p.minStock || 10)), 
+    [products]
+  );
+  
+  const lowStockProductIds = useMemo(() => 
+    new Set(lowStockProducts.map(p => p._id)), 
+    [lowStockProducts]
+  );
+
+  // Handle highlighting single product: scroll to product and navigate to correct page
+  useEffect(() => {
+    if (highlightProductId && products.length > 0) {
+      // Find the product index
+      const productIndex = products.findIndex(p => p._id === highlightProductId);
+      
+      if (productIndex !== -1) {
+        // Calculate which page the product is on
+        const productPage = Math.floor(productIndex / ITEMS_PER_PAGE) + 1;
+        
+        // Navigate to that page
+        if (productPage !== currentPage) {
+          setCurrentPage(productPage);
+        }
+        
+        // Scroll to the highlighted product after a short delay to allow rendering
+        setTimeout(() => {
+          if (highlightedProductRef.current) {
+            highlightedProductRef.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        }, 100);
+      }
+    }
+  }, [highlightProductId, products, currentPage]);
+
+  // Handle highlighting all low stock products: scroll to first low stock item
+  useEffect(() => {
+    if (highlightAllLowStock && lowStockProducts.length > 0) {
+      // Find the first low stock product
+      const firstLowStockIndex = products.findIndex(p => lowStockProductIds.has(p._id));
+      
+      if (firstLowStockIndex !== -1) {
+        // Calculate which page the first low stock product is on
+        const productPage = Math.floor(firstLowStockIndex / ITEMS_PER_PAGE) + 1;
+        
+        // Navigate to that page
+        if (productPage !== currentPage) {
+          setCurrentPage(productPage);
+        }
+        
+        // Scroll to the first low stock product after a short delay
+        setTimeout(() => {
+          if (firstLowStockRef.current) {
+            firstLowStockRef.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        }, 100);
+      }
+    }
+  }, [highlightAllLowStock, lowStockProducts.length, products, currentPage, lowStockProductIds]);
 
   if (loading) {
     return (
@@ -60,9 +135,27 @@ export const ProductList: React.FC<ProductListProps> = ({
     <div className="space-y-6">
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {currentProducts.map((product) => (
-          <Card key={product._id} className="hover:shadow-lg transition-shadow duration-200">
-            <CardContent className="p-4">
+        {currentProducts.map((product, index) => {
+          const isSingleHighlight = highlightProductId === product._id;
+          const isLowStock = lowStockProductIds.has(product._id);
+          const isAllLowStockHighlight = highlightAllLowStock && isLowStock;
+          const isHighlighted = isSingleHighlight || isAllLowStockHighlight;
+          
+          // Use ref for the first low stock product when highlighting all
+          const isFirstLowStockOnPage = highlightAllLowStock && isLowStock && 
+            currentProducts.findIndex(p => lowStockProductIds.has(p._id)) === index;
+          
+          return (
+            <Card 
+              key={product._id} 
+              ref={isSingleHighlight ? highlightedProductRef : isFirstLowStockOnPage ? firstLowStockRef : null}
+              className={`hover:shadow-lg transition-all duration-200 ${
+                isHighlighted 
+                  ? 'ring-4 ring-blue-500 ring-offset-2 shadow-xl bg-blue-50' 
+                  : ''
+              }`}
+            >
+              <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-800 truncate">{product.name}</h3>
                 <Badge
@@ -139,7 +232,8 @@ export const ProductList: React.FC<ProductListProps> = ({
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {/* Pagination */}

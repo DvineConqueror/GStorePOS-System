@@ -10,11 +10,14 @@ import {
   Clock,
   AlertTriangle,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Send
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getColorScheme } from '@/utils/colorSchemes';
+import { useToast } from '@/hooks/use-toast';
+import { notificationsAPI } from '@/lib/api';
 
 interface PendingUser {
   _id: string;
@@ -65,6 +68,8 @@ export default function NotificationDialog({
   const { user } = useAuth();
   const navigate = useNavigate();
   const colors = getColorScheme();
+  const { toast } = useToast();
+  const [notifying, setNotifying] = useState(false);
 
   const handleUserClick = (userId: string) => {
     onClose();
@@ -84,20 +89,52 @@ export default function NotificationDialog({
     }
   };
 
+  const notifyManagersAboutLowStock = async (productId?: string) => {
+    try {
+      setNotifying(true);
+      const response = await notificationsAPI.notifyManagers({
+        type: 'low_stock_request',
+        productId: productId,
+        message: productId 
+          ? 'Superadmin requests attention for a low stock product'
+          : 'Superadmin requests review of all low stock items'
+      });
+
+      if (response.success) {
+        toast({
+          title: "Managers Notified",
+          description: "All managers have been notified about the low stock items.",
+          variant: "success",
+        });
+        onClose();
+      }
+    } catch (error) {
+      toast({
+        title: "Notification Failed",
+        description: "Failed to notify managers. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setNotifying(false);
+    }
+  };
+
   const handleViewAllProducts = () => {
-    onClose();
     if (user?.role === 'superadmin') {
-      navigate('/superadmin/inventory');
+      // Notify all managers instead of navigating
+      notifyManagersAboutLowStock();
     } else {
+      onClose();
       navigate('/dashboard?highlight=low-stock');
     }
   };
 
-  const handleProductClick = (productId: string) => {
-    onClose();
+  const handleProductClick = (productId: string, productName: string) => {
     if (user?.role === 'superadmin') {
-      navigate(`/superadmin/inventory?productId=${productId}`);
+      // Notify managers about this specific product
+      notifyManagersAboutLowStock(productId);
     } else {
+      onClose();
       navigate(`/dashboard?highlight=low-stock&productId=${productId}`);
     }
   };
@@ -267,7 +304,7 @@ export default function NotificationDialog({
                             <div
                               key={product._id}
                               className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 cursor-pointer transition-colors"
-                              onClick={() => handleProductClick(product._id)}
+                              onClick={() => handleProductClick(product._id, product.name)}
                             >
                               <div className="flex items-center gap-3 flex-1">
                                 <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
@@ -287,7 +324,11 @@ export default function NotificationDialog({
                                   </div>
                                 </div>
                               </div>
-                              <ExternalLink className="h-4 w-4 text-gray-400" />
+                              {user?.role === 'superadmin' ? (
+                                <Send className="h-4 w-4 text-blue-600" />
+                              ) : (
+                                <ExternalLink className="h-4 w-4 text-gray-400" />
+                              )}
                             </div>
                           ))}
                           {lowStockAlerts.count > 3 && (
@@ -378,7 +419,7 @@ export default function NotificationDialog({
                         <div
                           key={product._id}
                           className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 cursor-pointer transition-colors"
-                          onClick={() => handleProductClick(product._id)}
+                          onClick={() => handleProductClick(product._id, product.name)}
                         >
                           <div className="flex items-center gap-4 flex-1">
                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
@@ -398,15 +439,27 @@ export default function NotificationDialog({
                               </div>
                             </div>
                           </div>
-                          <ExternalLink className="h-4 w-4 text-gray-400" />
+                          {user?.role === 'superadmin' ? (
+                            <Send className="h-4 w-4 text-blue-600" />
+                          ) : (
+                            <ExternalLink className="h-4 w-4 text-gray-400" />
+                          )}
                         </div>
                       ))}
                     </div>
                     <Button
                       onClick={handleViewAllProducts}
+                      disabled={notifying}
                       className={`w-full mt-4 ${colors.primaryButton} text-white`}
                     >
-                      View All Products
+                      {user?.role === 'superadmin' ? (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          {notifying ? 'Notifying Managers...' : 'Notify All Managers'}
+                        </>
+                      ) : (
+                        'View All Products'
+                      )}
                     </Button>
                   </div>
                 </TabsContent>

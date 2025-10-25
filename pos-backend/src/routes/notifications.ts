@@ -44,4 +44,9 @@ router.get('/queue-status', authenticate, requireManager, NotificationController
 // @access  Private (Manager/Superadmin only)
 router.delete('/clear-completed', authenticate, requireManager, NotificationController.clearCompletedNotifications);
 
+// @desc    Notify all managers about low stock
+// @route   POST /api/v1/notifications/notify-managers
+// @access  Private (Superadmin only)
+router.post('/notify-managers', authenticate, requireManager, NotificationController.notifyManagers);
+
 export default router;

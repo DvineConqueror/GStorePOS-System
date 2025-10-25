@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,7 +13,17 @@ import { ProductList } from './ProductList';
 import { ProductForm } from './ProductForm';
 import { ProductFilters as ProductFiltersType } from '@/types/product';
 
-export const ProductManagement: React.FC = () => {
+interface ProductManagementProps {
+  highlightProductId?: string | null;
+  highlightAllLowStock?: boolean;
+  onClearHighlight?: () => void;
+}
+
+export const ProductManagement: React.FC<ProductManagementProps> = ({ 
+  highlightProductId,
+  highlightAllLowStock = false,
+  onClearHighlight 
+}) => {
   // React Query hooks
   const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts();
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
@@ -239,6 +249,9 @@ export const ProductManagement: React.FC = () => {
             onToggleStatus={handleToggleProductStatus}
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
+            highlightProductId={highlightProductId}
+            highlightAllLowStock={highlightAllLowStock}
+            onClearHighlight={onClearHighlight}
           />
         </CardContent>
       </Card>

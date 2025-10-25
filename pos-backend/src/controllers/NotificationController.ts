@@ -222,13 +222,13 @@ export class NotificationController {
 
       switch (type) {
         case 'user':
-          result = await this.notificationService.sendUserNotification(target, type, message, data);
+          result = await NotificationController.notificationService.sendUserNotification(target, type, message, data);
           break;
         case 'role':
-          result = await this.notificationService.sendRoleNotification([target], type, message, data);
+          result = await NotificationController.notificationService.sendRoleNotification([target], type, message, data);
           break;
         case 'broadcast':
-          result = await this.notificationService.sendBroadcastNotification(type, message, data);
+          result = await NotificationController.notificationService.sendBroadcastNotification(type, message, data);
           break;
         default:
           res.status(400).json({
@@ -263,7 +263,7 @@ export class NotificationController {
    */
   static async getQueueStatus(req: Request, res: Response): Promise<void> {
     try {
-      const status = this.notificationService.getQueueStatus();
+      const status = NotificationController.notificationService.getQueueStatus();
 
       res.json({
         success: true,
@@ -284,7 +284,7 @@ export class NotificationController {
    */
   static async clearCompletedNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const clearedCount = this.notificationService.clearCompletedNotifications();
+      const clearedCount = NotificationController.notificationService.clearCompletedNotifications();
 
       res.json({
         success: true,
@@ -296,6 +296,82 @@ export class NotificationController {
       res.status(500).json({
         success: false,
         message: 'Server error while clearing completed notifications.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Notify all managers about low stock items
+   */
+  static async notifyManagers(req: Request, res: Response): Promise<void> {
+    try {
+      const { type, productId, message } = req.body;
+
+      if (!type || !message) {
+        res.status(400).json({
+          success: false,
+          message: 'Type and message are required.',
+        } as ApiResponse);
+        return;
+      }
+
+      // Get product details if productId is provided
+      let productDetails = null;
+      if (productId) {
+        productDetails = await Product.findById(productId).select('name stock minStock sku category');
+        if (!productDetails) {
+          res.status(404).json({
+            success: false,
+            message: 'Product not found.',
+          } as ApiResponse);
+          return;
+        }
+      }
+
+      // Send notification to all managers
+      const notificationData = {
+        type: 'low_stock_request',
+        message: message,
+        product: productDetails ? {
+          id: productDetails._id,
+          name: productDetails.name,
+          stock: productDetails.stock,
+          minStock: productDetails.minStock,
+          sku: productDetails.sku,
+          category: productDetails.category
+        } : null,
+        requestedBy: 'superadmin',
+        timestamp: new Date().toISOString()
+      };
+
+      // Use the notification service to send to all managers
+      const result = await NotificationController.notificationService.sendRoleNotification(
+        ['manager'],
+        'low_stock_request',
+        message,
+        notificationData
+      );
+
+      if (result) {
+        res.json({
+          success: true,
+          message: 'All managers have been notified successfully.',
+          data: {
+            notifiedRole: 'manager',
+            notificationData
+          }
+        } as ApiResponse);
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to notify managers.',
+        } as ApiResponse);
+      }
+    } catch (error) {
+      console.error('Notify managers error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while notifying managers.',
       } as ApiResponse);
     }
   }

@@ -322,6 +322,15 @@ export const notificationsAPI = {
     const response = await api.get('/notifications/low-stock');
     return response.data;
   },
+
+  notifyManagers: async (data: {
+    type: string;
+    productId?: string;
+    message: string;
+  }) => {
+    const response = await api.post('/notifications/notify-managers', data);
+    return response.data;
+  },
 };
 
 // Transactions API

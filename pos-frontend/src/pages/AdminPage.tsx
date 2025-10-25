@@ -17,6 +17,7 @@ import { Users, Package, BarChart3, ShoppingCart, LogOut} from 'lucide-react';
 import { ManagerLogo } from '@/components/ui/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { useUsers } from '@/hooks/useUsers';
+import NotificationButton from '@/components/notifications/NotificationButton';
 
 const AdminPageContent = () => {
   const { user, signOut } = useAuth();
@@ -59,21 +60,30 @@ const AdminPageContent = () => {
   // Get highlight parameters from URL
   const shouldHighlightPending = searchParams.get('highlight') === 'pending';
   const highlightUserId = searchParams.get('userId');
+  const shouldHighlightLowStock = searchParams.get('highlight') === 'low-stock';
+  const highlightProductId = searchParams.get('productId');
+  const highlightAllLowStock = shouldHighlightLowStock && !highlightProductId; // View All Products mode
   
   // State to control which tab is active
   const [activeTab, setActiveTab] = useState('users');
   
-  // Switch to users tab when highlighting is active (one-time effect)
+  // Switch to users tab when highlighting pending users
   useEffect(() => {
     if (shouldHighlightPending) {
       setActiveTab('users');
     }
   }, [shouldHighlightPending]);
+
+  // Switch to products tab when highlighting low stock products (single or all)
+  useEffect(() => {
+    if (shouldHighlightLowStock) {
+      setActiveTab('products');
+    }
+  }, [shouldHighlightLowStock]);
   
-  // Clear highlight parameters when navigating away from users tab
+  // Clear highlight parameters for pending users after 10 seconds
   useEffect(() => {
     if (shouldHighlightPending) {
-      // Set a timeout to clear highlight after 10 seconds
       const timer = setTimeout(() => {
         const newSearchParams = new URLSearchParams(searchParams);
         newSearchParams.delete('highlight');
@@ -85,11 +95,26 @@ const AdminPageContent = () => {
     }
   }, [shouldHighlightPending, searchParams, setSearchParams]);
 
+  // Clear highlight parameters for low stock products after 10 seconds (both single and all modes)
+  useEffect(() => {
+    if (shouldHighlightLowStock) {
+      const timer = setTimeout(() => {
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete('highlight');
+        newSearchParams.delete('productId');
+        setSearchParams(newSearchParams, { replace: true });
+      }, 10000); // 10 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldHighlightLowStock, searchParams, setSearchParams]);
+
   // Function to clear highlight manually
   const handleClearHighlight = () => {
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.delete('highlight');
     newSearchParams.delete('userId');
+    newSearchParams.delete('productId');
     setSearchParams(newSearchParams, { replace: true });
   };
 
@@ -123,6 +148,7 @@ const AdminPageContent = () => {
               <Users className="h-4 w-4 text-green-600" />
               <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
             </div>
+            <NotificationButton />
             <Button
               variant="ghost"
               size="icon"
@@ -185,7 +211,11 @@ const AdminPageContent = () => {
 
           {/* Product Management Tab */}
           <TabsContent value="products" className="space-y-6">
-            <ProductManagement />
+            <ProductManagement 
+              highlightProductId={shouldHighlightLowStock ? highlightProductId : undefined}
+              highlightAllLowStock={highlightAllLowStock}
+              onClearHighlight={handleClearHighlight}
+            />
           </TabsContent>
 
           {/* POS System Tab */}
