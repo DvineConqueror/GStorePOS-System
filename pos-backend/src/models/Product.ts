@@ -52,7 +52,7 @@ const productSchema = new Schema<IProduct>({
   minStock: {
     type: Number,
     min: [0, 'Minimum stock cannot be negative'],
-    default: 0,
+    default: 10,
   },
   maxStock: {
     type: Number,

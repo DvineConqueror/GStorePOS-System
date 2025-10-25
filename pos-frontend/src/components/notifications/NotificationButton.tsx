@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { getColorScheme } from '@/utils/colorSchemes';
 import { useSocket } from '@/context/SocketContext';
+import { useRefresh } from '@/context/RefreshContext';
 import NotificationDialog from './NotificationDialog';
 
 interface PendingUser {
@@ -55,15 +56,30 @@ export default function NotificationButton({ className }: NotificationButtonProp
   const { user } = useAuth();
   const colors = getColorScheme();
   const { isConnected } = useSocket();
+  const { refreshTrigger } = useRefresh();
   
   const [notificationData, setNotificationData] = useState<NotificationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
 
-  // Only show for superadmin and manager roles
-  if (!user || (user.role !== 'superadmin' && user.role !== 'manager')) {
-    return null;
-  }
+  const fetchAllNotifications = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Import API dynamically to avoid circular dependencies
+      const { notificationsAPI } = await import('@/lib/api');
+      
+      const response = await notificationsAPI.getAllNotifications();
+      
+      if (response.success) {
+        setNotificationData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchAllNotifications();
@@ -88,7 +104,7 @@ export default function NotificationButton({ className }: NotificationButtonProp
       window.removeEventListener('lowStockUpdate', handleNotificationUpdate);
       clearInterval(interval);
     };
-  }, [user?.role, isConnected]);
+  }, [user?.role, isConnected, refreshTrigger]);
 
   // Listen for WebSocket notifications and refresh data
   useEffect(() => {
@@ -106,28 +122,14 @@ export default function NotificationButton({ className }: NotificationButtonProp
     };
   }, []);
 
-  const fetchAllNotifications = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Import API dynamically to avoid circular dependencies
-      const { notificationsAPI } = await import('@/lib/api');
-      
-      const response = await notificationsAPI.getAllNotifications();
-      
-      if (response.success) {
-        setNotificationData(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleNotificationClick = () => {
     setShowNotificationDialog(true);
   };
+
+  // Only show for superadmin and manager roles
+  if (!user || (user.role !== 'superadmin' && user.role !== 'manager')) {
+    return null;
+  }
 
   return (
     <>

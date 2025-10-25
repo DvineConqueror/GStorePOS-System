@@ -15,6 +15,8 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { systemSettingsAPI } from '@/lib/api';
 import { Textarea } from '@/components/ui/textarea';
+import { useRefresh } from '@/context/RefreshContext';
+import { useDataPrefetch } from '@/context/DataPrefetchContext';
 
 export default function SystemSettings() {
   const [loading, setLoading] = useState(false);
@@ -31,6 +33,8 @@ export default function SystemSettings() {
   });
 
   const { toast } = useToast();
+  const { triggerRefresh } = useRefresh();
+  const { refreshData } = useDataPrefetch();
 
   useEffect(() => {
     fetchSettings();
@@ -67,6 +71,12 @@ export default function SystemSettings() {
           title: "Settings Saved",
           description: "System settings have been updated successfully.",
         });
+        
+        // Refresh data to reflect setting changes (e.g., low stock alerts toggle)
+        await refreshData(['products', 'analytics', 'pendingCount']);
+        
+        // Trigger global refresh for all components
+        triggerRefresh();
       } else {
         throw new Error(response.data.message || 'Failed to save settings');
       }
