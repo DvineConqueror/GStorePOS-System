@@ -615,7 +615,7 @@ export function ModernCashierAnalyticsV3() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Sales Trend</h3>
                 <p className="text-sm text-gray-600">
-                  {trendPeriod === 'weekly' && 'Sales performance over the last 7 days'}
+                  {trendPeriod === 'weekly' && 'Weekly breakdown of current month (Week 1-4)'}
                   {trendPeriod === 'monthly' && 'Sales performance over the last 12 months'}
                   {trendPeriod === 'annual' && 'Sales performance over the last 5 years'}
                 </p>
