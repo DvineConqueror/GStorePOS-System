@@ -1,8 +1,9 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { transactionsAPI } from '@/lib/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { transactionsAPI, analyticsAPI } from '@/lib/api';
 import { formatCurrency } from '@/utils/format';
 import { WeeklyTrendChart } from '@/components/analytics/WeeklyTrendChart';
 import { CategoryBreakdownChart } from '@/components/analytics/CategoryBreakdownChart';
@@ -80,6 +81,41 @@ export function ModernCashierAnalyticsV3() {
   const products = productsData?.data || [];
   const categories = categoriesData?.data || [];
   const [loading, setLoading] = useState(true);
+  
+  // Sales trend period state
+  const [trendPeriod, setTrendPeriod] = useState<'weekly' | 'monthly' | 'annual'>('weekly');
+  const [trendData, setTrendData] = useState<Array<{ day: string; sales: number }>>([]);
+  const [loadingTrends, setLoadingTrends] = useState(false);
+
+  // Fetch sales trends based on selected period
+  const fetchSalesTrends = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoadingTrends(true);
+      const response = await analyticsAPI.getSalesTrends({ 
+        period: trendPeriod,
+        cashierId: user.id 
+      });
+      if (response.success) {
+        // Transform data to match WeeklyTrendChart expected format
+        const transformedData = response.data.map((item: { label: string; sales: number }) => ({
+          day: item.label,
+          sales: item.sales
+        }));
+        setTrendData(transformedData);
+      }
+    } catch (error) {
+      console.error('Error fetching sales trends:', error);
+    } finally {
+      setLoadingTrends(false);
+    }
+  }, [trendPeriod, user?.id]);
+
+  // Fetch trends when period changes
+  useEffect(() => {
+    fetchSalesTrends();
+  }, [fetchSalesTrends]);
 
   const analytics = useMemo(() => {
     if (!analyticsData || !user?.id) return null;
@@ -570,22 +606,44 @@ export function ModernCashierAnalyticsV3() {
         </Card>
       </div>
 
-      {/* Weekly Trend Chart */}
+      {/* Sales Trend Chart with Period Selector */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-3">
-            <TrendingUpIcon className="h-5 w-5 text-green-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Weekly Trend</h3>
-              <p className="text-sm text-gray-600">Sales performance over the last 7 days</p>
-            </div>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-3">
+              <TrendingUpIcon className="h-5 w-5 text-green-600" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Sales Trend</h3>
+                <p className="text-sm text-gray-600">
+                  {trendPeriod === 'weekly' && 'Sales performance over the last 7 days'}
+                  {trendPeriod === 'monthly' && 'Sales performance over the last 12 months'}
+                  {trendPeriod === 'annual' && 'Sales performance over the last 5 years'}
+                </p>
+              </div>
+            </CardTitle>
+            <Select value={trendPeriod} onValueChange={(value: 'weekly' | 'monthly' | 'annual') => setTrendPeriod(value)}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="annual">Annual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
-          <WeeklyTrendChart 
-            data={analytics.weeklyTrend} 
-            loading={loading}
-          />
+          {loadingTrends ? (
+            <div className="h-80 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+            </div>
+          ) : (
+            <WeeklyTrendChart 
+              data={trendData.length > 0 ? trendData : analytics.weeklyTrend} 
+              loading={loadingTrends}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

@@ -254,7 +254,7 @@ export default function UserApproval({ onApprovalChange }: UserApprovalProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#ececec]">
+    <div className="min-h-screen bg-teal-50">
       <div className="space-y-8 p-6">
         {/* Authority Header */}
         <div className="border-b border-gray-200 pb-6">

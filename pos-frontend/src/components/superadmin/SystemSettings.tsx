@@ -91,7 +91,7 @@ export default function SystemSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-[#ececec] p-6">
+    <div className="min-h-screen bg-teal-50 p-6">
       <div className="max-w-4xl mx-auto space-y-5">
         {/* Header with Save button */}
         <div className="flex justify-end mb-1">

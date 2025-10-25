@@ -483,6 +483,14 @@ export const analyticsAPI = {
     const response = await api.get('/analytics/inventory');
     return response.data;
   },
+
+  getSalesTrends: async (params?: {
+    period?: 'weekly' | 'monthly' | 'annual';
+    cashierId?: string;
+  }) => {
+    const response = await api.get('/analytics/trends', { params });
+    return response.data;
+  },
 };
 
 // System Settings API

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AnalyticsService } from '../services/AnalyticsService';
 import { AnalyticsCacheService } from '../services/AnalyticsCacheService';
+import { SalesTrendService } from '../services/analytics/SalesTrendService';
 import { ApiResponse } from '../types';
 
 export class AnalyticsController {
@@ -181,6 +182,49 @@ export class AnalyticsController {
       res.status(500).json({
         success: false,
         message: 'Server error while retrieving inventory analytics.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Get sales trends (weekly, monthly, annual)
+   */
+  static async getSalesTrends(req: Request, res: Response): Promise<void> {
+    try {
+      const { period = 'weekly', cashierId } = req.query;
+
+      // Validate period
+      if (!['weekly', 'monthly', 'annual'].includes(period as string)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid period. Must be weekly, monthly, or annual.',
+        } as ApiResponse);
+        return;
+      }
+
+      // Get trends based on user role and cashierId
+      let trendsData;
+      if (cashierId) {
+        trendsData = await SalesTrendService.getCashierSalesTrends(
+          cashierId as string,
+          period as 'weekly' | 'monthly' | 'annual'
+        );
+      } else {
+        trendsData = await SalesTrendService.getManagerSalesTrends(
+          period as 'weekly' | 'monthly' | 'annual'
+        );
+      }
+
+      res.json({
+        success: true,
+        message: 'Sales trends retrieved successfully.',
+        data: trendsData
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Get sales trends error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while retrieving sales trends.',
       } as ApiResponse);
     }
   }

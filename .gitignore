@@ -106,3 +106,5 @@ Thumbs.db
 # Uploads
 uploads/
 pos-backend/uploads/
+generate.py
+pos_transactions_dataset.csv

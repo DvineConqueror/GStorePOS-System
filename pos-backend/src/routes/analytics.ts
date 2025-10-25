@@ -29,4 +29,9 @@ router.get('/cashiers', authenticate, requireAdmin, AnalyticsController.getCashi
 // @access  Private (Admin only)
 router.get('/inventory', authenticate, requireAdmin, AnalyticsController.getInventoryAnalytics);
 
+// @desc    Get sales trends (weekly, monthly, annual)
+// @route   GET /api/v1/analytics/trends
+// @access  Private (All authenticated users)
+router.get('/trends', authenticate, AnalyticsController.getSalesTrends);
+
 export default router;
