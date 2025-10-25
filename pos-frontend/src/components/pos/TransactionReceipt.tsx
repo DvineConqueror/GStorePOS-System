@@ -1,5 +1,6 @@
 import { Transaction } from '@/types';
 import { formatCurrency } from '@/utils/format';
+import { calculateVAT } from '@/utils/vat';
 import './receipt.css';  // We'll create this file separately
 
 interface ReceiptProps {
@@ -7,6 +8,8 @@ interface ReceiptProps {
 }
 
 export function TransactionReceipt({ transaction }: ReceiptProps) {
+  const vatBreakdown = calculateVAT(transaction.total);
+  
   return (
     <div className="flex justify-center w-full">
       <div className="receipt-container font-mono text-sm">
@@ -30,9 +33,19 @@ export function TransactionReceipt({ transaction }: ReceiptProps) {
           ))}
         </div>
 
-        <div className="mt-2">
-          <div className="flex justify-between font-bold">
-            <div className="text-black">Total</div>
+        <div className="mt-2 space-y-1">
+          <div className="border-t border-dashed pt-2">
+            <div className="flex justify-between text-xs">
+              <div className="text-gray-600">Net Sales</div>
+              <div>{formatCurrency(vatBreakdown.netSales)}</div>
+            </div>
+            <div className="flex justify-between text-xs">
+              <div className="text-gray-600">VAT ({vatBreakdown.vatRate}%)</div>
+              <div>{formatCurrency(vatBreakdown.vatAmount)}</div>
+            </div>
+          </div>
+          <div className="flex justify-between font-bold border-t border-dashed pt-2">
+            <div className="text-black">Total (VAT Inc.)</div>
             <div>{formatCurrency(transaction.total)}</div>
           </div>
           <div className="flex justify-between">

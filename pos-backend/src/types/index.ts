@@ -78,6 +78,9 @@ export interface ITransaction extends Document {
   tax: number;
   discount: number;
   total: number;
+  vatAmount: number; // VAT amount extracted from total (12/112 of total)
+  netSales: number; // Net sales (total - vatAmount)
+  vatRate: number; // VAT rate applied (default 12%)
   paymentMethod: 'cash' | 'card' | 'digital';
   cashierId: string;
   cashierName: string;

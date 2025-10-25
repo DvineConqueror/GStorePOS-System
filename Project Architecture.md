@@ -29,7 +29,7 @@ pos-backend/src/
 └── utils/           # Helper functions
 ```
 
-### **🔄 Data Flow**
+### ** Data Flow**
 ```
 HTTP Request → Routes → Controllers → Services → Models → Database
                 ↓
@@ -95,7 +95,7 @@ pos-frontend/src/
 └── utils/           # Helper functions
 ```
 
-### **🔄 Component Hierarchy**
+### ** Component Hierarchy**
 ```
 App
 ├── AuthProvider

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePos } from '@/context/PosContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/utils/format';
+import { calculateVAT } from '@/utils/vat';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TransactionReceipt } from './TransactionReceipt';
 import { Label } from '@/components/ui/label';
@@ -22,14 +23,20 @@ export function CheckoutDialog() {
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
 
   const total = calculateTotal();
+  const vatBreakdown = calculateVAT(total);
   const cashReceived = parseFloat(cashAmount) || 0;
   const cashLimit = 10000;
   const change = cashReceived - total;
 
   const handleCashAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (/^\d*\.?\d*$/.test(value)) {
-      setCashAmount(value);
+    // Allow only numbers and decimal point, max 10 digits before decimal
+    if (/^\d*\.?\d{0,2}$/.test(value) && value.length <= 13) {
+      const numValue = parseFloat(value) || 0;
+      // Prevent numbers larger than 1 million
+      if (numValue <= 1000000) {
+        setCashAmount(value);
+      }
     }
   };
 
@@ -132,27 +139,44 @@ export function CheckoutDialog() {
         ) : showCashInput ? (
           <div className="flex flex-col flex-1">
             <div className="px-4 py-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-sm font-medium text-black">Total Amount</Label>
-                  <div className="text-xl font-bold text-green-600">{formatCurrency(total)}</div>
+              <div className="bg-gray-50 p-3 rounded-lg space-y-2 border border-gray-200">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Net Sales</span>
+                  <span>{formatCurrency(vatBreakdown.netSales)}</span>
                 </div>
-                <div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>VAT ({vatBreakdown.vatRate}%)</span>
+                  <span>{formatCurrency(vatBreakdown.vatAmount)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-base pt-1 border-t border-gray-300">
+                  <span className="text-black">Total (VAT Inclusive)</span>
+                  <span className="text-green-600">{formatCurrency(total)}</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center">
+                  <Label className="text-sm font-medium text-black">Cash Received</Label>
+                  <div className="text-xl font-bold text-green-700 truncate">{formatCurrency(cashReceived)}</div>
+                </div>
+                <div className="text-center">
                   <Label className="text-sm font-medium text-black">Change</Label>
-                  <div className={`text-xl font-bold ${change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                  <div className={`text-xl font-bold truncate ${change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                     {formatCurrency(change >= 0 ? change : 0)}
                   </div>
                 </div>
               </div>
               <div>
-                <Label htmlFor="cashAmount" className="text-sm font-medium text-black">Cash Received</Label>
+                <Label htmlFor="cashAmount" className="text-sm font-medium text-black">Enter Cash Amount</Label>
                 <Input
                   id="cashAmount"
+                  type="text"
+                  inputMode="decimal"
                   value={cashAmount}
                   onChange={handleCashAmountChange}
                   placeholder="0.00"
+                  maxLength={13}
                   autoFocus
-                  className="mt-1 text-black"
+                  className="mt-1 text-black text-lg"
                 />
                 {cashReceived > cashLimit && (
                   <p className="text-sm text-red-500 mt-1">
@@ -187,9 +211,19 @@ export function CheckoutDialog() {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between font-bold text-lg pt-2 border-t text-black">
-                <span>Total</span>
-                <span className="text-green-600">{formatCurrency(total)}</span>
+              <div className="pt-2 border-t space-y-1">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Net Sales</span>
+                  <span>{formatCurrency(vatBreakdown.netSales)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>VAT ({vatBreakdown.vatRate}%)</span>
+                  <span>{formatCurrency(vatBreakdown.vatAmount)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg pt-1 border-t text-black">
+                  <span>Total (VAT Inclusive)</span>
+                  <span className="text-green-600">{formatCurrency(total)}</span>
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-500">Select payment method:</Label>

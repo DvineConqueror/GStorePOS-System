@@ -275,7 +275,7 @@ export class LoginService {
               </div>
               
               <div class="warning">
-                <div class="warning-title">⚠️ If this was not you, please take action immediately:</div>
+                <div class="warning-title"> If this was not you, please take action immediately:</div>
                 <ul class="warning-list">
                   <li>Change your password immediately</li>
                   <li>Contact your system administrator</li>

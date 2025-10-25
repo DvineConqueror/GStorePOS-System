@@ -138,7 +138,7 @@ This is your last chance. Type "YES" to permanently delete all data: YES
   Clearing users...
      Deleted 15 users
 
-🔄 Resetting counters...
+ Resetting counters...
    Transaction number counters will reset automatically
    All indexes remain intact
 
@@ -162,7 +162,7 @@ This is your last chance. Type "YES" to permanently delete all data: YES
    4. Start using the system with fresh data
 
 Disconnected from MongoDB
-👋 Goodbye!
+ Goodbye!
 ```
 
 ## Requirements

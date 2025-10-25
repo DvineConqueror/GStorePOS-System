@@ -4,12 +4,16 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/utils/format';
+import { calculateVAT } from '@/utils/vat';
 import { useState } from 'react';
 
 export function Cart() {
   const { state, removeFromCart, updateQuantity, clearCart, toggleCheckout, calculateTotal } = usePos();
   const { cart, products } = state;
   const [confirmClear, setConfirmClear] = useState(false);
+  
+  const total = calculateTotal();
+  const vatBreakdown = calculateVAT(total);
 
   // Helper function to get product stock
   const getProductStock = (productId: string): number => {
@@ -132,16 +136,24 @@ export function Cart() {
           )}
         </div>
 
-        <div className="border-t pt-3 lg:pt-4 space-y-3 lg:space-y-4 mt-auto">
-          <div className="flex flex-col space-y-1 lg:space-y-2 text-xs lg:text-sm text-gray-500">
+        <div className="border-t pt-3 lg:pt-4 space-y-2 lg:space-y-3 mt-auto">
+          <div className="flex flex-col space-y-1 text-xs lg:text-sm text-gray-600">
             <div className="flex justify-between">
               <span>Items</span>
               <span>{cart.reduce((acc, item) => acc + item.quantity, 0)} items</span>
             </div>
+            <div className="flex justify-between">
+              <span>Net Sales</span>
+              <span>{formatCurrency(vatBreakdown.netSales)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>VAT ({vatBreakdown.vatRate}%)</span>
+              <span>{formatCurrency(vatBreakdown.vatAmount)}</span>
+            </div>
           </div>
-          <div className="flex items-center justify-between font-bold text-base lg:text-lg">
+          <div className="flex items-center justify-between font-bold text-base lg:text-lg border-t pt-2">
             <span className="text-black">Total</span>
-            <span className='text-black'>{formatCurrency(calculateTotal())}</span>
+            <span className='text-green-600'>{formatCurrency(total)}</span>
           </div>
           <Button
             className="w-full bg-green-600 hover:bg-green-700 text-sm lg:text-base"

@@ -14,7 +14,9 @@
     "create-superadmin": "node scripts/create-superadmin.js",
     "init-indexes": "node scripts/init-indexes.js",
     "reset-indexes": "node scripts/reset-indexes.js",
-    "init-category-groups": "node scripts/init-category-groups.js"
+    "init-category-groups": "node scripts/init-category-groups.js",
+    "init-vat": "node scripts/init-vat-settings.js",
+    "migrate-vat": "node scripts/migrate-add-vat.js"
   },
   "keywords": [
     "pos",

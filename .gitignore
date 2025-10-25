@@ -108,3 +108,6 @@ uploads/
 pos-backend/uploads/
 generate.py
 pos_transactions_dataset.csv
+VAT_CHANGES_SUMMARY.md
+VAT_IMPLEMENTATION.md
+VAT_SETUP_GUIDE.md

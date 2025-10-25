@@ -70,6 +70,25 @@ const transactionSchema = new Schema<ITransaction>({
     required: [true, 'Total amount is required'],
     min: [0, 'Total cannot be negative'],
   },
+  vatAmount: {
+    type: Number,
+    required: [true, 'VAT amount is required'],
+    min: [0, 'VAT amount cannot be negative'],
+    default: 0,
+  },
+  netSales: {
+    type: Number,
+    required: [true, 'Net sales is required'],
+    min: [0, 'Net sales cannot be negative'],
+    default: 0,
+  },
+  vatRate: {
+    type: Number,
+    required: [true, 'VAT rate is required'],
+    min: [0, 'VAT rate cannot be negative'],
+    max: [100, 'VAT rate cannot exceed 100%'],
+    default: 12,
+  },
   paymentMethod: {
     type: String,
     enum: ['cash', 'card', 'digital'],

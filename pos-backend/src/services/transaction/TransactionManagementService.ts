@@ -3,6 +3,8 @@ import { Product } from '../../models/Product';
 import { ITransaction } from '../../types';
 import { RealtimeAnalyticsService } from '../RealtimeAnalyticsService';
 import { TransactionValidationService } from './TransactionValidationService';
+import { calculateVATFromInclusive } from '../../utils/vat';
+import SystemSettingsService from '../SystemSettingsService';
 
 export class TransactionManagementService {
   /**
@@ -80,6 +82,16 @@ export class TransactionManagementService {
     // Generate transaction number
     const transactionNumber = await this.generateTransactionNumber();
 
+    // Calculate total (VAT-inclusive)
+    const total = subtotal + tax - discount;
+
+    // Get VAT rate from system settings
+    const settings = await SystemSettingsService.getSettings();
+    const vatRate = settings?.taxRate || 12; // Default to 12% if not set
+
+    // Calculate VAT breakdown (since prices are VAT-inclusive)
+    const vatBreakdown = calculateVATFromInclusive(total, vatRate);
+
     // Create transaction
     const transaction = new Transaction({
       transactionNumber,
@@ -87,7 +99,10 @@ export class TransactionManagementService {
       subtotal,
       tax,
       discount,
-      total: subtotal + tax - discount,
+      total: vatBreakdown.total,
+      vatAmount: vatBreakdown.vatAmount,
+      netSales: vatBreakdown.netSales,
+      vatRate: vatBreakdown.vatRate,
       paymentMethod,
       cashierId,
       cashierName,

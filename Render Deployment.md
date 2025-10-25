@@ -197,12 +197,12 @@ Replace `<password>` with your actual password.
 2. **Frontend Environment**:
    - Update `VITE_API_URL`: `https://smart-grocery-pos-backend.onrender.com/api/v1`
 
-### **🔄 Step 7: Redeploy After URL Updates**
+### ** Step 7: Redeploy After URL Updates**
 
 1. **Backend**: Settings → **Manually Deploy**
 2. **Frontend**: Settings → **Manually Deploy**
 
-## ✅ **Post-Deployment Testing**
+## **Post-Deployment Testing**
 
 ### **Test Checklist**:
 
