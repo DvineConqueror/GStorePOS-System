@@ -4,6 +4,7 @@ import { CartItem, Product, Transaction } from '@/types';
 import { productsAPI, transactionsAPI } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useDataPrefetch } from './DataPrefetchContext';
+import { useRefresh } from './RefreshContext';
 
 type PosState = {
   products: Product[];
@@ -121,6 +122,7 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(posReducer, initialState);
   const { toast } = useToast();
   const { data: prefetchedData, refreshData } = useDataPrefetch();
+  const { triggerRefresh } = useRefresh();
 
   const fetchProducts = async () => {
     try {
@@ -237,6 +239,12 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
         
         // Refresh prefetched products to update stock levels
         await refreshData(['products']);
+        
+        // Fetch updated products to reflect new stock levels
+        await fetchProducts();
+        
+        // Trigger global refresh for other components
+        triggerRefresh();
         
         toast({
           title: "Success",
