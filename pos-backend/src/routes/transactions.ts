@@ -9,6 +9,16 @@ const router = express.Router();
 // @access  Private (Cashier, Admin)
 router.get('/', authenticate, requireCashier, TransactionController.getTransactions);
 
+// @desc    Export transactions to CSV
+// @route   GET /api/v1/transactions/export
+// @access  Private (Manager/Superadmin only)
+router.get('/export', authenticate, TransactionController.exportTransactions);
+
+// @desc    Get export statistics (preview)
+// @route   GET /api/v1/transactions/export/stats
+// @access  Private (Manager/Superadmin only)
+router.get('/export/stats', authenticate, TransactionController.getExportStatistics);
+
 // @desc    Get single transaction by ID
 // @route   GET /api/v1/transactions/:id
 // @access  Private (Cashier, Admin)

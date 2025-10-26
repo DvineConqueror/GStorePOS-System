@@ -1,14 +1,18 @@
 import { ModernAnalyticsV3 } from './ModernAnalyticsV3';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Receipt, RefreshCw } from 'lucide-react';
+import { Receipt, RefreshCw, Download } from 'lucide-react';
 import { useState } from 'react';
 import { useDataPrefetch } from '@/context/DataPrefetchContext';
+import { exportAPI } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export function UnifiedAnalytics() {
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
   const { clearAllCaches } = useDataPrefetch();
+  const { toast } = useToast();
 
   const handleRefresh = () => {
     // Clear all caches and force refresh
@@ -25,11 +29,43 @@ export function UnifiedAnalytics() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      
+      // Show loading toast
+      toast({
+        title: 'Exporting...',
+        description: 'Preparing your CSV file...',
+        variant: 'default',
+      });
+
+      // Export all transactions (no filters for now)
+      await exportAPI.exportTransactions();
+
+      // Show success toast
+      toast({
+        title: 'Export Successful',
+        description: 'Your CSV file has been downloaded.',
+        variant: 'success',
+      });
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Export Failed',
+        description: error.message || 'Failed to export transactions.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header with View All Transactions Button */}
+      {/* Header with Action Buttons */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Button
             onClick={handleRefresh}
             variant="outline"
@@ -37,6 +73,15 @@ export function UnifiedAnalytics() {
           >
             <RefreshCw className="h-4 w-4" />
             Refresh Data
+          </Button>
+          <Button
+            onClick={handleExport}
+            disabled={isExporting}
+            variant="outline"
+            className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-50"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? 'Exporting...' : 'Export to CSV'}
           </Button>
           <Button
             onClick={() => navigate('/transactions')}

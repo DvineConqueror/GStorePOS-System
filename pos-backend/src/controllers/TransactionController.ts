@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Transaction } from '../models/Transaction';
 import { TransactionService } from '../services/TransactionService';
+import { TransactionExportService } from '../services/transaction/TransactionExportService';
 import { ApiResponse } from '../types';
 
 export class TransactionController {
@@ -330,6 +331,115 @@ export class TransactionController {
       res.status(500).json({
         success: false,
         message: 'Server error while retrieving top products.',
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Export transactions to CSV
+   * GET /api/v1/transactions/export
+   */
+  static async exportTransactions(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        startDate,
+        endDate,
+        status,
+        cashierId,
+      } = req.query;
+
+      // Build filters
+      const filters: any = {};
+
+      if (startDate) {
+        filters.startDate = new Date(startDate as string);
+      }
+
+      if (endDate) {
+        filters.endDate = new Date(endDate as string);
+      }
+
+      if (status) {
+        filters.status = status as string;
+      }
+
+      if (cashierId) {
+        filters.cashierId = cashierId as string;
+      }
+
+      // Get export data
+      const exportRows = await TransactionExportService.getExportData(filters);
+
+      // Convert to CSV
+      const csvData = TransactionExportService.convertToCSV(exportRows);
+
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const filename = `transactions_export_${timestamp}.csv`;
+
+      // Set headers for CSV download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Pragma', 'no-cache');
+
+      // Send CSV data
+      res.status(200).send(csvData);
+    } catch (error: any) {
+      console.error('Export transactions error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while exporting transactions.',
+        error: error.message,
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Get export statistics (preview before downloading)
+   * GET /api/v1/transactions/export/stats
+   */
+  static async getExportStatistics(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        startDate,
+        endDate,
+        status,
+        cashierId,
+      } = req.query;
+
+      // Build filters
+      const filters: any = {};
+
+      if (startDate) {
+        filters.startDate = new Date(startDate as string);
+      }
+
+      if (endDate) {
+        filters.endDate = new Date(endDate as string);
+      }
+
+      if (status) {
+        filters.status = status as string;
+      }
+
+      if (cashierId) {
+        filters.cashierId = cashierId as string;
+      }
+
+      // Get statistics
+      const stats = await TransactionExportService.getExportStatistics(filters);
+
+      res.status(200).json({
+        success: true,
+        data: stats,
+      } as ApiResponse);
+    } catch (error: any) {
+      console.error('Get export statistics error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error while getting export statistics.',
+        error: error.message,
       } as ApiResponse);
     }
   }

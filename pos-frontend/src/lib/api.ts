@@ -629,4 +629,65 @@ export const imageAPI = {
   cleanupOrphanedImages,
 };
 
+// Export API
+export const exportTransactions = async (filters?: {
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  cashierId?: string;
+}) => {
+  const params = new URLSearchParams();
+  
+  if (filters?.startDate) params.append('startDate', filters.startDate);
+  if (filters?.endDate) params.append('endDate', filters.endDate);
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.cashierId) params.append('cashierId', filters.cashierId);
+
+  const response = await api.get(`/transactions/export?${params.toString()}`, {
+    responseType: 'blob', // Important for file download
+  });
+
+  // Create download link
+  const blob = new Blob([response.data], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  
+  // Generate filename with timestamp
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  link.download = `transactions_export_${timestamp}.csv`;
+  
+  // Trigger download
+  document.body.appendChild(link);
+  link.click();
+  
+  // Cleanup
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+  
+  return { success: true, message: 'Export successful' };
+};
+
+export const getExportStatistics = async (filters?: {
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  cashierId?: string;
+}) => {
+  const params = new URLSearchParams();
+  
+  if (filters?.startDate) params.append('startDate', filters.startDate);
+  if (filters?.endDate) params.append('endDate', filters.endDate);
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.cashierId) params.append('cashierId', filters.cashierId);
+
+  const response = await api.get(`/transactions/export/stats?${params.toString()}`);
+  return response.data;
+};
+
+export const exportAPI = {
+  exportTransactions,
+  getExportStatistics,
+};
+
 export default api;
