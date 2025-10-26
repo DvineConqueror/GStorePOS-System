@@ -1,5 +1,29 @@
 import { AnalyticsReportService } from './analytics/AnalyticsReportService';
 
+/**
+ * AnalyticsService - Facade Pattern
+ * 
+ * This service acts as a Facade that provides a simplified, unified interface
+ * to the complex analytics subsystem.
+ * 
+ * Architecture:
+ * - This class delegates to specialized analytics services for different concerns
+ * - Controllers should only interact with this facade, not the underlying services
+ * 
+ * Delegates to:
+ * - AnalyticsReportService: Generates comprehensive analytics reports
+ * - AnalyticsQueryService: Executes complex database queries for analytics
+ * - AnalyticsCalculationService: Performs calculations and aggregations
+ * - AnalyticsCacheService: Manages caching for performance optimization
+ * - SalesTrendService: Analyzes sales trends over time
+ * - RealtimeAnalyticsBroadcastService: Broadcasts real-time updates via Socket.IO
+ * 
+ * Benefits:
+ * - Single entry point for analytics operations
+ * - Hides complexity of caching, calculation, and real-time updates
+ * - Makes analytics queries consistent across controllers
+ * - Easier to optimize performance without changing controller code
+ */
 export class AnalyticsService {
   /**
    * Get dashboard analytics

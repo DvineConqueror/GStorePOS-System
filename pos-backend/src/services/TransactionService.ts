@@ -1,6 +1,28 @@
 import { TransactionQueryService } from './transaction/TransactionQueryService';
 import { TransactionManagementService } from './transaction/TransactionManagementService';
 
+/**
+ * TransactionService - Facade Pattern
+ * 
+ * This service acts as a Facade that provides a simplified, unified interface
+ * to the complex transaction management subsystem.
+ * 
+ * Architecture:
+ * - This class delegates to specialized services for different concerns
+ * - Controllers should only interact with this facade, not the underlying services
+ * 
+ * Delegates to:
+ * - TransactionQueryService: Handles all transaction queries and data retrieval
+ * - TransactionManagementService: Handles transaction creation, refunds, and modifications
+ * - TransactionValidationService: Validates business rules (used internally by management)
+ * - TransactionExportService: Handles CSV export functionality
+ * 
+ * Benefits:
+ * - Single entry point for transaction operations
+ * - Simplifies complex transaction workflows (stock updates, calculations, notifications)
+ * - Consistent interface for transaction operations across the application
+ * - Easier to maintain and extend transaction functionality
+ */
 export class TransactionService {
   /**
    * Get all transactions with filtering and pagination

@@ -7,6 +7,8 @@ import { AuthPasswordController } from '../controllers/auth/AuthPasswordControll
 import { AuthRegistrationController } from '../controllers/auth/AuthRegistrationController';
 import { authenticate } from '../middleware/auth';
 import { authRateLimit, refreshRateLimit, passwordResetRateLimit } from '../middleware/rateLimiter';
+import { RequestValidation } from '../middleware/validation/requestValidation';
+import { RoleValidation } from '../middleware/validation/roleValidation';
 
 const router = express.Router();
 
@@ -17,7 +19,14 @@ router.post('/setup', AuthSetupController.setup);
 router.post('/register-cashier', AuthLoginController.registerCashier);
 
 // Login routes
-router.post('/login', authRateLimit, AuthLoginController.login);
+router.post(
+  '/login',
+  authRateLimit,
+  RequestValidation.validateRequiredFields(['emailOrUsername', 'password', 'loginMode']),
+  RequestValidation.validateLoginMode(),
+  RoleValidation.validateLoginMode,
+  AuthLoginController.login
+);
 
 // Profile routes
 router.get('/me', authenticate, AuthProfileController.getProfile);

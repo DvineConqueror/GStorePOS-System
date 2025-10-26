@@ -298,6 +298,80 @@ export class NotificationService {
       console.error('Error sending security alert notification:', error);
       }
   }
+
+  /**
+   * Get product details for notification
+   * Returns null if product not found
+   */
+  async getProductDetailsForNotification(productId: string): Promise<{
+    id: string;
+    name: string;
+    stock: number;
+    minStock: number;
+    sku: string;
+    category: string;
+  } | null> {
+    try {
+      const product = await Product.findById(productId).select('name stock minStock sku category');
+      
+      if (!product) {
+        return null;
+      }
+
+      return {
+        id: product._id.toString(),
+        name: product.name,
+        stock: product.stock,
+        minStock: product.minStock,
+        sku: product.sku,
+        category: product.category
+      };
+    } catch (error) {
+      console.error('Error fetching product details for notification:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Notify all managers about low stock or other product issues
+   */
+  async notifyManagers(
+    type: string,
+    message: string,
+    productId?: string
+  ): Promise<boolean> {
+    try {
+      let productDetails = null;
+      
+      if (productId) {
+        productDetails = await this.getProductDetailsForNotification(productId);
+      }
+
+      const notificationData = {
+        type,
+        message,
+        product: productDetails,
+        requestedBy: 'system',
+        timestamp: new Date().toISOString()
+      };
+
+      const result = await this.sendRoleNotification(
+        ['manager'],
+        type,
+        message,
+        notificationData
+      );
+
+      if (result) {
+        console.log(`Manager notification sent successfully: ${type}`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error notifying managers:', error);
+      return false;
+    }
+  }
 }
 
 export default NotificationService;

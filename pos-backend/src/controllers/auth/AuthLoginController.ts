@@ -132,36 +132,7 @@ export class AuthLoginController {
         platform: req.get('X-Platform') || 'Unknown'
       };
 
-      // **ROLE VALIDATION BEFORE AUTHENTICATION**
-      // First, find user by email/username to check their role (without password validation)
-      const user = await User.findOne({
-        $or: [
-          { email: emailOrUsername },
-          { username: emailOrUsername }
-        ]
-      }).select('role username email');
-
-      if (user) {
-        // Check if login mode matches user role
-        if (loginMode === 'cashier' && (user.role === 'manager' || user.role === 'superadmin')) {
-          res.status(403).json({
-            success: false,
-            message: 'Manager/Superadmin access required. Please use Manager Mode to login.',
-            data: { errorType: 'role_mismatch' }
-          } as ApiResponse);
-          return;
-        }
-        
-        if (loginMode === 'admin' && user.role === 'cashier') {
-          res.status(403).json({
-            success: false,
-            message: 'Cashier access required. Please use Cashier Mode to login.',
-            data: { errorType: 'role_mismatch' }
-          } as ApiResponse);
-          return;
-        }
-      }
-
+      // Role validation is now handled by RoleValidation middleware
       // Login using AuthService
       const result = await LoginService.loginUser(emailOrUsername, password, deviceInfo);
 

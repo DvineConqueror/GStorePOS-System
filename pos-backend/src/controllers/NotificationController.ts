@@ -4,6 +4,7 @@ import { Product } from '../models/Product';
 import SystemSettingsService from '../services/SystemSettingsService';
 import NotificationService from '../services/NotificationService';
 import { ApiResponse } from '../types';
+import { ErrorResponse } from '../utils/errorResponse';
 
 export class NotificationController {
   private static notificationService = new NotificationService();
@@ -53,13 +54,9 @@ export class NotificationController {
         }
       };
 
-      res.json(response as ApiResponse);
+      ErrorResponse.success(res, 'Notifications retrieved successfully.', response.data);
     } catch (error) {
-      console.error('Get notifications error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while retrieving notifications.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while retrieving notifications.');
     }
   }
 
@@ -308,71 +305,37 @@ export class NotificationController {
       const { type, productId, message } = req.body;
 
       if (!type || !message) {
-        res.status(400).json({
-          success: false,
-          message: 'Type and message are required.',
-        } as ApiResponse);
+        ErrorResponse.validationError(res, 'Type and message are required.');
         return;
       }
 
-      // Get product details if productId is provided
-      let productDetails = null;
+      // Validate product exists if productId provided
       if (productId) {
-        productDetails = await Product.findById(productId).select('name stock minStock sku category');
+        const productDetails = await NotificationController.notificationService.getProductDetailsForNotification(productId);
         if (!productDetails) {
-          res.status(404).json({
-            success: false,
-            message: 'Product not found.',
-          } as ApiResponse);
+          ErrorResponse.notFound(res, 'Product');
           return;
         }
       }
 
-      // Send notification to all managers
-      const notificationData = {
-        type: 'low_stock_request',
-        message: message,
-        product: productDetails ? {
-          id: productDetails._id,
-          name: productDetails.name,
-          stock: productDetails.stock,
-          minStock: productDetails.minStock,
-          sku: productDetails.sku,
-          category: productDetails.category
-        } : null,
-        requestedBy: 'superadmin',
-        timestamp: new Date().toISOString()
-      };
-
-      // Use the notification service to send to all managers
-      const result = await NotificationController.notificationService.sendRoleNotification(
-        ['manager'],
-        'low_stock_request',
+      // Use the notification service to notify managers
+      const result = await NotificationController.notificationService.notifyManagers(
+        type,
         message,
-        notificationData
+        productId
       );
 
       if (result) {
-        res.json({
-          success: true,
-          message: 'All managers have been notified successfully.',
-          data: {
-            notifiedRole: 'manager',
-            notificationData
-          }
-        } as ApiResponse);
+        ErrorResponse.success(res, 'All managers have been notified successfully.', {
+          notifiedRole: 'manager',
+          type,
+          message
+        });
       } else {
-        res.status(500).json({
-          success: false,
-          message: 'Failed to notify managers.',
-        } as ApiResponse);
+        ErrorResponse.send(res, new Error('Failed to notify managers'), 'Failed to notify managers.');
       }
     } catch (error) {
-      console.error('Notify managers error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while notifying managers.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while notifying managers.');
     }
   }
 }

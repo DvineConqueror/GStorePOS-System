@@ -3,6 +3,7 @@ import { AnalyticsService } from '../services/AnalyticsService';
 import { AnalyticsCacheService } from '../services/AnalyticsCacheService';
 import { SalesTrendService } from '../services/analytics/SalesTrendService';
 import { ApiResponse } from '../types';
+import { ErrorResponse } from '../utils/errorResponse';
 
 export class AnalyticsController {
   /**
@@ -41,17 +42,9 @@ export class AnalyticsController {
       // Cache the result for future requests
       AnalyticsCacheService.setCachedAnalytics(cacheKey, responseData);
 
-      res.json({
-        success: true,
-        message: 'Dashboard analytics retrieved successfully.',
-        data: responseData
-      } as ApiResponse);
+      ErrorResponse.success(res, 'Dashboard analytics retrieved successfully.', responseData);
     } catch (error) {
-      console.error('Get dashboard analytics error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while retrieving dashboard analytics.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while retrieving dashboard analytics.');
     }
   }
 
@@ -75,17 +68,9 @@ export class AnalyticsController {
         groupBy: groupBy as 'day' | 'week' | 'month'
       });
 
-      res.json({
-        success: true,
-        message: 'Sales analytics retrieved successfully.',
-        data: analyticsData
-      } as ApiResponse);
+      ErrorResponse.success(res, 'Sales analytics retrieved successfully.', analyticsData);
     } catch (error) {
-      console.error('Get sales analytics error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while retrieving sales analytics.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while retrieving sales analytics.');
     }
   }
 
@@ -109,17 +94,9 @@ export class AnalyticsController {
         limit: parseInt(limit as string)
       });
 
-      res.json({
-        success: true,
-        message: 'Product analytics retrieved successfully.',
-        data: analyticsData
-      } as ApiResponse);
+      ErrorResponse.success(res, 'Product analytics retrieved successfully.', analyticsData);
     } catch (error) {
-      console.error('Get product analytics error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while retrieving product analytics.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while retrieving product analytics.');
     }
   }
 
@@ -138,10 +115,7 @@ export class AnalyticsController {
       const end = endDate ? new Date(endDate as string) : new Date();
 
       if (!cashierId) {
-        res.status(400).json({
-          success: false,
-          message: 'Cashier ID is required for cashier analytics.',
-        } as ApiResponse);
+        ErrorResponse.validationError(res, 'Cashier ID is required for cashier analytics.');
         return;
       }
 
@@ -151,17 +125,9 @@ export class AnalyticsController {
         cashierId: cashierId as string
       });
 
-      res.json({
-        success: true,
-        message: 'Cashier analytics retrieved successfully.',
-        data: analyticsData
-      } as ApiResponse);
+      ErrorResponse.success(res, 'Cashier analytics retrieved successfully.', analyticsData);
     } catch (error) {
-      console.error('Get cashier analytics error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while retrieving cashier analytics.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while retrieving cashier analytics.');
     }
   }
 
@@ -172,17 +138,9 @@ export class AnalyticsController {
     try {
       const analyticsData = await AnalyticsService.getInventoryAnalytics();
 
-      res.json({
-        success: true,
-        message: 'Inventory analytics retrieved successfully.',
-        data: analyticsData
-      } as ApiResponse);
+      ErrorResponse.success(res, 'Inventory analytics retrieved successfully.', analyticsData);
     } catch (error) {
-      console.error('Get inventory analytics error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while retrieving inventory analytics.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while retrieving inventory analytics.');
     }
   }
 
@@ -195,10 +153,7 @@ export class AnalyticsController {
 
       // Validate period
       if (!['weekly', 'monthly', 'annual'].includes(period as string)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid period. Must be weekly, monthly, or annual.',
-        } as ApiResponse);
+        ErrorResponse.validationError(res, 'Invalid period. Must be weekly, monthly, or annual.');
         return;
       }
 
@@ -215,17 +170,9 @@ export class AnalyticsController {
         );
       }
 
-      res.json({
-        success: true,
-        message: 'Sales trends retrieved successfully.',
-        data: trendsData
-      } as ApiResponse);
+      ErrorResponse.success(res, 'Sales trends retrieved successfully.', trendsData);
     } catch (error) {
-      console.error('Get sales trends error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while retrieving sales trends.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while retrieving sales trends.');
     }
   }
 }

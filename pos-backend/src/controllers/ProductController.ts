@@ -5,6 +5,8 @@ import CategoryService from '../services/CategoryService';
 import { ImageService } from '../services/ImageService';
 import { ProductService } from '../services/ProductService';
 import { ApiResponse, ProductFilters } from '../types';
+import { ErrorResponse } from '../utils/errorResponse';
+import { ImageCleanup } from '../utils/imageCleanup';
 
 export class ProductController {
   /**
@@ -51,18 +53,14 @@ export class ProductController {
         order: order as 'asc' | 'desc'
       });
 
-      res.json({
-        success: true,
-        message: 'Products retrieved successfully.',
-        data: result.products,
-        pagination: result.pagination,
-      } as ApiResponse);
+      ErrorResponse.success(
+        res,
+        'Products retrieved successfully.',
+        result.products,
+        result.pagination
+      );
     } catch (error) {
-      console.error('Get products error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error while retrieving products.',
-      } as ApiResponse);
+      ErrorResponse.send(res, error, 'Server error while retrieving products.');
     }
   }
 
@@ -187,49 +185,27 @@ export class ProductController {
    */
   static async createProduct(req: Request, res: Response): Promise<void> {
     try {
-      const productData = req.body;
-
       // Validate category exists
-      if (productData.category) {
-        const categoryExists = await CategoryService.getCategoryByName(productData.category);
+      if (req.body.category) {
+        const categoryExists = await CategoryService.getCategoryByName(req.body.category);
         
         if (!categoryExists) {
-          res.status(400).json({
-            success: false,
-            message: 'Category does not exist. Please create the category first.',
-          } as ApiResponse);
+          ErrorResponse.validationError(
+            res,
+            'Category does not exist. Please create the category first.'
+          );
           return;
         }
       }
 
-      // Clean up image field - remove if it's an empty object or null
-      if (productData.image && typeof productData.image === 'object' && Object.keys(productData.image).length === 0) {
-        delete productData.image;
-      } else if (productData.image === null || productData.image === undefined) {
-        delete productData.image;
-      }
+      // Clean up image field using utility
+      const cleanedData = ImageCleanup.cleanImageField(req.body);
 
-      const product = await ProductService.createProduct(productData);
+      const product = await ProductService.createProduct(cleanedData);
 
-      res.status(201).json({
-        success: true,
-        message: 'Product created successfully.',
-        data: product,
-      } as ApiResponse);
-    } catch (error: any) {
-      console.error('Create product error:', error);
-      
-      if (error.message.includes('already exists')) {
-        res.status(400).json({
-          success: false,
-          message: error.message,
-        } as ApiResponse);
-      } else {
-        res.status(500).json({
-          success: false,
-          message: 'Server error while creating product.',
-        } as ApiResponse);
-      }
+      ErrorResponse.created(res, 'Product created successfully.', product);
+    } catch (error) {
+      ErrorResponse.send(res, error, 'Server error while creating product.');
     }
   }
 
@@ -313,42 +289,16 @@ export class ProductController {
    */
   static async updateProduct(req: Request, res: Response): Promise<void> {
     try {
-      const productData = req.body;
       const productId = req.params.id;
-
-      // Clean up image field - remove if it's an empty object or null
-      if (productData.image && typeof productData.image === 'object' && Object.keys(productData.image).length === 0) {
-        delete productData.image;
-      } else if (productData.image === null || productData.image === undefined) {
-        delete productData.image;
-      }
-
-      const product = await ProductService.updateProduct(productId, productData);
-
-      res.json({
-        success: true,
-        message: 'Product updated successfully.',
-        data: product,
-      } as ApiResponse);
-    } catch (error: any) {
-      console.error('Update product error:', error);
       
-      if (error.message === 'Product not found') {
-        res.status(404).json({
-          success: false,
-          message: 'Product not found.',
-        } as ApiResponse);
-      } else if (error.message.includes('already exists')) {
-        res.status(400).json({
-          success: false,
-          message: error.message,
-        } as ApiResponse);
-      } else {
-        res.status(500).json({
-          success: false,
-          message: 'Server error while updating product.',
-        } as ApiResponse);
-      }
+      // Clean up image field using utility
+      const cleanedData = ImageCleanup.cleanImageField(req.body);
+
+      const product = await ProductService.updateProduct(productId, cleanedData);
+
+      ErrorResponse.success(res, 'Product updated successfully.', product);
+    } catch (error) {
+      ErrorResponse.send(res, error, 'Server error while updating product.');
     }
   }
 
