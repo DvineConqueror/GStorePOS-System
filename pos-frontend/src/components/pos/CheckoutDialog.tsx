@@ -16,7 +16,7 @@ import { Transaction } from '@/types';
 import { cn } from "@/lib/utils";
 
 export function CheckoutDialog() {
-  const { state, toggleCheckout, calculateTotal, completeTransaction } = usePos();
+  const { state, toggleCheckout, calculateTotal, completeTransaction, fetchProducts } = usePos();
   const { user } = useAuth();
   const { isCheckoutOpen, cart } = state;
   const [cashAmount, setCashAmount] = useState<string>('');
@@ -122,16 +122,22 @@ export function CheckoutDialog() {
     toggleCheckout(false);
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    // Refresh products to show updated stock levels after transaction
+    if (showReceipt) {
+      await fetchProducts();
+    }
     resetCheckout();
   };
 
   return (
     <Dialog 
       open={isCheckoutOpen} 
-      onOpenChange={(open) => {
+      onOpenChange={async (open) => {
         if (!open && !showReceipt) {
           resetCheckout();
+        } else if (!open && showReceipt) {
+          await handleClose();
         }
       }}
     >

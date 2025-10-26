@@ -160,10 +160,10 @@ export const ProductList: React.FC<ProductListProps> = ({
                 <h3 className="text-sm font-semibold text-gray-800 truncate">{product.name}</h3>
                 <Badge
                   className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    product.stock === 0 ? 'bg-red-100 text-red-700' :
-                    product.status === 'available' ? 'bg-green-100 text-green-700' :
-                    product.status === 'unavailable' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-gray-100 text-gray-700'
+                    product.stock === 0 ? 'bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-800' :
+                    product.status === 'available' ? 'bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800' :
+                    product.status === 'unavailable' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 hover:text-yellow-800' :
+                    'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
                   }`}
                 >
                   {product.stock === 0 ? 'Out of Stock' : 

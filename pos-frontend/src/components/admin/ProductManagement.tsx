@@ -248,34 +248,36 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
             <div className="flex items-center gap-4">
               <CardTitle>Product Management</CardTitle>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button 
-                onClick={() => setShowAddCategoryDialog(true)} 
-                variant="outline"
-                className="flex-1 sm:flex-initial"
-              >
-                <FolderPlus className="mr-2 h-4 w-4" />
-                Add Category
-              </Button>
-              <Button 
-                onClick={() => setShowAddProductForm(true)} 
-                className="flex-1 sm:flex-initial"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Product
-              </Button>
-            </div>
           </div>
           
           {/* Search and Filter Controls */}
           <div className="mt-4">
-            <ProductFilters
-              filters={filters}
-              categories={categories}
-              onSearchChange={handleSearchChange}
-              onCategoryFilterChange={handleCategoryFilterChange}
-              onStatusFilterChange={handleStatusFilterChange}
-            />
+            <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-end">
+              <ProductFilters
+                filters={filters}
+                categories={categories}
+                onSearchChange={handleSearchChange}
+                onCategoryFilterChange={handleCategoryFilterChange}
+                onStatusFilterChange={handleStatusFilterChange}
+              />
+              <div className="flex gap-2 w-full lg:w-auto shrink-0">
+                <Button 
+                  onClick={() => setShowAddCategoryDialog(true)} 
+                  variant="outline"
+                  className="flex-1 lg:flex-initial whitespace-nowrap h-10"
+                >
+                  <FolderPlus className="mr-2 h-4 w-4" />
+                  Add Category
+                </Button>
+                <Button 
+                  onClick={() => setShowAddProductForm(true)} 
+                  className="flex-1 lg:flex-initial whitespace-nowrap h-10"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Product
+                </Button>
+              </div>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

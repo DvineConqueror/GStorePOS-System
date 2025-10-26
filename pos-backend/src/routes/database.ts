@@ -53,4 +53,11 @@ router.get('/slow-queries', authenticate, authorize('superadmin'), DatabaseContr
  */
 router.get('/health', authenticate, authorize('superadmin', 'manager'), DatabaseController.healthCheck);
 
+/**
+ * @route   POST /api/database/fix-product-status
+ * @desc    Fix product status based on stock levels (stock=0 -> unavailable, stock>0 -> available)
+ * @access  Manager and above
+ */
+router.post('/fix-product-status', authenticate, authorize('superadmin', 'manager'), DatabaseController.fixProductStatus);
+
 export default router;

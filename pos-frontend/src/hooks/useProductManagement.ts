@@ -109,12 +109,33 @@ export const useProductManagement = () => {
   // Calculate product stats
   const productStats: ProductStats = useMemo(() => {
     const activeProducts = products.filter(p => p.status !== 'deleted');
+    
+    // Use Number() to ensure proper type comparison (handles potential string values)
+    const outOfStockProducts = activeProducts.filter(p => Number(p.stock) === 0);
+    
+    // Unavailable products include: manually set as unavailable OR out of stock
+    const unavailableProducts = activeProducts.filter(p => 
+      p.status === 'unavailable' || Number(p.stock) === 0
+    );
+    
+    // Available products must have status 'available' AND have stock > 0
+    const availableProducts = activeProducts.filter(p => 
+      p.status === 'available' && Number(p.stock) > 0
+    );
+    
+    // Low stock products: in stock but below or at minimum threshold
+    const lowStockProducts = activeProducts.filter(p => {
+      const stock = Number(p.stock);
+      const minStock = Number(p.minStock);
+      return stock > 0 && stock <= minStock;
+    });
+    
     return {
       total: activeProducts.length,
-      available: activeProducts.filter(p => p.status === 'available').length,
-      unavailable: activeProducts.filter(p => p.status === 'unavailable').length,
-      outOfStock: activeProducts.filter(p => p.stock === 0).length,
-      lowStock: activeProducts.filter(p => p.stock > 0 && p.stock <= p.minStock).length,
+      available: availableProducts.length,
+      unavailable: unavailableProducts.length,
+      outOfStock: outOfStockProducts.length,
+      lowStock: lowStockProducts.length,
     };
   }, [products]);
 

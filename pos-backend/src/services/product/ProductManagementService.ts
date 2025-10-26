@@ -35,15 +35,22 @@ export class ProductManagementService {
       await ProductValidationService.validateUniqueBarcode(productData.barcode, productId);
     }
 
-    const product = await Product.findByIdAndUpdate(
-      productId,
-      productData,
-      { new: true, runValidators: true }
-    );
+    // Use findById + save() pattern to trigger pre-save hooks for automatic status management
+    const product = await Product.findById(productId);
 
     if (!product) {
       throw new Error('Product not found');
     }
+
+    // Update product fields
+    Object.keys(productData).forEach((key) => {
+      if (productData[key] !== undefined) {
+        (product as any)[key] = productData[key];
+      }
+    });
+
+    // Save will trigger pre-save hook (auto status management based on stock)
+    await product.save();
 
     return product;
   }
@@ -69,15 +76,18 @@ export class ProductManagementService {
    * Restore product (undo soft delete)
    */
   static async restoreProduct(productId: string): Promise<IProduct> {
-    const product = await Product.findByIdAndUpdate(
-      productId,
-      { status: 'available' },
-      { new: true }
-    );
+    const product = await Product.findById(productId);
 
     if (!product) {
       throw new Error('Product not found');
     }
+
+    // Set status based on stock level
+    // If stock is 0, it will be set to unavailable by pre-save hook
+    // If stock > 0, it will be set to available
+    product.status = product.stock > 0 ? 'available' : 'unavailable';
+    
+    await product.save();
 
     return product;
   }

@@ -212,7 +212,7 @@ productSchema.set('toJSON', {
   virtuals: true,
 });
 
-// Pre-save middleware to generate SKU and validate stock
+// Pre-save middleware to generate SKU, validate stock, and auto-manage status
 productSchema.pre('save', function(next) {
   // Generate SKU if not provided
   if (!this.sku) {
@@ -225,6 +225,20 @@ productSchema.pre('save', function(next) {
   if (this.maxStock && this.stock > this.maxStock) {
     return next(new Error('Stock cannot exceed maximum stock limit'));
   }
+
+  // Auto-manage status based on stock level
+  // Only auto-change status if it's not explicitly set to 'deleted'
+  if (this.status !== 'deleted') {
+    if (this.stock === 0) {
+      // Automatically set to unavailable when out of stock
+      this.status = 'unavailable';
+    } else if (this.stock > 0 && this.status === 'unavailable') {
+      // Automatically set back to available when stock is replenished
+      // (only if it was unavailable due to stock, not manually set)
+      this.status = 'available';
+    }
+  }
+  
   next();
 });
 

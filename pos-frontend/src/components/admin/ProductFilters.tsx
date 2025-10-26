@@ -20,9 +20,9 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   onStatusFilterChange,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+    <div className="flex flex-col sm:flex-row gap-3 flex-1">
       {/* Search Input */}
-      <div className="flex-1">
+      <div className="w-full sm:flex-1">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -34,10 +34,10 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div className="w-full sm:w-48">
+      {/* Category and Status Filters */}
+      <div className="flex gap-2 w-full sm:w-auto shrink-0">
         <Select value={filters.category} onValueChange={onCategoryFilterChange}>
-          <SelectTrigger className="w-full sm:w-40 bg-white border-gray-300 text-black">
+          <SelectTrigger className="flex-1 sm:w-48 bg-white border-gray-300 text-black">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
@@ -49,12 +49,9 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
-      </div>
 
-      {/* Status Filter */}
-      <div className="w-full sm:w-48">
         <Select value={filters.status} onValueChange={onStatusFilterChange}>
-          <SelectTrigger className="w-full sm:w-40 bg-white border-gray-300 text-black">
+          <SelectTrigger className="flex-1 sm:w-40 bg-white border-gray-300 text-black">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>

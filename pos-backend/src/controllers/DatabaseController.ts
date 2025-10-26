@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { DatabaseIndexService } from '../services/DatabaseIndexService';
 import { ApiResponse } from '../types';
+import { fixProductStatusBasedOnStock } from '../utils/fixProductStatus';
 
 export class DatabaseController {
   /**
@@ -203,6 +204,31 @@ export class DatabaseController {
       res.status(500).json({
         success: false,
         message: 'Failed to maintain database indexes'
+      } as ApiResponse);
+    }
+  }
+
+  /**
+   * Fix product status based on stock levels
+   * Updates all products with stock=0 to status='unavailable'
+   * and stock>0 with status='unavailable' to status='available'
+   */
+  static async fixProductStatus(req: Request, res: Response): Promise<void> {
+    try {
+      console.log('Fixing product status based on stock levels...');
+      
+      const result = await fixProductStatusBasedOnStock();
+      
+      res.json({
+        success: true,
+        message: 'Product status fixed successfully',
+        data: result
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Error fixing product status:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fix product status'
       } as ApiResponse);
     }
   }
