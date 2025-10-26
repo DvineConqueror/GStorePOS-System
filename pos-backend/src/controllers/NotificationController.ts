@@ -30,7 +30,7 @@ export class NotificationController {
       // Get low stock products
       const lowStockProducts = await Product.find({
         $expr: { $lte: ['$stock', '$minStock'] },
-        status: 'active'
+        status: 'available'
       }).select('name stock minStock sku category');
 
       // Check if low stock alerts are enabled
@@ -179,7 +179,7 @@ export class NotificationController {
 
       const lowStockProducts = await Product.find({
         $expr: { $lte: ['$stock', '$minStock'] },
-        status: 'active'
+        status: 'available'
       }).select('name stock minStock sku category');
 
       res.json({
