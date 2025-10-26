@@ -17,7 +17,8 @@
     "init-category-groups": "node scripts/init-category-groups.js",
     "init-vat": "node scripts/init-vat-settings.js",
     "migrate-vat": "node scripts/migrate-add-vat.js",
-    "update-minstock": "node scripts/update-minstock.js"
+    "update-minstock": "node scripts/update-minstock.js",
+    "migrate-product-status": "node scripts/migrate-product-status.js"
   },
   "keywords": [
     "pos",

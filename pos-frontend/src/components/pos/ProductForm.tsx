@@ -80,7 +80,7 @@ export function ProductForm({ open, onClose, onSuccess, product }: ProductFormPr
         maxStock: 1000,
         unit: 'pcs', // Default unit
         image: imageId || undefined, // Use the GridFS image ID, or undefined if no image
-        status: 'active',
+        status: 'available',
         supplier: '' // Add supplier field if needed
       };
 

@@ -13,10 +13,11 @@ export class ProductQueryService {
     minPrice?: number;
     maxPrice?: number;
     inStock?: boolean;
-    isActive?: boolean;
+    status?: 'available' | 'unavailable' | 'deleted';
     search?: string;
     sort?: string;
     order?: 'asc' | 'desc';
+    includeDeleted?: boolean;
   }) {
     const {
       page = 1,
@@ -26,17 +27,23 @@ export class ProductQueryService {
       minPrice,
       maxPrice,
       inStock,
-      isActive,
+      status,
       search,
       sort = 'name',
-      order = 'asc'
+      order = 'asc',
+      includeDeleted = false
     } = filters;
 
     const query: any = {};
 
-    // Only filter by isActive if explicitly provided
-    if (isActive !== undefined) {
-      query.isActive = isActive;
+    // Always exclude deleted products unless explicitly requested
+    if (!includeDeleted) {
+      query.status = { $ne: 'deleted' };
+    }
+
+    // Filter by specific status if provided
+    if (status) {
+      query.status = status;
     }
 
     if (category) query.category = { $regex: category, $options: 'i' };

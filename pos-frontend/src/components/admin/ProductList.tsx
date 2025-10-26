@@ -8,9 +8,9 @@ import { Product } from '@/types/product';
 interface ProductListProps {
   products: Product[];
   loading?: boolean;
-  onToggleStatus: (productId: string, currentStatus: 'active' | 'inactive' | 'deleted') => void;
+  onToggleStatus: (productId: string, currentStatus: 'available' | 'unavailable' | 'deleted') => void;
   onEdit?: (product: Product) => void;
-  onDelete?: (productId: string) => void;
+  onDelete?: (productId: string, productName: string) => void;
   highlightProductId?: string | null;
   highlightAllLowStock?: boolean;
   onClearHighlight?: () => void;
@@ -160,12 +160,16 @@ export const ProductList: React.FC<ProductListProps> = ({
                 <h3 className="text-sm font-semibold text-gray-800 truncate">{product.name}</h3>
                 <Badge
                   className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    product.status === 'active' ? 'bg-green-100 text-green-700' :
-                    product.status === 'inactive' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
+                    product.stock === 0 ? 'bg-red-100 text-red-700' :
+                    product.status === 'available' ? 'bg-green-100 text-green-700' :
+                    product.status === 'unavailable' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-gray-100 text-gray-700'
                   }`}
                 >
-                  {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+                  {product.stock === 0 ? 'Out of Stock' : 
+                   product.status === 'available' ? 'Available' :
+                   product.status === 'unavailable' ? 'Unavailable' :
+                   product.status.charAt(0).toUpperCase() + product.status.slice(1)}
                 </Badge>
               </div>
               
@@ -194,16 +198,18 @@ export const ProductList: React.FC<ProductListProps> = ({
                   size="sm"
                   onClick={() => onToggleStatus(product._id, product.status)}
                   className="text-xs h-7 px-2"
+                  disabled={product.stock === 0}
+                  title={product.stock === 0 ? 'Product out of stock' : ''}
                 >
-                  {product.status === 'active' ? (
+                  {product.status === 'available' ? (
                     <>
                       <EyeOff className="h-3 w-3 mr-1" />
-                      Deactivate
+                      Set Unavailable
                     </>
                   ) : (
                     <>
                       <Eye className="h-3 w-3 mr-1" />
-                      Activate
+                      Set Available
                     </>
                   )}
                 </Button>
@@ -222,8 +228,9 @@ export const ProductList: React.FC<ProductListProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => onDelete(product._id)}
+                      onClick={() => onDelete(product._id, product.name)}
                       className="text-xs h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                      title="Delete product"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

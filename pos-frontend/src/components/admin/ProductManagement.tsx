@@ -55,6 +55,11 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
   });
   const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
   const [newCategory, setNewCategory] = useState('');
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{ open: boolean; productId: string | null; productName: string }>({
+    open: false,
+    productId: null,
+    productName: '',
+  });
 
   // Reset form state function
   const resetFormState = () => {
@@ -79,6 +84,9 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
   // Filter products based on current filters
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
+      // Always exclude deleted products
+      if (product.status === 'deleted') return false;
+
       // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
@@ -103,17 +111,20 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
     });
   }, [products, filters]);
 
-  // Calculate product stats
+  // Calculate product stats (excluding deleted products)
   const productStats = useMemo(() => {
-    const totalProducts = products.length;
-    const activeProducts = products.filter(p => p.status === 'active').length;
-    const inactiveProducts = products.filter(p => p.status === 'inactive').length;
-    const lowStockProducts = products.filter(p => p.stock < 10).length;
+    const activeProducts = products.filter(p => p.status !== 'deleted');
+    const totalProducts = activeProducts.length;
+    const availableProducts = activeProducts.filter(p => p.status === 'available').length;
+    const unavailableProducts = activeProducts.filter(p => p.status === 'unavailable').length;
+    const outOfStockProducts = activeProducts.filter(p => p.stock === 0).length;
+    const lowStockProducts = activeProducts.filter(p => p.stock > 0 && p.stock <= p.minStock).length;
     
     return {
       total: totalProducts,
-      active: activeProducts,
-      inactive: inactiveProducts,
+      available: availableProducts,
+      unavailable: unavailableProducts,
+      outOfStock: outOfStockProducts,
       lowStock: lowStockProducts,
     };
   }, [products]);
@@ -174,8 +185,27 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
     await toggleStatusMutation.mutateAsync(id);
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    await deleteProductMutation.mutateAsync(id);
+  const handleDeleteProduct = (productId: string, productName: string) => {
+    setDeleteConfirmDialog({
+      open: true,
+      productId,
+      productName,
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteConfirmDialog.productId) {
+      try {
+        await deleteProductMutation.mutateAsync(deleteConfirmDialog.productId);
+        setDeleteConfirmDialog({ open: false, productId: null, productName: '' });
+      } catch (error) {
+        console.error('Delete error:', error);
+      }
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmDialog({ open: false, productId: null, productName: '' });
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -328,6 +358,35 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmDialog.open} onOpenChange={(open) => !open && cancelDelete()}>
+        <DialogContent className="max-w-md p-0">
+          <DialogHeader className="px-4 pt-4 pb-2 border-b flex-shrink-0">
+            <DialogTitle className="text-lg text-black font-semibold">Confirm Delete</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 py-4">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to delete <span className="font-semibold text-black">"{deleteConfirmDialog.productName}"</span>?
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              This product will be marked as deleted and removed from the product list.
+            </p>
+          </div>
+          <div className="px-4 py-3 border-t flex justify-end gap-3">
+            <Button variant="outline" onClick={cancelDelete} disabled={deleteProductMutation.isPending}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete} 
+              disabled={deleteProductMutation.isPending}
+            >
+              {deleteProductMutation.isPending ? 'Deleting...' : 'Delete Product'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

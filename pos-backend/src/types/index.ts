@@ -42,7 +42,8 @@ export interface IProduct extends Document {
   maxStock?: number;
   unit: string;
   image?: string;
-  status: 'active' | 'inactive' | 'deleted';
+  status: 'available' | 'unavailable' | 'deleted';
+  displayStatus?: string; // Virtual field: 'out of stock' when stock is 0, otherwise status
   supplier?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -247,7 +248,8 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
-  status?: 'active' | 'inactive' | 'deleted' | { $ne: 'deleted' };
+  status?: 'available' | 'unavailable' | 'deleted';
+  includeDeleted?: boolean;
   search?: string;
 }
 

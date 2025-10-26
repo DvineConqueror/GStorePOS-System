@@ -108,11 +108,13 @@ export const useProductManagement = () => {
 
   // Calculate product stats
   const productStats: ProductStats = useMemo(() => {
+    const activeProducts = products.filter(p => p.status !== 'deleted');
     return {
-      total: products.length,
-      active: products.filter(p => p.status === 'active').length,
-      inactive: products.filter(p => p.status === 'inactive').length,
-      lowStock: products.filter(p => p.stock <= p.minStock).length,
+      total: activeProducts.length,
+      available: activeProducts.filter(p => p.status === 'available').length,
+      unavailable: activeProducts.filter(p => p.status === 'unavailable').length,
+      outOfStock: activeProducts.filter(p => p.stock === 0).length,
+      lowStock: activeProducts.filter(p => p.stock > 0 && p.stock <= p.minStock).length,
     };
   }, [products]);
 
@@ -340,9 +342,9 @@ export const useProductManagement = () => {
   };
 
   // Toggle product status
-  const toggleProductStatus = async (productId: string, currentStatus: 'active' | 'inactive' | 'deleted') => {
+  const toggleProductStatus = async (productId: string, currentStatus: 'available' | 'unavailable' | 'deleted') => {
     try {
-      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const newStatus = currentStatus === 'available' ? 'unavailable' : 'available';
       const response = await productsAPI.toggleProductStatus(productId);
       if (response.success) {
         await fetchProducts();

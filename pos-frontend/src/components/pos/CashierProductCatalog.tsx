@@ -27,7 +27,7 @@ export function CashierProductCatalog() {
   const { cart } = state;
   
   // React Query hooks
-  const { data: productsData, isLoading: productsLoading } = useProducts({ status: 'active' });
+  const { data: productsData, isLoading: productsLoading } = useProducts({ status: 'available' });
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
   
   // Local state
@@ -62,7 +62,7 @@ export function CashierProductCatalog() {
       const matchesCategory = selectedCategory === 'All' || 
                              product.category === selectedCategory;
       
-      return matchesSearch && matchesCategory && product.status === 'active';
+      return matchesSearch && matchesCategory && product.status === 'available';
     });
   }, [products, searchTerm, selectedCategory]);
 

@@ -30,10 +30,10 @@ export class ProductController {
       
       // Only filter by status if explicitly provided
       if (status !== undefined) {
-        filters.status = status as 'active' | 'inactive' | 'deleted';
+        filters.status = status as 'available' | 'unavailable' | 'deleted';
       } else {
         // Default: exclude deleted products from all queries
-        filters.status = { $ne: 'deleted' };
+        filters.includeDeleted = false;
       }
 
       if (category) filters.category = category as string;
@@ -557,7 +557,7 @@ export class ProductController {
   }
 
   /**
-   * Toggle product status (active/inactive)
+   * Toggle product status (available/unavailable)
    */
   static async toggleProductStatus(req: Request, res: Response): Promise<void> {
     try {
@@ -571,8 +571,8 @@ export class ProductController {
         return;
       }
 
-      // Toggle between active and inactive (never toggle to deleted)
-      const newStatus = product.status === 'active' ? 'inactive' : 'active';
+      // Toggle between available and unavailable (never toggle to deleted)
+      const newStatus = product.status === 'available' ? 'unavailable' : 'available';
       
       const updatedProduct = await Product.findByIdAndUpdate(
         req.params.id,
@@ -582,7 +582,7 @@ export class ProductController {
 
       res.json({
         success: true,
-        message: `Product ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully.`,
+        message: `Product set to ${newStatus} successfully.`,
         data: updatedProduct,
       } as ApiResponse);
 

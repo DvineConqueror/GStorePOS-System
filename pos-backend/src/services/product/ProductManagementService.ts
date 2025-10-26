@@ -54,7 +54,7 @@ export class ProductManagementService {
   static async deleteProduct(productId: string): Promise<IProduct> {
     const product = await Product.findByIdAndUpdate(
       productId,
-      { isActive: false },
+      { status: 'deleted' },
       { new: true }
     );
 
@@ -71,7 +71,7 @@ export class ProductManagementService {
   static async restoreProduct(productId: string): Promise<IProduct> {
     const product = await Product.findByIdAndUpdate(
       productId,
-      { isActive: true },
+      { status: 'available' },
       { new: true }
     );
 

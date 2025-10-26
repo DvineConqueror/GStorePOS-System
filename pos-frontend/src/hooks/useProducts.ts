@@ -31,11 +31,11 @@ export const useCreateProduct = () => {
 
   return useMutation({
     mutationFn: apiService.products.create,
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       if (response.success) {
-        // Invalidate and refetch products
-        queryClient.invalidateQueries({ queryKey: queryKeys.products });
-        queryClient.invalidateQueries({ queryKey: queryKeys.productStats() });
+        // Invalidate and force refetch products immediately
+        await queryClient.invalidateQueries({ queryKey: ['products'] });
+        await queryClient.refetchQueries({ queryKey: ['products'] });
         
         toast({
           title: "Success",
@@ -69,12 +69,11 @@ export const useUpdateProduct = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => 
       apiService.products.update(id, data),
-    onSuccess: (response, { id }) => {
+    onSuccess: async (response, { id }) => {
       if (response.success) {
-        // Invalidate and refetch products
-        queryClient.invalidateQueries({ queryKey: queryKeys.products });
-        queryClient.invalidateQueries({ queryKey: queryKeys.productById(id) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.productStats() });
+        // Invalidate and force refetch products immediately
+        await queryClient.invalidateQueries({ queryKey: ['products'] });
+        await queryClient.refetchQueries({ queryKey: ['products'] });
         
         toast({
           title: "Success",
@@ -107,12 +106,11 @@ export const useDeleteProduct = () => {
 
   return useMutation({
     mutationFn: apiService.products.delete,
-    onSuccess: (response, id) => {
+    onSuccess: async (response, id) => {
       if (response.success) {
-        // Remove from cache and invalidate
-        queryClient.removeQueries({ queryKey: queryKeys.productById(id) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.products });
-        queryClient.invalidateQueries({ queryKey: queryKeys.productStats() });
+        // Invalidate ALL products queries and force immediate refetch
+        await queryClient.invalidateQueries({ queryKey: ['products'] });
+        await queryClient.refetchQueries({ queryKey: ['products'], type: 'active' });
         
         toast({
           title: "Success",
@@ -145,12 +143,11 @@ export const useToggleProductStatus = () => {
 
   return useMutation({
     mutationFn: apiService.products.toggleStatus,
-    onSuccess: (response, id) => {
+    onSuccess: async (response, id) => {
       if (response.success) {
-        // Invalidate products and specific product
-        queryClient.invalidateQueries({ queryKey: queryKeys.products });
-        queryClient.invalidateQueries({ queryKey: queryKeys.productById(id) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.productStats() });
+        // Invalidate and force refetch immediately
+        await queryClient.invalidateQueries({ queryKey: ['products'] });
+        await queryClient.refetchQueries({ queryKey: ['products'], type: 'active' });
         
         toast({
           title: "Success",

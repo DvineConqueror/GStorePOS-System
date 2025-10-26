@@ -13,7 +13,8 @@ export interface Product {
   maxStock?: number;
   unit: string;
   image?: string;
-  status: 'active' | 'inactive' | 'deleted';
+  status: 'available' | 'unavailable' | 'deleted';
+  displayStatus?: string; // Virtual field: 'out of stock' when stock is 0, otherwise status
   supplier?: string;
   createdAt: string;
   updatedAt: string;
@@ -53,7 +54,8 @@ export interface ProductFilters {
 
 export interface ProductStats {
   total: number;
-  active: number;
-  inactive: number;
+  available: number;
+  unavailable: number;
+  outOfStock: number;
   lowStock: number;
 }

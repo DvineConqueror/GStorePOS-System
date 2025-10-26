@@ -70,8 +70,8 @@ const productSchema = new Schema<IProduct>({
   },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'deleted'],
-    default: 'active',
+    enum: ['available', 'unavailable', 'deleted'],
+    default: 'available',
     required: true,
   },
   supplier: {
@@ -189,6 +189,14 @@ productSchema.virtual('totalValue').get(function() {
   return this.stock * this.price;
 });
 
+// Virtual for display status (shows "out of stock" when stock is 0)
+productSchema.virtual('displayStatus').get(function() {
+  if (this.stock === 0) {
+    return 'out of stock';
+  }
+  return this.status;
+});
+
 // Ensure virtual fields are serialized
 productSchema.set('toJSON', {
   virtuals: true,
@@ -216,7 +224,7 @@ productSchema.statics.findLowStock = function() {
     $expr: {
       $lte: ['$stock', '$minStock']
     },
-    status: 'active'
+    status: 'available'
   });
 };
 
@@ -224,7 +232,7 @@ productSchema.statics.findLowStock = function() {
 productSchema.statics.findOutOfStock = function() {
   return this.find({
     stock: 0,
-    status: 'active'
+    status: 'available'
   });
 };
 
@@ -237,7 +245,7 @@ productSchema.statics.searchProducts = function(query: string, filters: any = {}
       { sku: { $regex: query, $options: 'i' } },
       { barcode: { $regex: query, $options: 'i' } },
     ],
-    status: 'active',
+    status: 'available',
     ...filters
   };
 

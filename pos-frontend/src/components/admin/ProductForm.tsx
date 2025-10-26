@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Upload } from 'lucide-react';
 import { NewProduct, Product } from '@/types/product';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -33,6 +34,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   isEdit = false,
   editingProduct = null,
 }) => {
+  const { toast } = useToast();
+
   const handleInputChange = (field: keyof NewProduct, value: string) => {
     onProductChange({
       ...newProduct,
@@ -42,6 +45,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate category is selected
+    if (!newProduct.category || newProduct.category.trim() === '') {
+      toast({
+        title: "Validation Error",
+        description: "Please select a category for the product",
+        variant: "destructive",
+      });
+      const categoryButton = document.querySelector('[role="combobox"]') as HTMLElement;
+      if (categoryButton) {
+        categoryButton.focus();
+      }
+      return;
+    }
     
     // Prepare the product data for submission
     const productData = {
