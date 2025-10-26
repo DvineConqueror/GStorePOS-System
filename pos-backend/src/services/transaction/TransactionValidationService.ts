@@ -80,14 +80,14 @@ export class TransactionValidationService {
       throw new Error('Quantity must be greater than 0');
     }
 
-    // Validate product exists and is active
+    // Validate product exists and is available
     const product = await Product.findById(productId);
     if (!product) {
       throw new Error(`Product with ID ${productId} not found`);
     }
 
-    if (product.status !== 'active') {
-      throw new Error(`Product ${product.name} is not active`);
+    if (product.status !== 'available') {
+      throw new Error(`Product ${product.name} is not available`);
     }
 
     // Validate stock availability

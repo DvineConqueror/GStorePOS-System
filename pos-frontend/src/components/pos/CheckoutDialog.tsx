@@ -3,12 +3,14 @@ import { usePos } from '@/context/PosContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/utils/format';
 import { calculateVAT } from '@/utils/vat';
+import { calculateTransactionDiscount, getDiscountLabel } from '@/utils/seniorPwdDiscount';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TransactionReceipt } from './TransactionReceipt';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Banknote, Receipt } from 'lucide-react';
+import { Banknote, Receipt, User, Accessibility } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Transaction } from '@/types';
 import { cn } from "@/lib/utils";
@@ -21,9 +23,30 @@ export function CheckoutDialog() {
   const [showCashInput, setShowCashInput] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
+  const [customerType, setCustomerType] = useState<'regular' | 'senior' | 'pwd'>('regular');
 
-  const total = calculateTotal();
-  const vatBreakdown = calculateVAT(total);
+  // Calculate discount based on customer type
+  const discountResult = calculateTransactionDiscount(
+    cart.map(item => ({
+      _id: item._id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      isDiscountable: item.isDiscountable !== undefined ? item.isDiscountable : true,
+      isVatExemptable: item.isVatExemptable !== undefined ? item.isVatExemptable : true,
+    })),
+    customerType
+  );
+
+  const total = discountResult.amountDue;
+  const vatBreakdown = customerType === 'regular' 
+    ? calculateVAT(total)
+    : {
+        total: discountResult.amountDue,
+        vatAmount: discountResult.totalVatExempt,
+        netSales: discountResult.amountDue - discountResult.totalVatExempt,
+        vatRate: 12
+      };
   const cashReceived = parseFloat(cashAmount) || 0;
   const cashLimit = 10000;
   const change = cashReceived - total;
@@ -44,17 +67,32 @@ export function CheckoutDialog() {
     setShowCashInput(true);
   };
 
-  const handleCompleteTransaction = () => {
+  const handleCompleteTransaction = async () => {
     if (cashReceived >= total && cashReceived <= cashLimit) {
+      // Map cart items to include discount information
+      const itemsWithDiscount = cart.map((cartItem, index) => {
+        const discountItem = discountResult.items[index];
+        return {
+          ...cartItem,
+          vatExempt: discountItem?.vatExempt || false,
+          discountApplied: discountItem?.discountApplied || false,
+          discountAmount: discountItem?.discountAmount || 0,
+          finalPrice: discountItem?.finalPrice || cartItem.price * cartItem.quantity,
+        };
+      });
+
       const transaction = {
         _id: uuidv4(),
         id: uuidv4(),
         transactionNumber: `TXN-${Date.now()}`,
-        items: [...cart],
-        subtotal: total,
+        items: itemsWithDiscount,
+        subtotal: discountResult.subtotal,
         tax: 0,
         discount: 0,
-        total,
+        total: discountResult.amountDue,
+        customerType,
+        totalVatExempt: discountResult.totalVatExempt,
+        totalDiscountAmount: discountResult.totalDiscountAmount,
         paymentMethod: 'cash' as const,
         cashierId: user?.id || '',
         cashierName: user ? `${user.firstName} ${user.lastName}` : 'Unknown Cashier',
@@ -66,9 +104,12 @@ export function CheckoutDialog() {
         timestamp: new Date().toISOString(),
       };
       
-      completeTransaction(transaction);
-      setCurrentTransaction(transaction);
-      setShowReceipt(true);
+      // Await transaction completion and only show receipt if successful
+      const success = await completeTransaction(transaction);
+      if (success) {
+        setCurrentTransaction(transaction);
+        setShowReceipt(true);
+      }
     }
   };
 
@@ -77,6 +118,7 @@ export function CheckoutDialog() {
     setShowCashInput(false);
     setShowReceipt(false);
     setCurrentTransaction(null);
+    setCustomerType('regular');
     toggleCheckout(false);
   };
 
@@ -94,7 +136,7 @@ export function CheckoutDialog() {
       }}
     >
       <DialogContent className={cn(
-        "max-w-md p-0",
+        "max-w-md p-0 max-h-[90vh] flex flex-col",
         showReceipt && "max-w-lg"
       )}>
         <DialogHeader className="px-4 pt-4 pb-2 border-b flex-shrink-0">
@@ -108,8 +150,8 @@ export function CheckoutDialog() {
         </DialogHeader>
         
         {showReceipt ? (
-          <div className="flex flex-col flex-1">
-            <div className="px-4 py-4 space-y-3">
+          <div className="flex flex-col flex-1 max-h-[80vh]">
+            <div className="px-4 py-4 space-y-3 overflow-y-auto flex-1">
               <div className="flex flex-col items-center py-2 space-y-2">
                 <Receipt className="h-12 w-12 text-green-600" />
                 <p className="text-lg font-medium text-black">Payment Successful</p>
@@ -141,15 +183,35 @@ export function CheckoutDialog() {
             <div className="px-4 py-4 space-y-3">
               <div className="bg-gray-50 p-3 rounded-lg space-y-2 border border-gray-200">
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Net Sales</span>
-                  <span>{formatCurrency(vatBreakdown.netSales)}</span>
+                  <span>Subtotal</span>
+                  <span>{formatCurrency(discountResult.subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>VAT ({vatBreakdown.vatRate}%)</span>
-                  <span>{formatCurrency(vatBreakdown.vatAmount)}</span>
-                </div>
+                {customerType !== 'regular' && discountResult.totalVatExempt > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Less VAT Exempt (12%)</span>
+                    <span>-{formatCurrency(discountResult.totalVatExempt)}</span>
+                  </div>
+                )}
+                {customerType !== 'regular' && discountResult.totalDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>{getDiscountLabel(customerType)}</span>
+                    <span>-{formatCurrency(discountResult.totalDiscountAmount)}</span>
+                  </div>
+                )}
+                {customerType === 'regular' && (
+                  <>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Net Sales</span>
+                      <span>{formatCurrency(vatBreakdown.netSales)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>VAT ({vatBreakdown.vatRate}%)</span>
+                      <span>{formatCurrency(vatBreakdown.vatAmount)}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between font-semibold text-base pt-1 border-t border-gray-300">
-                  <span className="text-black">Total (VAT Inclusive)</span>
+                  <span className="text-black">Total Amount Due</span>
                   <span className="text-green-600">{formatCurrency(total)}</span>
                 </div>
               </div>
@@ -203,25 +265,120 @@ export function CheckoutDialog() {
         ) : (
           <div className="flex flex-col flex-1">
             <div className="px-4 py-4 space-y-3">
+              {/* Customer Type Selector */}
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <Label className="text-sm font-semibold text-black flex items-center gap-2 mb-2">
+                  <User className="h-4 w-4" />
+                  Customer Type
+                </Label>
+                <Select value={customerType} onValueChange={(value: 'regular' | 'senior' | 'pwd') => setCustomerType(value)}>
+                  <SelectTrigger className="w-full bg-white text-black">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="text-black">
+                    <SelectItem value="regular">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span>Regular Customer</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="senior">
+                      <div className="flex items-center gap-2">
+                        <Accessibility className="h-4 w-4" />
+                        <span>Senior Citizen (20% discount + VAT exempt)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="pwd">
+                      <div className="flex items-center gap-2">
+                        <Accessibility className="h-4 w-4" />
+                        <span>PWD (20% discount + VAT exempt)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {customerType !== 'regular' && (
+                  <p className="text-xs text-blue-600 mt-2">
+                    ✓ Discount applied to eligible items only (RA 9994 & RA 10754)
+                  </p>
+                )}
+              </div>
+
               <div className="max-h-[200px] overflow-y-auto space-y-2">
-                {cart.map(item => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-black">{item.name} × {item.quantity}</span>
-                    <span className="font-medium text-gray-500">{formatCurrency(item.price * item.quantity)}</span>
-                  </div>
-                ))}
+                {cart.map((item, index) => {
+                  const discountItem = discountResult.items[index];
+                  const hasDiscount = discountItem?.discountApplied || discountItem?.vatExempt;
+                  
+                  return (
+                    <div 
+                      key={item.id} 
+                      className={cn(
+                        "flex justify-between text-sm p-2 rounded",
+                        hasDiscount && customerType !== 'regular' && "bg-green-50 border border-green-200"
+                      )}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-black">{item.name} × {item.quantity}</span>
+                          {hasDiscount && customerType !== 'regular' && (
+                            <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">DISCOUNTED</span>
+                          )}
+                        </div>
+                        {customerType !== 'regular' && discountItem && (
+                          <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                            {discountItem.vatExempt && (
+                              <div>VAT Exempt: {formatCurrency(discountItem.vatAmount)}</div>
+                            )}
+                            {discountItem.discountApplied && (
+                              <div>20% Discount: {formatCurrency(discountItem.discountAmount)}</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        {customerType !== 'regular' && hasDiscount ? (
+                          <>
+                            <div className="text-xs text-gray-400 line-through">{formatCurrency(item.price * item.quantity)}</div>
+                            <div className="font-medium text-green-600">{formatCurrency(discountItem?.finalPrice || 0)}</div>
+                          </>
+                        ) : (
+                          <div className="font-medium text-gray-500">{formatCurrency(item.price * item.quantity)}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               <div className="pt-2 border-t space-y-1">
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Net Sales</span>
-                  <span>{formatCurrency(vatBreakdown.netSales)}</span>
+                  <span>Subtotal</span>
+                  <span>{formatCurrency(discountResult.subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>VAT ({vatBreakdown.vatRate}%)</span>
-                  <span>{formatCurrency(vatBreakdown.vatAmount)}</span>
-                </div>
+                {customerType !== 'regular' && discountResult.totalVatExempt > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Less VAT Exempt (12%)</span>
+                    <span>-{formatCurrency(discountResult.totalVatExempt)}</span>
+                  </div>
+                )}
+                {customerType !== 'regular' && discountResult.totalDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>{getDiscountLabel(customerType)}</span>
+                    <span>-{formatCurrency(discountResult.totalDiscountAmount)}</span>
+                  </div>
+                )}
+                {customerType === 'regular' && (
+                  <>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Net Sales</span>
+                      <span>{formatCurrency(vatBreakdown.netSales)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>VAT ({vatBreakdown.vatRate}%)</span>
+                      <span>{formatCurrency(vatBreakdown.vatAmount)}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between font-bold text-lg pt-1 border-t text-black">
-                  <span>Total (VAT Inclusive)</span>
+                  <span>Total Amount Due</span>
                   <span className="text-green-600">{formatCurrency(total)}</span>
                 </div>
               </div>

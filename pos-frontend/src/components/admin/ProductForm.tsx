@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Upload } from 'lucide-react';
 import { NewProduct, Product } from '@/types/product';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +37,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 }) => {
   const { toast } = useToast();
 
-  const handleInputChange = (field: keyof NewProduct, value: string) => {
+  const handleInputChange = (field: keyof NewProduct, value: string | boolean) => {
     onProductChange({
       ...newProduct,
       [field]: value,
@@ -67,6 +68,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       category: newProduct.category,
       stock: parseInt(newProduct.stock),
       unit: newProduct.unit,
+      isDiscountable: newProduct.isDiscountable,
+      isVatExemptable: newProduct.isVatExemptable,
     };
     
     // If there's an image file, create FormData
@@ -176,6 +179,34 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </div>
                 <div>
                   {/* Empty div for grid alignment */}
+                </div>
+              </div>
+
+              {/* Senior/PWD Discount Eligibility */}
+              <div className="space-y-3 p-3 bg-blue-50 rounded-md border border-blue-200">
+                <Label className="text-sm font-semibold text-black">Senior Citizen & PWD Discount Eligibility</Label>
+                <p className="text-xs text-gray-600">Select if this product qualifies for Senior Citizen/PWD benefits (RA 9994 & RA 10754)</p>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isDiscountable"
+                    checked={newProduct.isDiscountable}
+                    onCheckedChange={(checked) => handleInputChange('isDiscountable', checked as boolean)}
+                  />
+                  <Label htmlFor="isDiscountable" className="text-sm font-normal text-black cursor-pointer">
+                    Eligible for 20% discount
+                  </Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isVatExemptable"
+                    checked={newProduct.isVatExemptable}
+                    onCheckedChange={(checked) => handleInputChange('isVatExemptable', checked as boolean)}
+                  />
+                  <Label htmlFor="isVatExemptable" className="text-sm font-normal text-black cursor-pointer">
+                    Eligible for VAT exemption (12%)
+                  </Label>
                 </div>
               </div>
 

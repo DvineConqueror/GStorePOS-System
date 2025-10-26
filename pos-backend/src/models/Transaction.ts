@@ -30,6 +30,24 @@ const transactionItemSchema = new Schema<ITransactionItem>({
     default: 0,
     min: [0, 'Discount cannot be negative'],
   },
+  vatExempt: {
+    type: Boolean,
+    default: false,
+  },
+  discountApplied: {
+    type: Boolean,
+    default: false,
+  },
+  discountAmount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Discount amount cannot be negative'],
+  },
+  finalPrice: {
+    type: Number,
+    required: [true, 'Final price is required'],
+    min: [0, 'Final price cannot be negative'],
+  },
 }, { _id: false });
 
 const transactionSchema = new Schema<ITransaction>({
@@ -88,6 +106,22 @@ const transactionSchema = new Schema<ITransaction>({
     min: [0, 'VAT rate cannot be negative'],
     max: [100, 'VAT rate cannot exceed 100%'],
     default: 12,
+  },
+  customerType: {
+    type: String,
+    enum: ['regular', 'senior', 'pwd'],
+    default: 'regular',
+    required: [true, 'Customer type is required'],
+  },
+  totalVatExempt: {
+    type: Number,
+    default: 0,
+    min: [0, 'Total VAT exempt cannot be negative'],
+  },
+  totalDiscountAmount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Total discount amount cannot be negative'],
   },
   paymentMethod: {
     type: String,

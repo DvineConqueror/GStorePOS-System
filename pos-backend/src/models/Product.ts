@@ -78,6 +78,16 @@ const productSchema = new Schema<IProduct>({
     type: String,
     trim: true,
   },
+  isDiscountable: {
+    type: Boolean,
+    default: true,
+    required: true,
+  },
+  isVatExemptable: {
+    type: Boolean,
+    default: true,
+    required: true,
+  },
 }, {
   timestamps: true,
 });

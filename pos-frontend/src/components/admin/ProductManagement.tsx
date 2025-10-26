@@ -52,6 +52,8 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
     unit: 'pcs',
     image: null,
     imagePreview: '',
+    isDiscountable: true,
+    isVatExemptable: true,
   });
   const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
   const [newCategory, setNewCategory] = useState('');
@@ -71,6 +73,8 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
       unit: 'pcs',
       image: null,
       imagePreview: '',
+      isDiscountable: true,
+      isVatExemptable: true,
     });
   };
 
@@ -168,6 +172,8 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({
       unit: product.unit,
       image: null,
       imagePreview: product.image || '',
+      isDiscountable: product.isDiscountable !== undefined ? product.isDiscountable : true,
+      isVatExemptable: product.isVatExemptable !== undefined ? product.isVatExemptable : true,
     });
     setShowEditProductForm(true);
   };

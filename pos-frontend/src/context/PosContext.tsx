@@ -201,7 +201,7 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const completeTransaction = async (transaction: Transaction) => {
+  const completeTransaction = async (transaction: Transaction): Promise<boolean> => {
     try {
       const transactionData = {
         items: transaction.items.map(item => ({
@@ -213,6 +213,7 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
         paymentMethod: transaction.paymentMethod,
         customerId: transaction.customerId,
         customerName: transaction.customerName,
+        customerType: transaction.customerType,
         notes: transaction.notes,
         discount: transaction.discount || 0,
         tax: transaction.tax || 0
@@ -251,16 +252,19 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
           description: "Transaction completed successfully",
           variant: "success",
         });
+        
+        return true;
       } else {
         throw new Error(response.message || 'Failed to complete transaction');
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to complete transaction",
+        description: error.message || "Failed to complete transaction",
         variant: "destructive"
       });
       console.error('Error completing transaction:', error);
+      return false;
     }
   };
 

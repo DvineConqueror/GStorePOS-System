@@ -16,6 +16,8 @@ export interface Product {
   status: 'available' | 'unavailable' | 'deleted';
   displayStatus?: string; // Virtual field: 'out of stock' when stock is 0, otherwise status
   supplier?: string;
+  isDiscountable: boolean; // Eligible for Senior/PWD 20% discount
+  isVatExemptable: boolean; // Eligible for VAT exemption for Senior/PWD
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +30,8 @@ export interface NewProduct {
   unit: string;
   image: File | null;
   imagePreview: string;
+  isDiscountable: boolean;
+  isVatExemptable: boolean;
 }
 
 export interface Category {

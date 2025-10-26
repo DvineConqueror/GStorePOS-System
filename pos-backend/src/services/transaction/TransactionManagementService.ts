@@ -4,6 +4,7 @@ import { ITransaction } from '../../types';
 import { RealtimeAnalyticsService } from '../RealtimeAnalyticsService';
 import { TransactionValidationService } from './TransactionValidationService';
 import { calculateVATFromInclusive } from '../../utils/vat';
+import { calculateTransactionDiscount } from '../../utils/seniorPwdDiscount';
 import SystemSettingsService from '../SystemSettingsService';
 
 export class TransactionManagementService {
@@ -20,6 +21,7 @@ export class TransactionManagementService {
     paymentMethod: 'cash' | 'card' | 'digital';
     customerId?: string;
     customerName?: string;
+    customerType?: 'regular' | 'senior' | 'pwd';
     notes?: string;
     discount?: number;
     tax?: number;
@@ -31,6 +33,7 @@ export class TransactionManagementService {
       paymentMethod,
       customerId,
       customerName,
+      customerType = 'regular',
       notes,
       discount = 0,
       tax = 0,
@@ -43,6 +46,7 @@ export class TransactionManagementService {
 
     // Validate and process items
     const processedItems = [];
+    const itemsForDiscount = [];
     let subtotal = 0;
 
     for (const item of items) {
@@ -51,8 +55,8 @@ export class TransactionManagementService {
         throw new Error(`Product with ID ${item.productId} not found`);
       }
 
-      if (product.status !== 'active') {
-        throw new Error(`Product ${product.name} is not active`);
+      if (product.status !== 'available') {
+        throw new Error(`Product ${product.name} is not available`);
       }
 
       if (product.stock < item.quantity) {
@@ -60,49 +64,77 @@ export class TransactionManagementService {
       }
 
       const unitPrice = item.unitPrice || product.price;
-      const itemTotal = unitPrice * item.quantity;
-      const itemDiscount = item.discount || 0;
-
-      processedItems.push({
-        productId: product._id,
+      
+      // Collect items for discount calculation
+      itemsForDiscount.push({
+        productId: product._id.toString(),
         productName: product.name,
+        price: unitPrice,
         quantity: item.quantity,
-        unitPrice,
-        totalPrice: itemTotal,
-        discount: itemDiscount,
+        isDiscountable: product.isDiscountable || true,
+        isVatExemptable: product.isVatExemptable || true,
       });
-
-      subtotal += itemTotal - itemDiscount;
 
       // Update product stock immediately
       product.stock -= item.quantity;
       await product.save();
     }
 
+    // Calculate Senior/PWD discounts if applicable
+    const discountResult = calculateTransactionDiscount(itemsForDiscount, customerType);
+
+    // Map discount results to transaction items
+    discountResult.items.forEach((discountedItem) => {
+      processedItems.push({
+        productId: discountedItem.productId,
+        productName: discountedItem.productName,
+        quantity: discountedItem.quantity,
+        unitPrice: discountedItem.unitPrice,
+        totalPrice: discountedItem.totalPrice,
+        discount: discountedItem.discount || 0,
+        vatExempt: discountedItem.vatExempt,
+        discountApplied: discountedItem.discountApplied,
+        discountAmount: discountedItem.discountAmount,
+        finalPrice: discountedItem.finalPrice,
+      });
+    });
+
+    subtotal = discountResult.subtotal;
+
     // Generate transaction number
     const transactionNumber = await this.generateTransactionNumber();
 
-    // Calculate total (VAT-inclusive)
-    const total = subtotal + tax - discount;
+    // Use the amount due from discount calculation
+    const total = discountResult.amountDue;
 
     // Get VAT rate from system settings
     const settings = await SystemSettingsService.getSettings();
     const vatRate = settings?.taxRate || 12; // Default to 12% if not set
 
-    // Calculate VAT breakdown (since prices are VAT-inclusive)
-    const vatBreakdown = calculateVATFromInclusive(total, vatRate);
+    // Calculate VAT breakdown (for regular customers or final amount)
+    const vatBreakdown = customerType === 'regular' 
+      ? calculateVATFromInclusive(total, vatRate)
+      : {
+          total: discountResult.amountDue,
+          vatAmount: discountResult.totalVatExempt,
+          netSales: discountResult.amountDue - discountResult.totalVatExempt,
+          vatRate: vatRate
+        };
 
     // Create transaction
     const transaction = new Transaction({
       transactionNumber,
       items: processedItems,
-      subtotal,
+      subtotal: discountResult.subtotal,
       tax,
       discount,
-      total: vatBreakdown.total,
+      total: discountResult.amountDue,
       vatAmount: vatBreakdown.vatAmount,
       netSales: vatBreakdown.netSales,
       vatRate: vatBreakdown.vatRate,
+      customerType,
+      totalVatExempt: discountResult.totalVatExempt,
+      totalDiscountAmount: discountResult.totalDiscountAmount,
       paymentMethod,
       cashierId,
       cashierName,

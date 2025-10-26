@@ -18,7 +18,8 @@
     "init-vat": "node scripts/init-vat-settings.js",
     "migrate-vat": "node scripts/migrate-add-vat.js",
     "update-minstock": "node scripts/update-minstock.js",
-    "migrate-product-status": "node scripts/migrate-product-status.js"
+    "migrate-product-status": "node scripts/migrate-product-status.js",
+    "migrate-discount-fields": "node scripts/migrate-add-discount-fields.js"
   },
   "keywords": [
     "pos",
