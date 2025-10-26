@@ -141,6 +141,7 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions = {}) 
           // Smoothly merge new data without causing re-renders that disrupt UI
           const mergedData = {
             ...prev,
+            ...newData, // Include ALL fields from newData (salesByCategory, hourlySales, etc.)
             // Only update metrics if they have significantly changed (> 5% difference)
             metrics: newData.metrics && prev.metrics ? {
               ...prev.metrics,

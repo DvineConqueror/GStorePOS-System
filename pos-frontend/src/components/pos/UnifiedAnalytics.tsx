@@ -64,7 +64,7 @@ export function UnifiedAnalytics() {
   return (
     <div className="space-y-6">
       {/* Header with Action Buttons */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-3 flex-wrap">
           <Button
             onClick={handleRefresh}

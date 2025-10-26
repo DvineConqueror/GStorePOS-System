@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
   const [maintenanceRole, setMaintenanceRole] = useState<'cashier' | 'manager'>('cashier');
@@ -22,6 +23,9 @@ export default function LoginPage() {
   });
   
   const colors = getColorScheme();
+
+  // Check if passwords match
+  const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0;
 
   const handleToggleSignUp = () => {
     setIsSignUp(!isSignUp);
@@ -39,6 +43,10 @@ export default function LoginPage() {
 
   const handleTogglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleToggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   const handleToggleRememberMe = (checked: boolean) => {
@@ -102,13 +110,16 @@ export default function LoginPage() {
             colors={colors}
             formData={formData}
             passwordValidation={passwordValidation}
+            passwordsMatch={passwordsMatch}
             rememberMe={rememberMe}
             showPassword={showPassword}
+            showConfirmPassword={showConfirmPassword}
             onFormSubmit={handleFormSubmit}
             onInputChange={handleInputChange}
             onToggleSignUp={handleToggleSignUp}
             onToggleRoleMode={handleToggleRoleMode}
             onTogglePasswordVisibility={handleTogglePasswordVisibility}
+            onToggleConfirmPasswordVisibility={handleToggleConfirmPasswordVisibility}
             onToggleRememberMe={handleToggleRememberMe}
           />
         </div>

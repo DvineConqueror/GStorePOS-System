@@ -128,13 +128,17 @@ export function getSalesByCategory(transactions: ITransaction[]) {
       });
     });
   
+  // Calculate total sales for percentage calculation
+  const totalSales = Array.from(categoryMap.values()).reduce((sum, data) => sum + data.amount, 0);
+  
+  // Return with correct field names and percentage calculation
   return Array.from(categoryMap.entries())
     .map(([category, data]) => ({
       category,
-      amount: data.amount,
-      count: data.count
+      sales: data.amount,  // Rename 'amount' to 'sales' for frontend compatibility
+      percentage: totalSales > 0 ? (data.amount / totalSales) * 100 : 0  // Calculate percentage
     }))
-    .sort((a, b) => b.amount - a.amount);
+    .sort((a, b) => b.sales - a.sales);
 }
 
 /**

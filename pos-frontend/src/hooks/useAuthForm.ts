@@ -9,6 +9,7 @@ interface AuthFormData {
   email: string;
   emailOrUsername: string;
   password: string;
+  confirmPassword: string;
   username: string;
   firstName: string;
   lastName: string;
@@ -25,6 +26,7 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
     email: '',
     emailOrUsername: '',
     password: '',
+    confirmPassword: '',
     username: '',
     firstName: '',
     lastName: ''
@@ -212,6 +214,7 @@ export const useAuthForm = ({ isAdminMode, isSignUp, rememberMe }: UseAuthFormPr
       email: '',
       emailOrUsername: '',
       password: '',
+      confirmPassword: '',
       username: '',
       firstName: '',
       lastName: ''

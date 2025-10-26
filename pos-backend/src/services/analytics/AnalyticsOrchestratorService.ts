@@ -130,10 +130,33 @@ export class AnalyticsOrchestratorService {
 
       // Only broadcast updates if there are connected clients (don't force refresh if no one is watching)
       if (SocketService.hasConnectedClients()) {
+        // Get all transactions for calculating additional analytics (same as real-time updates)
+        const { Transaction } = await import('../../models/Transaction');
+        const {
+          getSalesByCategory,
+          getHourlySales,
+          getTopPerformer,
+          getWeeklyTrend
+        } = await import('../../utils/analytics');
+        
+        const allTransactions = await Transaction.find({})
+          .sort({ createdAt: -1 })
+          .lean();
+        
+        // Calculate additional analytics (matching RealtimeAnalyticsBroadcastService)
+        const salesByCategory = getSalesByCategory(allTransactions);
+        const hourlySales = getHourlySales(allTransactions);
+        const topPerformer = getTopPerformer(allTransactions);
+        const weeklyTrend = getWeeklyTrend(allTransactions);
+        
         SocketService.emitManagerAnalyticsUpdate({
           ...dashboardAnalytics30d,
           weekly: dashboardAnalytics7d,
           daily: dashboardAnalytics1d,
+          salesByCategory,  // Include category breakdown
+          hourlySales,      // Include hourly sales
+          topPerformer,     // Include top performer
+          weeklyTrend,      // Include weekly trend
           lastUpdated: new Date().toISOString(),
           backgroundUpdate: true, // Flag to indicate this is a background update
           cacheRefreshed: true

@@ -19,18 +19,22 @@ interface LoginFormProps {
     email: string;
     emailOrUsername: string;
     password: string;
+    confirmPassword: string;
     username: string;
     firstName: string;
     lastName: string;
   };
   passwordValidation: PasswordValidationResult;
+  passwordsMatch: boolean;
   rememberMe: boolean;
   showPassword: boolean;
+  showConfirmPassword: boolean;
   onFormSubmit: (e: React.FormEvent) => void;
   onInputChange: (field: string, value: string) => void;
   onToggleSignUp: () => void;
   onToggleRoleMode: () => void;
   onTogglePasswordVisibility: () => void;
+  onToggleConfirmPasswordVisibility: () => void;
   onToggleRememberMe: (checked: boolean) => void;
 }
 
@@ -41,13 +45,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   colors,
   formData,
   passwordValidation,
+  passwordsMatch,
   rememberMe,
   showPassword,
+  showConfirmPassword,
   onFormSubmit,
   onInputChange,
   onToggleSignUp,
   onToggleRoleMode,
   onTogglePasswordVisibility,
+  onToggleConfirmPasswordVisibility,
   onToggleRememberMe
 }) => {
   return (
@@ -170,6 +177,56 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 </div>
               )}
             </div>
+
+            {isSignUp && !isAdminMode && (
+              <div className="space-y-0.5">
+                <Label htmlFor="confirmPassword" className="text-xs font-medium text-black">
+                  Confirm Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => onInputChange('confirmPassword', e.target.value)}
+                    className={`h-8 px-3 pr-8 text-black text-sm transition-all duration-300 ${
+                      formData.confirmPassword && !passwordsMatch
+                        ? 'border-red-500 focus:border-red-500' 
+                        : 'border-gray-300 focus:border-gray-300'
+                    } focus:outline-none focus:ring-0`}
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button 
+                    type="button"
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:${colors.primaryText} transition-colors duration-300`}
+                    onClick={onToggleConfirmPasswordVisibility}
+                  >
+                    {showConfirmPassword ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </button>
+                </div>
+                {/* Password match feedback */}
+                {formData.confirmPassword && (
+                  <div className="flex items-center gap-1 mt-1">
+                    {passwordsMatch ? (
+                      <span className="text-xs text-green-600 flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Passwords match
+                      </span>
+                    ) : (
+                      <span className="text-xs text-red-500 flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        Passwords do not match
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             
             {/* Remember Me checkbox - only show for login, not signup */}
             {!isSignUp && (
@@ -198,7 +255,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <div className={`flex flex-col ${isSignUp ? 'gap-1' : 'gap-2'}`}>
               <Button 
                 type="submit" 
-                disabled={isLoading || (isSignUp && !isAdminMode && !passwordValidation.isValid)}
+                disabled={isLoading || (isSignUp && !isAdminMode && (!passwordValidation.isValid || !passwordsMatch))}
                 className={`w-full ${isSignUp ? 'h-8' : 'h-9'} text-sm ${colors.primaryButton} duration-500 text-white font-medium transition-all`}
               >
                 {isLoading ? 'Loading...' : (isSignUp && !isAdminMode ? 'Create Cashier Account' : 'Sign In')}

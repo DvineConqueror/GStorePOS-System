@@ -745,13 +745,13 @@ export function ModernAnalyticsV3() {
               </div>
             </CardTitle>
             <Select value={trendPeriod} onValueChange={(value: 'weekly' | 'monthly' | 'annual') => setTrendPeriod(value)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Select period" />
+              <SelectTrigger className="w-[140px] text-black">
+                <SelectValue className="text-black" placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="annual">Annual</SelectItem>
+                <SelectItem value="weekly" className="text-black">Weekly</SelectItem>
+                <SelectItem value="monthly" className="text-black">Monthly</SelectItem>
+                <SelectItem value="annual" className="text-black">Annual</SelectItem>
               </SelectContent>
             </Select>
           </div>
