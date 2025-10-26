@@ -10,20 +10,23 @@ import { TransactionReceipt } from './TransactionReceipt';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Banknote, Receipt, User, Accessibility } from 'lucide-react';
+import { Banknote, Receipt, User, Accessibility, AlertTriangle } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Transaction } from '@/types';
 import { cn } from "@/lib/utils";
+import { useToast } from '@/hooks/use-toast';
 
 export function CheckoutDialog() {
-  const { state, toggleCheckout, calculateTotal, completeTransaction, fetchProducts } = usePos();
+  const { state, toggleCheckout, calculateTotal, completeTransaction, fetchProducts, validateCartStock } = usePos();
   const { user } = useAuth();
+  const { toast } = useToast();
   const { isCheckoutOpen, cart } = state;
   const [cashAmount, setCashAmount] = useState<string>('');
   const [showCashInput, setShowCashInput] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
   const [customerType, setCustomerType] = useState<'regular' | 'senior' | 'pwd'>('regular');
+  const [isValidating, setIsValidating] = useState(false);
 
   // Calculate discount based on customer type
   const discountResult = calculateTransactionDiscount(
@@ -69,6 +72,31 @@ export function CheckoutDialog() {
 
   const handleCompleteTransaction = async () => {
     if (cashReceived >= total && cashReceived <= cashLimit) {
+      // Validate stock before proceeding with transaction
+      setIsValidating(true);
+      const validation = await validateCartStock();
+      setIsValidating(false);
+      
+      if (!validation.valid) {
+        // Show detailed error message with all validation errors
+        toast({
+          title: "The following items have stock issues:",
+          description: (
+            <div className="space-y-1">
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                {validation.errors.map((error, index) => (
+                  <li key={index} className="text-sm">{error}</li>
+                ))}
+              </ul>
+              <p className="mt-2 text-sm">Please adjust your cart and try again.</p>
+            </div>
+          ),
+          variant: "destructive",
+          duration: 10000, // Longer duration for critical errors
+        });
+        return; // Stop transaction
+      }
+      
       // Map cart items to include discount information
       const itemsWithDiscount = cart.map((cartItem, index) => {
         const discountItem = discountResult.items[index];
@@ -260,10 +288,10 @@ export function CheckoutDialog() {
                 </Button>
                 <Button 
                   className="flex-1 bg-green-600 hover:bg-green-700" 
-                  disabled={cashReceived < total || cashReceived > cashLimit}
+                  disabled={cashReceived < total || cashReceived > cashLimit || isValidating}
                   onClick={handleCompleteTransaction}
                 >
-                  Complete Payment
+                  {isValidating ? 'Validating Stock...' : 'Complete Payment'}
                 </Button>
               </div>
             </div>

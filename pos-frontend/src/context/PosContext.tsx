@@ -114,6 +114,7 @@ type PosContextType = {
   calculateTotal: () => number;
   fetchProducts: () => Promise<void>;
   fetchTransactions: () => Promise<void>;
+  validateCartStock: () => Promise<{ valid: boolean; errors: string[] }>;
 };
 
 const PosContext = createContext<PosContextType | undefined>(undefined);
@@ -258,12 +259,39 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
         throw new Error(response.message || 'Failed to complete transaction');
       }
     } catch (error: any) {
+      console.error('Transaction error:', error);
+      
+      // Parse error message to provide better feedback
+      let errorTitle = "Transaction Failed";
+      let errorDescription = error.message || "Failed to complete transaction";
+      
+      // Check for specific error patterns
+      if (errorDescription.includes('not available')) {
+        errorTitle = "Product Unavailable";
+        // Extract product name from error message like "Product Frozen Tocino is not available"
+        const productMatch = errorDescription.match(/Product (.+?) is not available/);
+        if (productMatch) {
+          errorDescription = `${productMatch[1]} is no longer available. It may have been sold out by another cashier. Please remove it from cart and try again.`;
+        }
+      } else if (errorDescription.includes('Insufficient stock')) {
+        errorTitle = "Insufficient Stock";
+        // Error already contains details like "Insufficient stock for Frozen Tocino. Available: 5"
+        errorDescription += " Another cashier may have just purchased this item. Please adjust the quantity.";
+      } else if (errorDescription.includes('out of stock')) {
+        errorTitle = "Out of Stock";
+        errorDescription = `One or more items in your cart are out of stock. Please remove them and try again.`;
+      }
+      
+      // Refresh products to show current stock levels
+      await fetchProducts();
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to complete transaction",
-        variant: "destructive"
+        title: errorTitle,
+        description: errorDescription,
+        variant: "destructive",
+        duration: 7000, // Longer duration for important errors
       });
-      console.error('Error completing transaction:', error);
+      
       return false;
     }
   };
@@ -392,6 +420,43 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
     return state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
+  const validateCartStock = async (): Promise<{ valid: boolean; errors: string[] }> => {
+    try {
+      // Fetch latest product data
+      const response = await productsAPI.getProducts({ status: 'available' });
+      
+      if (!response.success) {
+        return { valid: false, errors: ['Unable to validate stock. Please try again.'] };
+      }
+      
+      const currentProducts = response.data;
+      const errors: string[] = [];
+      
+      // Check each cart item against current stock
+      for (const cartItem of state.cart) {
+        const currentProduct = currentProducts.find((p: Product) => p._id === cartItem._id);
+        
+        if (!currentProduct) {
+          errors.push(`${cartItem.name} is no longer available`);
+        } else if (currentProduct.status !== 'available') {
+          errors.push(`${cartItem.name} is currently unavailable`);
+        } else if (currentProduct.stock < cartItem.quantity) {
+          errors.push(`${cartItem.name}: Only ${currentProduct.stock} available (you have ${cartItem.quantity} in cart)`);
+        }
+      }
+      
+      // If there are errors, refresh the products to update the UI
+      if (errors.length > 0) {
+        dispatch({ type: 'SET_PRODUCTS', payload: currentProducts });
+      }
+      
+      return { valid: errors.length === 0, errors };
+    } catch (error) {
+      console.error('Error validating cart stock:', error);
+      return { valid: false, errors: ['Unable to validate stock. Please try again.'] };
+    }
+  };
+
   return (
     <PosContext.Provider
       value={{
@@ -406,6 +471,7 @@ export function PosProvider({ children }: { children: React.ReactNode }) {
         calculateTotal,
         fetchProducts,
         fetchTransactions,
+        validateCartStock,
       }}
     >
       {children}
