@@ -25,49 +25,32 @@ export class TransactionController {
         order = 'desc'
       } = req.query;
 
-      const filters: any = {};
-
-      // Apply filters
-      if (startDate || endDate) {
-        filters.createdAt = {};
-        if (startDate) filters.createdAt.$gte = new Date(startDate as string);
-        if (endDate) filters.createdAt.$lte = new Date(endDate as string);
-      }
-
-      if (cashierId) filters.cashierId = cashierId;
-      if (paymentMethod) filters.paymentMethod = paymentMethod;
-      if (status) filters.status = status;
-
-      if (minAmount || maxAmount) {
-        filters.total = {};
-        if (minAmount) filters.total.$gte = parseFloat(minAmount as string);
-        if (maxAmount) filters.total.$lte = parseFloat(maxAmount as string);
-      }
-
-      // Search functionality
-      if (search) {
-        const searchRegex = new RegExp(search as string, 'i');
-        filters.$or = [
-          { transactionNumber: searchRegex },
-          { cashierName: searchRegex },
-          { 'items.productName': searchRegex }
-        ];
-      }
-
-      // If user is cashier (not admin), only show their transactions
-      if (req.user?.role === 'cashier') {
-        filters.cashierId = req.user._id;
-      }
-
-      const result = await TransactionService.getTransactions({
-        ...filters,
+      // Build parameters for the service
+      const serviceParams: any = {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
         sort: sort as string,
         order: order as 'asc' | 'desc',
         userRole: req.user?.role,
         userId: req.user?._id
-      });
+      };
+
+      // Add optional filters
+      if (startDate) serviceParams.startDate = new Date(startDate as string);
+      if (endDate) serviceParams.endDate = new Date(endDate as string);
+      if (cashierId) serviceParams.cashierId = cashierId;
+      if (paymentMethod) serviceParams.paymentMethod = paymentMethod;
+      if (status) serviceParams.status = status;
+      if (minAmount) serviceParams.minAmount = parseFloat(minAmount as string);
+      if (maxAmount) serviceParams.maxAmount = parseFloat(maxAmount as string);
+      if (search) serviceParams.search = search;
+
+      // If user is cashier (not admin), only show their transactions
+      if (req.user?.role === 'cashier') {
+        serviceParams.cashierId = req.user._id;
+      }
+
+      const result = await TransactionService.getTransactions(serviceParams);
 
       res.json({
         success: true,

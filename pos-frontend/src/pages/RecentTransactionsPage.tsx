@@ -96,17 +96,27 @@ export default function RecentTransactionsPage() {
     // Add date range filter to API call
     if (dateFilter !== 'all') {
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      // Create dates in local timezone and set to start of day (00:00:00)
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const startOfWeek = new Date(startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      
+      // Create end of day for better filtering
+      const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
       switch (dateFilter) {
         case 'today':
-          params.startDate = today.toISOString();
-          params.endDate = now.toISOString();
+          params.startDate = startOfToday.toISOString();
+          params.endDate = endOfToday.toISOString();
           break;
         case 'week':
-          params.startDate = weekAgo.toISOString();
-          params.endDate = now.toISOString();
+          params.startDate = startOfWeek.toISOString();
+          params.endDate = endOfToday.toISOString();
+          break;
+        case 'month':
+          params.startDate = startOfMonth.toISOString();
+          params.endDate = endOfToday.toISOString();
           break;
         case 'all':
           // No date filter - get all transactions
@@ -278,6 +288,7 @@ export default function RecentTransactionsPage() {
                 <SelectItem value="all" className="text-gray-700">All Time</SelectItem>
                 <SelectItem value="today" className="text-gray-700">Today</SelectItem>
                 <SelectItem value="week" className="text-gray-700">This Week</SelectItem>
+                <SelectItem value="month" className="text-gray-700">This Month</SelectItem>
               </SelectContent>
             </Select>
 

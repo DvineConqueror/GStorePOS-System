@@ -24,7 +24,7 @@ export function TransactionReceipt({ transaction }: ReceiptProps) {
             <div>Cashier: {transaction.cashierName}</div>
             <div>Receipt #: {transaction.id.slice(0, 8)}</div>
             {hasDiscount && (
-              <div className="font-semibold text-green-600 mt-1">
+              <div className="font-semibold text-black-600 mt-1">
                 {customerType === 'senior' ? 'SENIOR CITIZEN' : 'PWD'}
               </div>
             )}
@@ -40,7 +40,7 @@ export function TransactionReceipt({ transaction }: ReceiptProps) {
                   <div className="text-black">
                     {item.name} x {item.quantity}
                   </div>
-                  <div>{formatCurrency(item.price * item.quantity)}</div>
+                  <div className="text-black">{formatCurrency(item.price * item.quantity)}</div>
                 </div>
                 {hasDiscount && hasItemDiscount && (
                   <div className="text-xs text-gray-500 ml-2 space-y-0.5">
@@ -56,9 +56,9 @@ export function TransactionReceipt({ transaction }: ReceiptProps) {
                         <span>-{formatCurrency(item.discountAmount || 0)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between font-semibold text-green-600">
+                    <div className="flex justify-between font-semibold text-black-600">
                       <span>Item Total</span>
-                      <span>{formatCurrency(item.finalPrice || (item.price * item.quantity))}</span>
+                      <span className="text-black">{formatCurrency(item.finalPrice || (item.price * item.quantity))}</span>
                     </div>
                   </div>
                 )}
@@ -71,44 +71,44 @@ export function TransactionReceipt({ transaction }: ReceiptProps) {
           <div className="border-t border-dashed pt-2">
             <div className="flex justify-between text-xs font-semibold">
               <div className="text-gray-600">Subtotal</div>
-              <div>{formatCurrency(transaction.subtotal)}</div>
+              <div className="text-black">{formatCurrency(transaction.subtotal)}</div>
             </div>
             {hasDiscount && transaction.totalVatExempt && transaction.totalVatExempt > 0 && (
-              <div className="flex justify-between text-xs text-green-600">
-                <div>Less VAT Exempt (12%)</div>
-                <div>-{formatCurrency(transaction.totalVatExempt)}</div>
+              <div className="flex justify-between text-xs text-black-600">
+                <div className='text-gray-600'>Less VAT Exempt (12%)</div>
+                <div className="text-black">-{formatCurrency(transaction.totalVatExempt)}</div>
               </div>
             )}
             {hasDiscount && transaction.totalDiscountAmount && transaction.totalDiscountAmount > 0 && (
-              <div className="flex justify-between text-xs text-green-600">
-                <div>{discountLabel}</div>
-                <div>-{formatCurrency(transaction.totalDiscountAmount)}</div>
+              <div className="flex justify-between text-xs text-black-600">
+                <div className='text-gray-600'>{discountLabel}</div>
+                <div className="text-black">-{formatCurrency(transaction.totalDiscountAmount)}</div>
               </div>
             )}
             {!hasDiscount && (
               <>
                 <div className="flex justify-between text-xs">
                   <div className="text-gray-600">Net Sales</div>
-                  <div>{formatCurrency(vatBreakdown.netSales)}</div>
+                  <div className="text-black">{formatCurrency(vatBreakdown.netSales)}</div>
                 </div>
                 <div className="flex justify-between text-xs">
                   <div className="text-gray-600">VAT ({vatBreakdown.vatRate}%)</div>
-                  <div>{formatCurrency(vatBreakdown.vatAmount)}</div>
+                  <div className="text-black">{formatCurrency(vatBreakdown.vatAmount)}</div>
                 </div>
               </>
             )}
           </div>
           <div className="flex justify-between font-bold border-t border-dashed pt-2">
             <div className="text-black">Total Amount Due</div>
-            <div>{formatCurrency(transaction.total)}</div>
+            <div className="text-black">{formatCurrency(transaction.total)}</div>
           </div>
           <div className="flex justify-between">
             <div className="text-gray-600">Cash</div>
-            <div>{formatCurrency(transaction.cashReceived)}</div>
+            <div className="text-black">{formatCurrency(transaction.cashReceived)}</div>
           </div>
           <div className="flex justify-between">
             <div className="text-gray-600">Change</div>
-            <div>{formatCurrency(transaction.change)}</div>
+            <div className="text-black">{formatCurrency(transaction.change)}</div>
           </div>
         </div>
 

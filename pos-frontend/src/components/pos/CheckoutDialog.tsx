@@ -331,7 +331,7 @@ export function CheckoutDialog() {
                   </SelectContent>
                 </Select>
                 {customerType !== 'regular' && (
-                  <p className="text-xs text-blue-600 mt-2">
+                  <p className="text-xs text-green-600 mt-2">
                     ✓ Discount applied to eligible items only (RA 9994 & RA 10754)
                   </p>
                 )}

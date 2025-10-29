@@ -15,6 +15,7 @@ export class TransactionQueryService {
     status?: string;
     minAmount?: number;
     maxAmount?: number;
+    search?: string;
     sort?: string;
     order?: 'asc' | 'desc';
     userRole?: string;
@@ -27,9 +28,10 @@ export class TransactionQueryService {
       endDate,
       cashierId,
       paymentMethod,
-      status = 'completed',
+      status,
       minAmount,
       maxAmount,
+      search,
       sort = 'createdAt',
       order = 'desc',
       userRole,
@@ -43,6 +45,11 @@ export class TransactionQueryService {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = startDate;
       if (endDate) query.createdAt.$lte = endDate;
+      console.log('Date filter applied:', {
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+        query: query.createdAt
+      });
     }
 
     if (cashierId) query.cashierId = cashierId;
@@ -53,6 +60,16 @@ export class TransactionQueryService {
       query.total = {};
       if (minAmount) query.total.$gte = minAmount;
       if (maxAmount) query.total.$lte = maxAmount;
+    }
+
+    // Search functionality
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      query.$or = [
+        { transactionNumber: searchRegex },
+        { cashierName: searchRegex },
+        { 'items.productName': searchRegex }
+      ];
     }
 
     // If user is cashier (not admin), only show their transactions

@@ -33,10 +33,11 @@ export const useCreateProduct = () => {
     mutationFn: apiService.products.create,
     onSuccess: async (response) => {
       if (response.success) {
-        // Invalidate and force refetch products immediately
+        // Invalidate and refetch all product list queries (with any filters)
+  await queryClient.invalidateQueries({ queryKey: ['products', 'list'], exact: false });
+  await queryClient.refetchQueries({ queryKey: ['products', 'list'], exact: false });
         await queryClient.invalidateQueries({ queryKey: ['products'] });
         await queryClient.refetchQueries({ queryKey: ['products'] });
-        
         toast({
           title: "Success",
           description: "Product created successfully",
@@ -71,10 +72,11 @@ export const useUpdateProduct = () => {
       apiService.products.update(id, data),
     onSuccess: async (response, { id }) => {
       if (response.success) {
-        // Invalidate and force refetch products immediately
+        // Invalidate and refetch all product list queries (with any filters)
+  await queryClient.invalidateQueries({ queryKey: ['products', 'list'], exact: false });
+  await queryClient.refetchQueries({ queryKey: ['products', 'list'], exact: false });
         await queryClient.invalidateQueries({ queryKey: ['products'] });
         await queryClient.refetchQueries({ queryKey: ['products'] });
-        
         toast({
           title: "Success",
           description: "Product updated successfully",
@@ -108,10 +110,11 @@ export const useDeleteProduct = () => {
     mutationFn: apiService.products.delete,
     onSuccess: async (response, id) => {
       if (response.success) {
-        // Invalidate ALL products queries and force immediate refetch
+        // Invalidate and refetch all product list queries (with any filters)
+        await queryClient.invalidateQueries({ queryKey: ['products', 'list'], exact: false });
+        await queryClient.refetchQueries({ queryKey: ['products', 'list'], exact: false });
         await queryClient.invalidateQueries({ queryKey: ['products'] });
-        await queryClient.refetchQueries({ queryKey: ['products'], type: 'active' });
-        
+        await queryClient.refetchQueries({ queryKey: ['products'] });
         toast({
           title: "Success",
           description: "Product deleted successfully",
@@ -145,10 +148,11 @@ export const useToggleProductStatus = () => {
     mutationFn: apiService.products.toggleStatus,
     onSuccess: async (response, id) => {
       if (response.success) {
-        // Invalidate and force refetch immediately
+        // Invalidate and refetch all product list queries (with any filters)
+  await queryClient.invalidateQueries({ queryKey: ['products', 'list'], exact: false });
+  await queryClient.refetchQueries({ queryKey: ['products', 'list'], exact: false });
         await queryClient.invalidateQueries({ queryKey: ['products'] });
-        await queryClient.refetchQueries({ queryKey: ['products'], type: 'active' });
-        
+        await queryClient.refetchQueries({ queryKey: ['products'] });
         toast({
           title: "Success",
           description: "Product status updated successfully",
