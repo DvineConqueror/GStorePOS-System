@@ -134,7 +134,8 @@ export class PasswordResetService {
         };
       }
 
-      const user = await User.findById(resetToken.userId);
+      // Select password field explicitly since it's excluded by default
+      const user = await User.findById(resetToken.userId).select('+password');
       if (!user) {
         return {
           success: false,
@@ -181,6 +182,15 @@ export class PasswordResetService {
         return {
           success: false,
           message: 'Password must be at least 6 characters long.',
+        };
+      }
+
+      // Check if new password is the same as the old password
+      const isSamePassword = await user.comparePassword(newPassword);
+      if (isSamePassword) {
+        return {
+          success: false,
+          message: 'New password cannot be the same as your current password. Please choose a different password.',
         };
       }
 

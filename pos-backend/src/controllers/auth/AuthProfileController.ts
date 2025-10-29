@@ -138,6 +138,24 @@ export class AuthProfileController {
         return;
       }
 
+      // Check if new password is the same as current password
+      if (currentPassword === newPassword) {
+        res.status(400).json({
+          success: false,
+          message: 'New password cannot be the same as your current password. Please choose a different password.',
+        } as ApiResponse);
+        return;
+      }
+
+      // Validate new password length
+      if (newPassword.length < 6) {
+        res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters long.',
+        } as ApiResponse);
+        return;
+      }
+
       // Update password
       user.password = newPassword;
       await user.save();

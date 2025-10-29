@@ -1,14 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response, NextFunction } from 'express';
 
-// Helper to skip rate limiting in development
-const bypassInDevelopment = (req: Request, res: Response, next: NextFunction) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('RATE LIMITER: Bypassed in development mode');
-    return next();
-  }
-  next();
-};
+console.log('RATE LIMITER MODULE: Loaded with NODE_ENV =', process.env.NODE_ENV);
 
 // Rate limiting for authentication endpoints
 const authRateLimitConfig = rateLimit({
@@ -22,9 +15,13 @@ const authRateLimitConfig = rateLimit({
   legacyHeaders: false,
 });
 
-export const authRateLimit = process.env.NODE_ENV === 'development' 
-  ? bypassInDevelopment 
-  : authRateLimitConfig;
+export const authRateLimit = (req: Request, res: Response, next: NextFunction) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('RATE LIMITER: Bypassing auth rate limit in development mode');
+    return next();
+  }
+  return authRateLimitConfig(req, res, next);
+};
 
 // Rate limiting specifically for password reset (more lenient)
 const passwordResetRateLimitConfig = rateLimit({
@@ -38,9 +35,13 @@ const passwordResetRateLimitConfig = rateLimit({
   legacyHeaders: false,
 });
 
-export const passwordResetRateLimit = process.env.NODE_ENV === 'development' 
-  ? bypassInDevelopment 
-  : passwordResetRateLimitConfig;
+export const passwordResetRateLimit = (req: Request, res: Response, next: NextFunction) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('RATE LIMITER: Bypassing password reset rate limit in development mode');
+    return next();
+  }
+  return passwordResetRateLimitConfig(req, res, next);
+};
 
 // Rate limiting for refresh token endpoint
 const refreshRateLimitConfig = rateLimit({
@@ -54,9 +55,13 @@ const refreshRateLimitConfig = rateLimit({
   legacyHeaders: false,
 });
 
-export const refreshRateLimit = process.env.NODE_ENV === 'development' 
-  ? bypassInDevelopment 
-  : refreshRateLimitConfig;
+export const refreshRateLimit = (req: Request, res: Response, next: NextFunction) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('RATE LIMITER: Bypassing refresh rate limit in development mode');
+    return next();
+  }
+  return refreshRateLimitConfig(req, res, next);
+};
 
 // Rate limiting for general API endpoints
 const generalRateLimitConfig = rateLimit({
@@ -70,6 +75,10 @@ const generalRateLimitConfig = rateLimit({
   legacyHeaders: false,
 });
 
-export const generalRateLimit = process.env.NODE_ENV === 'development' 
-  ? bypassInDevelopment 
-  : generalRateLimitConfig;
+export const generalRateLimit = (req: Request, res: Response, next: NextFunction) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('RATE LIMITER: Bypassing general rate limit in development mode');
+    return next();
+  }
+  return generalRateLimitConfig(req, res, next);
+};
