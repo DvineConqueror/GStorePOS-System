@@ -4,6 +4,8 @@ import { PasswordResetToken } from '../../models/PasswordResetToken';
 import { EmailService } from '../email/EmailService';
 import { PasswordResetEmailTemplate } from '../email/PasswordResetEmailTemplate';
 import { IUser, IPasswordResetToken } from '../../types';
+import { SessionService } from './SessionService';
+import { SocketService } from '../SocketService';
 
 export class PasswordResetService {
   private static readonly TOKEN_EXPIRY_MINUTES = 15;
@@ -195,9 +197,19 @@ export class PasswordResetService {
         { used: true, usedAt: new Date() }
       );
 
+      console.log(`PASSWORD RESET: Terminating all sessions for user ${user._id}`);
+      const terminatedCount = await SessionService.deactivateAllUserSessions(user._id.toString());
+      console.log(`PASSWORD RESET: ${terminatedCount} sessions terminated`);
+
+      SocketService.emitToUser(user._id.toString(), 'session_terminated', {
+        type: 'password_reset',
+        message: 'Your password has been reset. Please log in again with your new password.',
+        timestamp: new Date().toISOString(),
+      });
+
       return {
         success: true,
-        message: 'Password has been reset successfully. You can now log in with your new password.',
+        message: 'Password has been reset successfully. All devices have been logged out. You can now log in with your new password.',
         user,
       };
     } catch (error) {
