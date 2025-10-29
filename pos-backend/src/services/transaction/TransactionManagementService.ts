@@ -247,13 +247,49 @@ export class TransactionManagementService {
    * Generate transaction number
    */
   private static async generateTransactionNumber(): Promise<string> {
-    const count = await Transaction.countDocuments();
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    const sequence = String(count + 1).padStart(6, '0');
-    return `TXN${year}${month}${day}${sequence}`;
+    const datePrefix = `TXN${year}${month}${day}`;
+
+    // Find the highest transaction number for today
+    const latestTransaction = await Transaction.findOne({
+      transactionNumber: { $regex: `^${datePrefix}` }
+    })
+      .sort({ transactionNumber: -1 })
+      .select('transactionNumber')
+      .lean();
+
+    let sequence = 1;
+    if (latestTransaction && latestTransaction.transactionNumber) {
+      // Extract the sequence number from the last transaction
+      const lastSequence = parseInt(latestTransaction.transactionNumber.slice(-6));
+      sequence = lastSequence + 1;
+    }
+
+    // Ensure uniqueness with retry logic (in case of race conditions)
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      const transactionNumber = `${datePrefix}${String(sequence).padStart(6, '0')}`;
+      
+      // Check if this number already exists
+      const exists = await Transaction.exists({ transactionNumber });
+      
+      if (!exists) {
+        return transactionNumber;
+      }
+      
+      // If it exists, increment and try again
+      sequence++;
+      attempts++;
+    }
+
+    // Fallback: use timestamp-based unique identifier
+    const timestamp = Date.now().toString().slice(-6);
+    return `${datePrefix}${timestamp}`;
   }
 
   /**
