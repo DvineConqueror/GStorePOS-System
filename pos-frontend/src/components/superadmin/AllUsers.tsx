@@ -145,45 +145,6 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
     return <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white">Active</Badge>;
   };
 
-  const handleApproveUser = async (userId: string) => {
-    try {
-      setActionLoading(prev => new Set(prev).add(userId));
-      
-      const response = await superadminAPI.approveUser(userId, true);
-      
-      if (response.success) {
-        toast({
-          title: "Success",
-          description: "User approved successfully",
-          variant: "default",
-        });
-        
-        // Refresh the users list
-        fetchAllUsers();
-        
-        // Call the change callback if provided
-        if (onUserChange) {
-          onUserChange();
-        }
-      } else {
-        throw new Error(response.message || 'Failed to approve user');
-      }
-    } catch (error) {
-      console.error('Error approving user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to approve user",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(userId);
-        return newSet;
-      });
-    }
-  };
-
   const handleUserStatusChange = async (userId: string, newStatus: 'active' | 'inactive' | 'deleted') => {
     try {
       setActionLoading(prev => new Set(prev).add(userId));
@@ -426,15 +387,6 @@ export default function AllUsers({ onUserChange }: AllUsersProps) {
                                 Delete User
                               </DropdownMenuItem>
                             </>
-                          ) : !user.isApproved ? (
-                            <DropdownMenuItem
-                              onClick={() => handleApproveUser(user._id)}
-                              className="text-green-700 hover:bg-green-50 cursor-pointer"
-                              disabled={actionLoading.has(user._id)}
-                            >
-                              <UserCheck className="mr-2 h-4 w-4 text-green-600" />
-                              Approve User
-                            </DropdownMenuItem>
                           ) : null}
                         </DropdownMenuContent>
                       </DropdownMenu>
