@@ -37,6 +37,7 @@ interface UserManagementProps {
   statusFilter: string;
   filteredUsers: UserProfile[];
   currentUserId: string | undefined;
+  currentUserRole?: 'manager' | 'superadmin'; // Added to check user role
   onSearchChange: (term: string) => void;
   onStatusFilterChange: (status: string) => void;
   onToggleUserStatus: (userId: string, currentStatusOrBoolean: boolean | 'active' | 'inactive' | 'deleted') => void;
@@ -54,6 +55,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   statusFilter,
   filteredUsers,
   currentUserId,
+  currentUserRole,
   onSearchChange,
   onStatusFilterChange,
   onToggleUserStatus,
@@ -63,6 +65,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   onClearHighlight
 }) => {
   const [confirmAdd, setConfirmAdd] = useState(false);
+  
+  // Only superadmin can manage user status
+  const canManageUserStatus = currentUserRole === 'superadmin';
 
   return (
     <div className="space-y-6">
@@ -143,7 +148,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
-                      <TableHead>Actions</TableHead>
+                      {canManageUserStatus && <TableHead>Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -195,40 +200,42 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                             <TableCell className="text-gray-600">
                               {new Date(userProfile.createdAt).toLocaleDateString()}
                             </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                {isPending ? (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => onToggleUserStatus(userProfile._id, false)}
-                                    className="bg-yellow-100 border-yellow-300 text-black hover:bg-yellow-200 hover:text-black"
-                                  >
-                                    <UserCheck className="mr-2 h-4 w-4" />
-                                    Approve
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => onToggleUserStatus(userProfile._id, userProfile.status === 'active')}
-                                    disabled={userProfile._id === currentUserId} // Prevent admin from deactivating themselves
-                                  >
-                                    {userProfile.status === 'active' ? (
-                                      <>
-                                        <UserX className="mr-2 h-4 w-4" />
-                                        Deactivate
-                                      </>
-                                    ) : (
-                                      <>
-                                        <UserCheck className="mr-2 h-4 w-4" />
-                                        Activate
-                                      </>
-                                    )}
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
+                            {canManageUserStatus && (
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  {isPending ? (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => onToggleUserStatus(userProfile._id, false)}
+                                      className="bg-yellow-100 border-yellow-300 text-black hover:bg-yellow-200 hover:text-black"
+                                    >
+                                      <UserCheck className="mr-2 h-4 w-4" />
+                                      Approve
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => onToggleUserStatus(userProfile._id, userProfile.status === 'active')}
+                                      disabled={userProfile._id === currentUserId} // Prevent admin from deactivating themselves
+                                    >
+                                      {userProfile.status === 'active' ? (
+                                        <>
+                                          <UserX className="mr-2 h-4 w-4" />
+                                          Deactivate
+                                        </>
+                                      ) : (
+                                        <>
+                                          <UserCheck className="mr-2 h-4 w-4" />
+                                          Activate
+                                        </>
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
                           </TableRow>
                         );
                       })
@@ -291,38 +298,40 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                             <div>Username: {userProfile.username}</div>
                             <div>Joined: {new Date(userProfile.createdAt).toLocaleDateString()}</div>
                           </div>
-                          <div className="flex gap-2">
-                            {isPending ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => onToggleUserStatus(userProfile._id, false)}
-                                className="bg-yellow-100 border-yellow-300 text-black hover:bg-yellow-200 hover:text-black"
-                              >
-                                <UserCheck className="mr-1 h-4 w-4" />
-                                Approve
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => onToggleUserStatus(userProfile._id, userProfile.status === 'active')}
-                                disabled={userProfile._id === currentUserId}
-                              >
-                                {userProfile.status === 'active' ? (
-                                  <>
-                                    <UserX className="mr-1 h-4 w-4" />
-                                    Deactivate
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserCheck className="mr-1 h-4 w-4" />
-                                    Activate
-                                  </>
-                                )}
-                              </Button>
-                            )}
-                          </div>
+                          {canManageUserStatus && (
+                            <div className="flex gap-2">
+                              {isPending ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onToggleUserStatus(userProfile._id, false)}
+                                  className="bg-yellow-100 border-yellow-300 text-black hover:bg-yellow-200 hover:text-black"
+                                >
+                                  <UserCheck className="mr-1 h-4 w-4" />
+                                  Approve
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onToggleUserStatus(userProfile._id, userProfile.status === 'active')}
+                                  disabled={userProfile._id === currentUserId}
+                                >
+                                  {userProfile.status === 'active' ? (
+                                    <>
+                                      <UserX className="mr-1 h-4 w-4" />
+                                      Deactivate
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="mr-1 h-4 w-4" />
+                                      Activate
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

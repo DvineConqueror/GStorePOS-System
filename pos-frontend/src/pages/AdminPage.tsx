@@ -199,6 +199,7 @@ const AdminPageContent = () => {
               statusFilter={statusFilter}
               filteredUsers={filteredUsers}
               currentUserId={user?.id || ''}
+              currentUserRole={user?.role as 'manager' | 'superadmin'}
               onSearchChange={setSearchTerm}
               onStatusFilterChange={setStatusFilter}
               onToggleUserStatus={() => {}} // TODO: Implement with React Query mutation
